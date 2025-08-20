@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../widgets/profile_selection_bottom_sheet.dart';
-import 'client_registration_screen.dart';
-import 'professional_registration_screen.dart';
+import 'user_type_selection_screen.dart';
 import '../../data/models/user_model.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -809,27 +808,29 @@ class _LoginScreenState extends State<LoginScreen>
               onTap: () async {
                 HapticFeedback.lightImpact();
                 
-                // Abre o BottomSheet para seleção do tipo de perfil
-                final UserType? selectedType = await ProfileSelectionBottomSheet.show(context);
-                
-                if (selectedType != null && mounted) {
-                  // Navega para a tela de cadastro apropriada
-                  if (selectedType == UserType.client) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ClientRegistrationScreen(),
-                      ),
-                    );
-                  } else {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ProfessionalRegistrationScreen(),
-                      ),
-                    );
-                  }
-                }
+                // Navega para a nova tela de seleção de tipo de usuário
+                Navigator.push(
+                  context,
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) =>
+                        const UserTypeSelectionScreen(),
+                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                      const begin = Offset(0.0, 1.0);
+                      const end = Offset.zero;
+                      const curve = Curves.easeInOutCubic;
+                      
+                      var tween = Tween(begin: begin, end: end).chain(
+                        CurveTween(curve: curve),
+                      );
+                      
+                      return SlideTransition(
+                        position: animation.drive(tween),
+                        child: child,
+                      );
+                    },
+                    transitionDuration: const Duration(milliseconds: 500),
+                  ),
+                );
               },
               borderRadius: BorderRadius.circular(16),
               child: Center(
