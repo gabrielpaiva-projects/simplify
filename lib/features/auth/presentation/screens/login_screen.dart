@@ -292,11 +292,6 @@ class _LoginScreenState extends State<LoginScreen>
                           _buildAdditionalLinks(isDarkMode),
                           
                           const Spacer(flex: 2),
-                          
-                          // Footer
-                          _buildModernFooter(isDarkMode),
-                          
-                          const SizedBox(height: 20),
                         ],
                       ),
                     ),
@@ -312,59 +307,70 @@ class _LoginScreenState extends State<LoginScreen>
 
   Widget _buildModernHeader(bool isDarkMode) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Logo Container com gradiente
-        Container(
-          width: 100,
-          height: 100,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppColors.primaryGreen,
-                AppColors.mediumGreen,
-              ],
-            ),
-            borderRadius: BorderRadius.circular(30),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primaryGreen.withValues(alpha: 0.4),
-                blurRadius: 30,
-                offset: const Offset(0, 15),
-              ),
-              BoxShadow(
-                color: AppColors.primaryGreen.withValues(alpha: 0.2),
-                blurRadius: 60,
-                offset: const Offset(0, 25),
-              ),
-            ],
-          ),
-          child: const Icon(
-            Icons.eco,
-            size: 50,
-            color: AppColors.iceWhite,
+        // Logo secundário
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Image.asset(
+            'assets/logo_secondary.png',
+            height: 80,
+            width: 80,
+            errorBuilder: (context, error, stackTrace) {
+              print('Erro ao carregar logo: $error');
+              return Container(
+                height: 80,
+                width: 80,
+                color: Colors.red.withValues(alpha: 0.3),
+                child: const Icon(
+                  Icons.error,
+                  color: Colors.red,
+                  size: 40,
+                ),
+              );
+            },
           ),
         ),
-        
-        const SizedBox(height: 40),
-        
+
         // Título com animação
-        ShaderMask(
-          shaderCallback: (bounds) => LinearGradient(
-            colors: isDarkMode
-                ? [AppColors.primaryText, AppColors.lightGrey]
-                : [AppColors.deepBlack, AppColors.charcoalGrey],
-          ).createShader(bounds),
-          child: Text(
-            'Bem-vindo de volta',
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-              letterSpacing: -0.5,
-              height: 1.2,
-            ),
+        RichText(
+          textAlign: TextAlign.left,
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: 'SI',
+                style: TextStyle(
+                  fontFamily: 'TafelSansPro',
+                  fontSize: 47,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                  letterSpacing: -0.5,
+                  height: 1.2,
+                ),
+              ),
+              TextSpan(
+                text: 'M',
+                style: TextStyle(
+                  fontFamily: 'TafelSansPro',
+                  fontSize: 47,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF256525),
+                  letterSpacing: -0.5,
+                  height: 1.2,
+                ),
+              ),
+              TextSpan(
+                text: 'PLIFY',
+                style: TextStyle(
+                  fontFamily: 'TafelSansPro',
+                  fontSize: 47,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                  letterSpacing: -0.5,
+                  height: 1.2,
+                ),
+              ),
+            ],
           ),
         ),
         
@@ -373,6 +379,7 @@ class _LoginScreenState extends State<LoginScreen>
         // Subtítulo
         Text(
           'Faça login para continuar',
+          textAlign: TextAlign.left,
           style: TextStyle(
             fontSize: 16,
             color: isDarkMode
@@ -827,44 +834,6 @@ class _LoginScreenState extends State<LoginScreen>
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildModernFooter(bool isDarkMode) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      decoration: BoxDecoration(
-        color: isDarkMode
-            ? AppColors.charcoalGrey.withValues(alpha: 0.2)
-            : AppColors.lightGrey.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDarkMode
-              ? AppColors.lightGrey.withValues(alpha: 0.1)
-              : AppColors.lightGrey.withValues(alpha: 0.3),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.shield_outlined,
-            color: AppColors.primaryGreen,
-            size: 18,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            'Conexão segura e criptografada',
-            style: TextStyle(
-              color: isDarkMode
-                  ? AppColors.secondaryText.withValues(alpha: 0.7)
-                  : AppColors.charcoalGrey.withValues(alpha: 0.7),
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
