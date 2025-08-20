@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../widgets/profile_selection_bottom_sheet.dart';
+import 'client_registration_screen.dart';
+import 'professional_registration_screen.dart';
+import '../../data/models/user_model.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -802,19 +806,30 @@ class _LoginScreenState extends State<LoginScreen>
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: () {
+              onTap: () async {
                 HapticFeedback.lightImpact();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('Cadastro em desenvolvimento'),
-                    backgroundColor: AppColors.info,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    margin: const EdgeInsets.all(20),
-                  ),
-                );
+                
+                // Abre o BottomSheet para seleção do tipo de perfil
+                final UserType? selectedType = await ProfileSelectionBottomSheet.show(context);
+                
+                if (selectedType != null && mounted) {
+                  // Navega para a tela de cadastro apropriada
+                  if (selectedType == UserType.client) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ClientRegistrationScreen(),
+                      ),
+                    );
+                  } else {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ProfessionalRegistrationScreen(),
+                      ),
+                    );
+                  }
+                }
               },
               borderRadius: BorderRadius.circular(16),
               child: Center(
