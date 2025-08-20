@@ -8,7 +8,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../data/models/address_model.dart';
 import '../../data/services/cep_service.dart';
 import '../widgets/modern_text_field.dart';
-import '../widgets/step_indicator.dart';
+import '../widgets/step_progress_bar.dart';
 import '../widgets/animated_button.dart';
 import 'registration_success_screen.dart';
 
@@ -501,14 +501,27 @@ class _UnifiedRegistrationScreenState extends State<UnifiedRegistrationScreen>
                 // Header
                 _buildHeader(),
                 
-                // Step Indicator
+                // Step Progress Bar
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  child: StepIndicator(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  child: StepProgressBar(
                     currentStep: _currentStep,
                     totalSteps: _stepTitles.length,
-                    titles: _stepTitles,
-                    icons: _stepIcons,
+                    stepTitles: _stepTitles,
+                    stepIcons: _stepIcons,
+                    onStepTapped: (step) {
+                      // Allow navigation to previous steps only
+                      if (step < _currentStep) {
+                        setState(() {
+                          _currentStep = step;
+                        });
+                        _pageController.animateToPage(
+                          step,
+                          duration: const Duration(milliseconds: 500),
+                          curve: Curves.easeInOutCubic,
+                        );
+                      }
+                    },
                   ),
                 ),
                 
