@@ -1,0 +1,435 @@
+name: PR Checks
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+  pull_request_review:
+    types: [submitted]
+  issue_comment:
+    types: [created]
+
+env:
+  FLUTTER_VERSION: '3.16.5'
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  checks: write
+
+jobs:
+  # Validação do PR
+  pr-validation:
+    name: 🔍 Validação do PR
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      
+      - name: 🏷️ Verificar labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels.map(l => l.name);
+            
+            // Verifica se tem pelo menos uma label de tipo
+            const typeLabels = ['feature', 'bugfix', 'hotfix', 'docs', 'refactor', 'test', 'ci'];
+            const hasTypeLabel = labels.some(label => typeLabels.includes(label));
+            
+            if (!hasTypeLabel) {
+              core.setFailed('PR deve ter pelo menos uma label de tipo: ' + typeLabels.join(', '));
+            }
+            
+            // Verifica se tem label de prioridade
+            const priorityLabels = ['priority:high', 'priority:medium', 'priority:low'];
+            const hasPriorityLabel = labels.some(label => priorityLabels.includes(label));
+            
+            if (!hasPriorityLabel) {
+              core.warning('Considere adicionar uma label de prioridade: ' + priorityLabels.join(', '));
+            }
+      
+      - name: 📝 Verificar título do PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = context.payload.pull_request.title;
+            const pattern = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?: .+/;
+            
+            if (!pattern.test(title)) {
+              core.setFailed(`Título do PR deve seguir o padrão Conventional Commits.
+                Exemplos:
+                - feat: adiciona nova funcionalidade
+                - fix: corrige bug no login
+                - docs: atualiza README
+                - refactor(auth): melhora estrutura do código`);
+            }
+      
+      - name: 📋 Verificar descrição do PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.pull_request.body || '';
+            
+            // Verifica se tem descrição mínima
+            if (body.length < 50) {
+              core.setFailed('Descrição do PR deve ter pelo menos 50 caracteres');
+            }
+            
+            // Verifica se tem checklist
+            if (!body.includes('- [ ]') && !body.includes('- [x]')) {
+              core.warning('Considere adicionar uma checklist na descrição do PR');
+            }
+            
+            // Verifica se menciona issue relacionada
+            if (!body.match(/#\d+|closes|fixes|resolves/i)) {
+              core.warning('Considere mencionar a issue relacionada (ex: Closes #123)');
+            }
+      
+      - name: 📊 Verificar tamanho do PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const additions = pr.additions;
+            const deletions = pr.deletions;
+            const total = additions + deletions;
+            
+            let size = 'small';
+            let emoji = '🟢';
+            
+            if (total > 1000) {
+              size = 'extra-large';
+              emoji = '🔴';
+              core.warning('PR muito grande! Considere dividir em PRs menores');
+            } else if (total > 500) {
+              size = 'large';
+              emoji = '🟡';
+            } else if (total > 250) {
+              size = 'medium';
+              emoji = '🟠';
+            }
+            
+            // Adiciona label de tamanho
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              labels: [`size:${size}`]
+            });
+            
+            // Adiciona comentário com estatísticas
+            const comment = `## ${emoji} Tamanho do PR: ${size}
+            
+            📊 **Estatísticas:**
+            - ➕ Adições: ${additions}
+            - ➖ Deleções: ${deletions}
+            - 📝 Arquivos alterados: ${pr.changed_files}
+            - 📦 Total de mudanças: ${total}
+            
+            ${total > 500 ? '⚠️ **Recomendação:** PRs grandes são mais difíceis de revisar. Considere dividir em PRs menores.' : ''}`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              body: comment
+            });
+  
+  # Análise de arquivos alterados
+  files-analysis:
+    name: 📁 Análise de Arquivos
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: 🔍 Analisar arquivos alterados
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number
+            });
+            
+            let warnings = [];
+            let errors = [];
+            
+            for (const file of files) {
+              // Verifica arquivos sensíveis
+              if (file.filename.includes('.env') || 
+                  file.filename.includes('secrets') ||
+                  file.filename.includes('credentials')) {
+                errors.push(`🔒 Arquivo sensível modificado: ${file.filename}`);
+              }
+              
+              // Verifica arquivos grandes
+              if (file.additions > 500) {
+                warnings.push(`📦 Arquivo muito grande: ${file.filename} (+${file.additions} linhas)`);
+              }
+              
+              // Verifica arquivos de configuração críticos
+              if (file.filename === 'pubspec.yaml' ||
+                  file.filename === 'pubspec.lock') {
+                warnings.push(`⚠️ Arquivo de dependências modificado: ${file.filename}`);
+              }
+              
+              // Verifica arquivos de build
+              if (file.filename.includes('android/app/build.gradle') ||
+                  file.filename.includes('ios/Runner.xcodeproj')) {
+                warnings.push(`🏗️ Arquivo de build nativo modificado: ${file.filename}`);
+              }
+            }
+            
+            if (errors.length > 0 || warnings.length > 0) {
+              let comment = '## 📁 Análise de Arquivos\n\n';
+              
+              if (errors.length > 0) {
+                comment += '### ❌ Erros\n' + errors.join('\n') + '\n\n';
+                core.setFailed('Arquivos sensíveis foram modificados!');
+              }
+              
+              if (warnings.length > 0) {
+                comment += '### ⚠️ Avisos\n' + warnings.join('\n');
+              }
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body: comment
+              });
+            }
+  
+  # Auto-assign reviewers
+  auto-assign:
+    name: 👥 Auto-assign
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.action == 'opened'
+    
+    steps:
+      - name: 👥 Atribuir revisores
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const author = context.payload.pull_request.user.login;
+            
+            // Define revisores baseado no tipo de mudança
+            const labels = context.payload.pull_request.labels.map(l => l.name);
+            let reviewers = [];
+            
+            // Mapeamento de labels para revisores (customize conforme sua equipe)
+            const reviewerMap = {
+              'frontend': ['@frontend-reviewer'],
+              'backend': ['@backend-reviewer'],
+              'database': ['@database-reviewer'],
+              'ui/ux': ['@design-reviewer'],
+              'security': ['@security-reviewer']
+            };
+            
+            for (const [label, revs] of Object.entries(reviewerMap)) {
+              if (labels.includes(label)) {
+                reviewers.push(...revs);
+              }
+            }
+            
+            // Remove duplicatas e o autor
+            reviewers = [...new Set(reviewers)].filter(r => r !== `@${author}`);
+            
+            if (reviewers.length > 0) {
+              try {
+                await github.rest.pulls.requestReviewers({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: context.payload.pull_request.number,
+                  reviewers: reviewers.map(r => r.substring(1)) // Remove @
+                });
+                
+                console.log(`Revisores atribuídos: ${reviewers.join(', ')}`);
+              } catch (error) {
+                console.error('Erro ao atribuir revisores:', error);
+              }
+            }
+  
+  # Comandos via comentários
+  comment-commands:
+    name: 💬 Comandos via Comentários
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issue_comment' && github.event.issue.pull_request
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      
+      - name: 🤖 Processar comando
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comment = context.payload.comment.body;
+            const author = context.payload.comment.user.login;
+            const pr = context.payload.issue.number;
+            
+            // Verifica se o autor tem permissão (membro ou owner)
+            const { data: authorAssociation } = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              username: author
+            });
+            
+            if (!['admin', 'write'].includes(authorAssociation.permission)) {
+              console.log('Usuário sem permissão para executar comandos');
+              return;
+            }
+            
+            // Comando: /retest
+            if (comment.includes('/retest')) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr,
+                body: '🔄 Re-executando testes...'
+              });
+              
+              // Re-executa workflow
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'flutter-ci.yml',
+                ref: context.payload.issue.head.ref
+              });
+            }
+            
+            // Comando: /format
+            if (comment.includes('/format')) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr,
+                body: '🎨 Formatando código automaticamente...'
+              });
+              
+              // Aqui você pode adicionar lógica para formatar o código
+            }
+            
+            // Comando: /approve
+            if (comment.includes('/approve')) {
+              await github.rest.pulls.createReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr,
+                event: 'APPROVE',
+                body: '✅ Aprovado via comando'
+              });
+            }
+            
+            // Comando: /merge
+            if (comment.includes('/merge')) {
+              try {
+                await github.rest.pulls.merge({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: pr,
+                  merge_method: 'squash'
+                });
+                
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr,
+                  body: '✅ PR merged via comando!'
+                });
+              } catch (error) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr,
+                  body: `❌ Erro ao fazer merge: ${error.message}`
+                });
+              }
+            }
+            
+            // Comando: /help
+            if (comment.includes('/help')) {
+              const helpMessage = `## 🤖 Comandos Disponíveis
+              
+              | Comando | Descrição |
+              |---------|-----------|
+              | \`/retest\` | Re-executa os testes |
+              | \`/format\` | Formata o código automaticamente |
+              | \`/approve\` | Aprova o PR |
+              | \`/merge\` | Faz merge do PR (squash) |
+              | \`/help\` | Mostra esta mensagem de ajuda |
+              
+              **Nota:** Apenas membros com permissão de escrita podem executar comandos.`;
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr,
+                body: helpMessage
+              });
+            }
+  
+  # Preview deployment
+  preview-deploy:
+    name: 🔮 Preview Deploy
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      
+      - name: 🎯 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+      
+      - name: 📦 Instalar dependências
+        run: flutter pub get
+      
+      - name: 🏗️ Build Web Preview
+        run: |
+          flutter build web --release \
+            --web-renderer html \
+            --base-href /pr-${{ github.event.pull_request.number }}/
+      
+      - name: 🚀 Deploy Preview
+        id: deploy
+        run: |
+          # Aqui você pode usar Vercel, Netlify, ou outro serviço
+          # Exemplo com GitHub Pages:
+          echo "preview_url=https://your-domain.com/pr-${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+      
+      - name: 💬 Comentar link do preview
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const previewUrl = '${{ steps.deploy.outputs.preview_url }}';
+            
+            const comment = `## 🔮 Preview Deploy
+            
+            ✅ **Preview disponível em:** ${previewUrl}
+            
+            📝 **Detalhes:**
+            - Branch: \`${{ github.head_ref }}\`
+            - Commit: \`${{ github.event.pull_request.head.sha }}\`
+            - Atualizado em: ${new Date().toLocaleString('pt-BR')}
+            
+            Este preview será removido automaticamente quando o PR for fechado.`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: comment
+            });
