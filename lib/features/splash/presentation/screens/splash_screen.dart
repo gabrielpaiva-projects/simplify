@@ -11,10 +11,15 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
+  late AnimationController _textController;
+  late Animation<double> _logoFadeAnimation;
+  late Animation<double> _logoScaleAnimation;
+  late Animation<double> _textFadeAnimation;
+  late Animation<double> _textSlideAnimation;
+  late Animation<double> _sloganFadeAnimation;
+  late Animation<double> _dotAnimation;
 
   @override
   void initState() {
@@ -29,34 +34,84 @@ class _SplashScreenState extends State<SplashScreen>
     );
     
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
+    _textController = AnimationController(
+      duration: const Duration(seconds: 3),
+      vsync: this,
+    );
+
+    // Logo animations
+    _logoFadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _controller,
-      curve: Curves.easeIn,
+      curve: const Interval(0.0, 0.4, curve: Curves.easeIn),
     ));
 
-    _scaleAnimation = Tween<double>(
-      begin: 0.8,
+    _logoScaleAnimation = Tween<double>(
+      begin: 0.5,
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _controller,
-      curve: Curves.easeOutCubic,
+      curve: const Interval(0.0, 0.5, curve: Curves.easeOutBack),
+    ));
+
+    // Text animations
+    _textFadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: const Interval(0.3, 0.7, curve: Curves.easeIn),
+    ));
+
+    _textSlideAnimation = Tween<double>(
+      begin: 30.0,
+      end: 0.0,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: const Interval(0.3, 0.7, curve: Curves.easeOutCubic),
+    ));
+
+    // Slogan animation
+    _sloganFadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: const Interval(0.5, 0.9, curve: Curves.easeIn),
+    ));
+
+    // Loading dots animation
+    _dotAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _textController,
+      curve: Curves.linear,
     ));
 
     _controller.forward();
+    _textController.repeat();
 
     // Navigate after delay
-    Future.delayed(const Duration(milliseconds: 2500), () {
+    Future.delayed(const Duration(milliseconds: 3000), () {
       if (mounted) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => const LoginScreen(),
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const LoginScreen(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(
+                opacity: animation,
+                child: child,
+              );
+            },
+            transitionDuration: const Duration(milliseconds: 500),
           ),
         );
       }
@@ -66,79 +121,187 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void dispose() {
     _controller.dispose();
+    _textController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.deepBlack,
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF000000),
-              Color(0xFF0A0A0A),
-              Color(0xFF000000),
+              AppColors.deepBlack,
+              AppColors.charcoalGrey.withValues(alpha: 0.3),
+              AppColors.deepBlack,
             ],
           ),
         ),
-        child: Center(
-          child: AnimatedBuilder(
-            animation: _controller,
-            builder: (context, child) {
-              return FadeTransition(
-                opacity: _fadeAnimation,
-                child: Transform.scale(
-                  scale: _scaleAnimation.value,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Single Logo
-                      Container(
-                        width: 100,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(24),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primaryGreen.withOpacity(0.4),
-                              blurRadius: 30,
-                              offset: const Offset(0, 10),
+        child: SafeArea(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Logo with animation
+                AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, child) {
+                    return FadeTransition(
+                      opacity: _logoFadeAnimation,
+                      child: Transform.scale(
+                        scale: _logoScaleAnimation.value,
+                        child: Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(28),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primaryGreen.withValues(alpha: 0.3),
+                                blurRadius: 40,
+                                spreadRadius: 10,
+                                offset: const Offset(0, 15),
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(28),
+                            child: Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: AppColors.deepBlack.withValues(alpha: 0.5),
+                                border: Border.all(
+                                  color: AppColors.primaryGreen.withValues(alpha: 0.2),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Image.asset(
+                                'assets/logo_secondary.png',
+                                fit: BoxFit.contain,
+                              ),
                             ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(24),
-                          child: Image.asset(
-                            'assets/logo_secondary.png',
-                            fit: BoxFit.cover,
                           ),
                         ),
                       ),
-                      
-                      const SizedBox(height: 24),
-                      
-                      // App Name
-                      const Text(
-                        'Simplify',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w300,
-                          letterSpacing: 1.5,
+                    );
+                  },
+                ),
+                
+                const SizedBox(height: 40),
+                
+                // SIMPLIFY text with green M
+                AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, child) {
+                    return FadeTransition(
+                      opacity: _textFadeAnimation,
+                      child: Transform.translate(
+                        offset: Offset(0, _textSlideAnimation.value),
+                        child: RichText(
+                          textAlign: TextAlign.center,
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'SI',
+                                style: TextStyle(
+                                  fontFamily: 'TafelSansPro',
+                                  fontSize: 52,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                  letterSpacing: -0.5,
+                                  height: 1.2,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'M',
+                                style: TextStyle(
+                                  fontFamily: 'TafelSansPro',
+                                  fontSize: 52,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.primaryGreen,
+                                  letterSpacing: -0.5,
+                                  height: 1.2,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'PLIFY',
+                                style: TextStyle(
+                                  fontFamily: 'TafelSansPro',
+                                  fontSize: 52,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                  letterSpacing: -0.5,
+                                  height: 1.2,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
-              );
-            },
+                
+                const SizedBox(height: 16),
+                
+                // Slogan
+                AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, child) {
+                    return FadeTransition(
+                      opacity: _sloganFadeAnimation,
+                      child: Text(
+                        'Simplificando limpeza e organização',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w300,
+                          color: AppColors.secondaryText.withValues(alpha: 0.8),
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                
+                const SizedBox(height: 60),
+                
+                // Loading indicator
+                AnimatedBuilder(
+                  animation: _textController,
+                  builder: (context, child) {
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: List.generate(3, (index) {
+                        final delay = index * 0.2;
+                        final value = (_dotAnimation.value - delay) % 1.0;
+                        final opacity = value < 0.5 ? value * 2 : 2 - value * 2;
+                        
+                        return Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.primaryGreen.withValues(
+                              alpha: 0.3 + opacity * 0.7,
+                            ),
+                          ),
+                        );
+                      }),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),
