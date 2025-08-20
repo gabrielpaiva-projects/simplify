@@ -102,8 +102,8 @@ class _RegistrationSuccessScreenState extends State<RegistrationSuccessScreen>
   void _generateConfetti() {
     final random = math.Random();
     final colors = [
-      AppColors.primary,
-      AppColors.secondary,
+      AppColors.primaryGreen,
+      AppColors.mediumGreen,
       Colors.yellow,
       Colors.green,
       Colors.pink,
@@ -323,9 +323,10 @@ class _RegistrationSuccessScreenState extends State<RegistrationSuccessScreen>
                         _AnimatedButton(
                           text: 'Começar a usar',
                           onPressed: () {
-                            // TODO: Navigate to home
+                            // TODO: Navigate to home when implemented
+                            // For now, navigate to login
                             Navigator.of(context).pushNamedAndRemoveUntil(
-                              '/home',
+                              '/login',
                               (route) => false,
                             );
                           },
@@ -336,9 +337,10 @@ class _RegistrationSuccessScreenState extends State<RegistrationSuccessScreen>
                         _AnimatedButton(
                           text: 'Completar perfil mais tarde',
                           onPressed: () {
-                            // TODO: Navigate to home
+                            // TODO: Navigate to home when implemented
+                            // For now, navigate to login
                             Navigator.of(context).pushNamedAndRemoveUntil(
-                              '/home',
+                              '/login',
                               (route) => false,
                             );
                           },

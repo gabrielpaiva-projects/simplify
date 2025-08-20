@@ -213,10 +213,10 @@ class _UserTypeSelectionScreenState extends State<UserTypeSelectionScreen>
                             icon: Icons.shopping_bag_rounded,
                             title: 'Sou Cliente',
                             description: 'Quero contratar serviços e encontrar profissionais qualificados',
-                            gradientColors: [
-                              AppColors.primary,
-                              AppColors.primary.withOpacity(0.7),
-                            ],
+                                        gradientColors: [
+              AppColors.primaryGreen,
+              AppColors.primaryGreen.withOpacity(0.7),
+            ],
                             isSelected: _selectedType == 0,
                             onTap: () {
                               setState(() => _selectedType = 0);
@@ -231,10 +231,10 @@ class _UserTypeSelectionScreenState extends State<UserTypeSelectionScreen>
                             icon: Icons.work_rounded,
                             title: 'Sou Profissional',
                             description: 'Quero oferecer meus serviços e expandir minha carteira de clientes',
-                            gradientColors: [
-                              AppColors.secondary,
-                              AppColors.secondary.withOpacity(0.7),
-                            ],
+                                        gradientColors: [
+              AppColors.mediumGreen,
+              AppColors.mediumGreen.withOpacity(0.7),
+            ],
                             isSelected: _selectedType == 1,
                             onTap: () {
                               setState(() => _selectedType = 1);

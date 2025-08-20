@@ -262,7 +262,7 @@ class _UnifiedRegistrationScreenState extends State<UnifiedRegistrationScreen>
     setState(() => _isSearchingCep = true);
     
     try {
-      final address = await CepService.searchCep(cep);
+      final address = await CepService.fetchAddressByCep(cep);
       if (address != null) {
         setState(() {
           _streetController.text = address.street ?? '';
