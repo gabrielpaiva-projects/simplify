@@ -372,7 +372,7 @@ class _AccountTypeSelectionScreenState extends State<AccountTypeSelectionScreen>
                             GestureDetector(
                               onTap: () {
                                 HapticFeedback.lightImpact();
-                                Navigator.pop(context);
+                                Navigator.pushReplacementNamed(context, '/login');
                               },
                               child: Text(
                                 'Fazer login',
@@ -380,6 +380,7 @@ class _AccountTypeSelectionScreenState extends State<AccountTypeSelectionScreen>
                                   color: AppColors.primaryGreen,
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
+                                  decoration: TextDecoration.underline,
                                 ),
                               ),
                             ),
