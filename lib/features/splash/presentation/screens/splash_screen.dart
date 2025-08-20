@@ -259,7 +259,7 @@ class _SplashScreenState extends State<SplashScreen>
                     return FadeTransition(
                       opacity: _sloganFadeAnimation,
                       child: Text(
-                        'Simplificando limpeza e organização',
+                        'Simplificando sua limpeza e organização',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w300,
