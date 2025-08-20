@@ -1,29 +1,67 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:equatable/equatable.dart';
 
 import '../../domain/entities/user.dart';
 
-part 'user_model.freezed.dart';
-part 'user_model.g.dart';
+class UserModel extends Equatable {
+  final String id;
+  final String email;
+  final String name;
+  final String? photoUrl;
+  final String? phone;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final bool isEmailVerified;
+  final bool isActive;
+  final String role;
 
-@freezed
-class UserModel with _$UserModel {
-  const UserModel._();
+  const UserModel({
+    required this.id,
+    required this.email,
+    required this.name,
+    this.photoUrl,
+    this.phone,
+    required this.createdAt,
+    this.updatedAt,
+    this.isEmailVerified = false,
+    this.isActive = true,
+    this.role = 'user',
+  });
 
-  const factory UserModel({
-    required String id,
-    required String email,
-    required String name,
-    String? photoUrl,
-    String? phone,
-    required DateTime createdAt,
-    DateTime? updatedAt,
-    @Default(false) bool isEmailVerified,
-    @Default(true) bool isActive,
-    @Default('user') String role,
-  }) = _UserModel;
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
+      id: json['id'] as String,
+      email: json['email'] as String,
+      name: json['name'] as String,
+      photoUrl: json['photoUrl'] as String?,
+      phone: json['phone'] as String?,
+      createdAt: json['createdAt'] is String
+          ? DateTime.parse(json['createdAt'])
+          : DateTime.fromMillisecondsSinceEpoch(json['createdAt'] as int),
+      updatedAt: json['updatedAt'] != null
+          ? (json['updatedAt'] is String
+              ? DateTime.parse(json['updatedAt'])
+              : DateTime.fromMillisecondsSinceEpoch(json['updatedAt'] as int))
+          : null,
+      isEmailVerified: json['isEmailVerified'] as bool? ?? false,
+      isActive: json['isActive'] as bool? ?? true,
+      role: json['role'] as String? ?? 'user',
+    );
+  }
 
-  factory UserModel.fromJson(Map<String, dynamic> json) =>
-      _$UserModelFromJson(json);
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'email': email,
+      'name': name,
+      'photoUrl': photoUrl,
+      'phone': phone,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
+      'isEmailVerified': isEmailVerified,
+      'isActive': isActive,
+      'role': role,
+    };
+  }
 
   factory UserModel.fromEntity(User user) {
     return UserModel(
@@ -57,4 +95,44 @@ class UserModel with _$UserModel {
       ),
     );
   }
+
+  UserModel copyWith({
+    String? id,
+    String? email,
+    String? name,
+    String? photoUrl,
+    String? phone,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    bool? isEmailVerified,
+    bool? isActive,
+    String? role,
+  }) {
+    return UserModel(
+      id: id ?? this.id,
+      email: email ?? this.email,
+      name: name ?? this.name,
+      photoUrl: photoUrl ?? this.photoUrl,
+      phone: phone ?? this.phone,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      isEmailVerified: isEmailVerified ?? this.isEmailVerified,
+      isActive: isActive ?? this.isActive,
+      role: role ?? this.role,
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+        id,
+        email,
+        name,
+        photoUrl,
+        phone,
+        createdAt,
+        updatedAt,
+        isEmailVerified,
+        isActive,
+        role,
+      ];
 }

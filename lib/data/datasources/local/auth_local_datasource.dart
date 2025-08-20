@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/errors/exceptions.dart';
@@ -21,7 +20,6 @@ abstract class AuthLocalDataSource {
   Future<bool> getRememberMe();
 }
 
-@LazySingleton(as: AuthLocalDataSource)
 class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   static const String _tokenKey = 'auth_token';
   static const String _userKey = 'current_user';

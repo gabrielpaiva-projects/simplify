@@ -1,12 +1,10 @@
 import 'package:dartz/dartz.dart';
-import 'package:injectable/injectable.dart';
 
 import '../../../core/errors/failures.dart';
 import '../../entities/user.dart';
 import '../../repositories/auth_repository.dart';
 import '../usecase.dart';
 
-@lazySingleton
 class CheckAuthStatusUseCase extends UseCase<AuthStatus, NoParams> {
   final AuthRepository _authRepository;
 

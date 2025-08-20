@@ -1,11 +1,8 @@
-import 'package:injectable/injectable.dart';
-
 import '../../../core/errors/exceptions.dart';
 import '../../models/auth_token_model.dart';
 import '../../models/user_model.dart';
 import 'auth_remote_datasource.dart';
 
-@LazySingleton(as: AuthRemoteDataSource)
 class MockAuthRemoteDataSource implements AuthRemoteDataSource {
   // Simulação de banco de dados em memória
   final Map<String, Map<String, dynamic>> _users = {

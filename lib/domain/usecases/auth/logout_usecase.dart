@@ -1,11 +1,9 @@
 import 'package:dartz/dartz.dart';
-import 'package:injectable/injectable.dart';
 
 import '../../../core/errors/failures.dart';
 import '../../repositories/auth_repository.dart';
 import '../usecase.dart';
 
-@lazySingleton
 class LogoutUseCase extends UseCase<void, NoParams> {
   final AuthRepository _authRepository;
 

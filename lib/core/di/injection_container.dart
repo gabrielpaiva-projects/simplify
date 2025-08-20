@@ -4,6 +4,7 @@ import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../data/datasources/local/auth_local_datasource.dart';
+import '../../data/datasources/remote/auth_remote_datasource.dart';
 import '../../data/datasources/remote/mock_auth_remote_datasource.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/repositories/auth_repository.dart';

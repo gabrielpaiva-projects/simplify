@@ -1,23 +1,39 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:equatable/equatable.dart';
 
 import '../../domain/entities/auth_token.dart';
 
-part 'auth_token_model.freezed.dart';
-part 'auth_token_model.g.dart';
+class AuthTokenModel extends Equatable {
+  final String accessToken;
+  final String? refreshToken;
+  final DateTime expiresAt;
+  final String tokenType;
 
-@freezed
-class AuthTokenModel with _$AuthTokenModel {
-  const AuthTokenModel._();
+  const AuthTokenModel({
+    required this.accessToken,
+    this.refreshToken,
+    required this.expiresAt,
+    this.tokenType = 'Bearer',
+  });
 
-  const factory AuthTokenModel({
-    @JsonKey(name: 'access_token') required String accessToken,
-    @JsonKey(name: 'refresh_token') String? refreshToken,
-    @JsonKey(name: 'expires_at') required DateTime expiresAt,
-    @JsonKey(name: 'token_type') @Default('Bearer') String tokenType,
-  }) = _AuthTokenModel;
+  factory AuthTokenModel.fromJson(Map<String, dynamic> json) {
+    return AuthTokenModel(
+      accessToken: json['access_token'] as String,
+      refreshToken: json['refresh_token'] as String?,
+      expiresAt: json['expires_at'] is String
+          ? DateTime.parse(json['expires_at'])
+          : DateTime.fromMillisecondsSinceEpoch(json['expires_at'] as int),
+      tokenType: json['token_type'] as String? ?? 'Bearer',
+    );
+  }
 
-  factory AuthTokenModel.fromJson(Map<String, dynamic> json) =>
-      _$AuthTokenModelFromJson(json);
+  Map<String, dynamic> toJson() {
+    return {
+      'access_token': accessToken,
+      'refresh_token': refreshToken,
+      'expires_at': expiresAt.toIso8601String(),
+      'token_type': tokenType,
+    };
+  }
 
   factory AuthTokenModel.fromEntity(AuthToken token) {
     return AuthTokenModel(
@@ -36,4 +52,7 @@ class AuthTokenModel with _$AuthTokenModel {
       tokenType: tokenType,
     );
   }
+
+  @override
+  List<Object?> get props => [accessToken, refreshToken, expiresAt, tokenType];
 }
