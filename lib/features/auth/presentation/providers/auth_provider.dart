@@ -9,10 +9,10 @@ import '../../domain/usecases/register_usecase.dart';
 import '../../../../core/usecases/usecase.dart';
 import 'auth_state.dart';
 
-part 'auth_provider.g.dart';
+// part 'auth_provider.g.dart'; // Will be generated
 
 @riverpod
-class Auth extends _$Auth {
+class Auth extends Notifier<AuthState> {
   late final LoginUseCase _loginUseCase;
   late final RegisterUseCase _registerUseCase;
   late final LogoutUseCase _logoutUseCase;

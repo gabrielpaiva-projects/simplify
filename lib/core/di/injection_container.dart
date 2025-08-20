@@ -4,7 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'injection_container.config.dart';
+// ignore_for_file: invalid_annotation_target
+// import 'injection_container.config.dart';
 
 final GetIt getIt = GetIt.instance;
 
@@ -17,8 +18,8 @@ Future<void> configureDependencies() async {
   // External dependencies
   await _registerExternalDependencies();
   
-  // Generated dependencies
-  getIt.init();
+  // Generated dependencies - will be available after running build_runner
+  // getIt.init();
 }
 
 Future<void> _registerExternalDependencies() async {
