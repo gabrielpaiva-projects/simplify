@@ -1,0 +1,22 @@
+targets:
+  $default:
+    builders:
+      json_serializable:
+        options:
+          explicit_to_json: true
+          field_rename: snake
+          checked: true
+          
+      freezed:
+        options:
+          when: true
+          map: true
+          
+      injectable_generator:injectable_builder:
+        options:
+          auto: true
+          
+      riverpod_generator:
+        options:
+          build_extensions:
+            "lib/{{file}}.dart": "lib/{{file}}.g.dart"
