@@ -48,7 +48,7 @@ class ProfileSelectionBottomSheet extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.primaryDark,
+                    color: AppColors.deepBlack,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -68,7 +68,7 @@ class ProfileSelectionBottomSheet extends StatelessWidget {
                   icon: Icons.person_outline,
                   title: 'Cliente',
                   description: 'Quero contratar serviços profissionais',
-                  color: AppColors.primary,
+                  color: AppColors.primaryGreen,
                   onTap: () => Navigator.pop(context, UserType.client),
                 ),
                 
@@ -79,7 +79,7 @@ class ProfileSelectionBottomSheet extends StatelessWidget {
                   icon: Icons.work_outline,
                   title: 'Profissional',
                   description: 'Quero oferecer meus serviços',
-                  color: AppColors.secondary,
+                  color: AppColors.mediumGreen,
                   onTap: () => Navigator.pop(context, UserType.professional),
                 ),
                 
