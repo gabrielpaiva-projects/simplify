@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
-import 'dart:io';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:image_picker/image_picker.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../data/models/address_model.dart';
 import '../../data/models/user_model.dart';
@@ -24,10 +21,9 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
   
   // Personal Data
   final _nameController = TextEditingController();
-  final _rgController = TextEditingController();
   final _cpfController = TextEditingController();
-  final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   
   // Password
   final _passwordController = TextEditingController();
@@ -48,11 +44,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
   final _addressFormKey = GlobalKey<FormState>();
   
   // Masks
-  final _rgMask = MaskTextInputFormatter(
-    mask: '##.###.###-#',
-    filter: {"#": RegExp(r'[0-9]')},
-  );
-  
   final _cpfMask = MaskTextInputFormatter(
     mask: '###.###.###-##',
     filter: {"#": RegExp(r'[0-9]')},
@@ -74,9 +65,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   bool _isSearchingCep = false;
-  
-  // Files
-  dynamic _addressProofFile;
   
   // Animation Controllers
   late AnimationController _progressController;

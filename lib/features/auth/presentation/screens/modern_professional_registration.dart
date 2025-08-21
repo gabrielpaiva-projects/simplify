@@ -31,10 +31,7 @@ class _ModernProfessionalRegistrationState
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   
-  // Professional Data
-  final _professionController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  final _experienceController = TextEditingController();
+
   
   // Password
   final _passwordController = TextEditingController();
@@ -151,7 +148,7 @@ class _ModernProfessionalRegistrationState
     );
     
     _stepControllers = List.generate(
-      5, // 5 steps for professional
+      4, // 4 steps: Dados, Senha, Endereço, Comprovante
       (index) => AnimationController(
         duration: const Duration(milliseconds: 600),
         vsync: this,
@@ -228,21 +225,18 @@ class _ModernProfessionalRegistrationState
         isValid = _personalFormKey.currentState?.validate() ?? false;
         break;
       case 1:
-        isValid = _professionalFormKey.currentState?.validate() ?? false;
-        break;
-      case 2:
         isValid = _passwordFormKey.currentState?.validate() ?? false;
         break;
-      case 3:
+      case 2:
         isValid = _addressFormKey.currentState?.validate() ?? false;
         break;
-      case 4:
+      case 3:
         isValid = _documentsFormKey.currentState?.validate() ?? false;
         break;
     }
     
     if (isValid) {
-      if (_currentStep < 4) {
+      if (_currentStep < 3) {
         // Animate to next step
         await _stepControllers[_currentStep].reverse();
         
@@ -304,10 +298,10 @@ class _ModernProfessionalRegistrationState
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => _SuccessDialog(
+      builder: (context) => _AnalysisDialog(
         onContinue: () {
           Navigator.of(context).pushNamedAndRemoveUntil(
-            '/professional-home',
+            '/login',
             (route) => false,
           );
         },
@@ -557,7 +551,7 @@ class _ModernProfessionalRegistrationState
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              '${_currentStep + 1}/5',
+              '${_currentStep + 1}/4',
               style: TextStyle(
                 color: AppColors.primaryGreen,
                 fontWeight: FontWeight.bold,
@@ -574,13 +568,11 @@ class _ModernProfessionalRegistrationState
       case 0:
         return 'Dados Pessoais';
       case 1:
-        return 'Dados Profissionais';
-      case 2:
         return 'Criar Senha';
-      case 3:
+      case 2:
         return 'Endereço';
-      case 4:
-        return 'Documentação';
+      case 3:
+        return 'Comprovante de Residência';
       default:
         return '';
     }
@@ -596,7 +588,7 @@ class _ModernProfessionalRegistrationState
           return ClipRRect(
             borderRadius: BorderRadius.circular(3),
             child: LinearProgressIndicator(
-              value: (_currentStep + _progressAnimation.value) / 5,
+              value: (_currentStep + _progressAnimation.value) / 4,
               backgroundColor: Colors.white.withOpacity(0.1),
               valueColor: AlwaysStoppedAnimation<Color>(
                 AppColors.primaryGreen,
