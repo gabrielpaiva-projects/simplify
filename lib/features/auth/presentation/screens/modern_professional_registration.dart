@@ -404,7 +404,7 @@ class _ModernProfessionalRegistrationState
                 end: Alignment.bottomRight,
                 colors: [
                   Colors.black,
-                  const Color(0xFF0A1F0A),
+                  AppColors.charcoalGrey.withOpacity(0.5),
                 ],
               ),
             ),
@@ -424,12 +424,12 @@ class _ModernProfessionalRegistrationState
                     width: 400,
                     height: 400,
                     decoration: BoxDecoration(
-                      gradient: RadialGradient(
-                        colors: [
-                          const Color(0xFF2E7D32).withOpacity(0.1),
-                          Colors.transparent,
-                        ],
-                      ),
+                                        gradient: RadialGradient(
+                    colors: [
+                      AppColors.primaryGreen.withOpacity(0.1),
+                      Colors.transparent,
+                    ],
+                  ),
                     ),
                   ),
                 );
@@ -528,29 +528,21 @@ class _ModernProfessionalRegistrationState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ShaderMask(
-                  shaderCallback: (bounds) => LinearGradient(
-                    colors: [
-                      const Color(0xFF2E7D32),
-                      const Color(0xFF66BB6A),
-                    ],
-                  ).createShader(bounds),
-                  child: const Text(
-                    'Cadastro Profissional',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      letterSpacing: -0.5,
-                    ),
+                const Text(
+                  'Cadastro Profissional',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: -0.5,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   _getStepTitle(),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
-                    color: Color(0xFF66BB6A),
+                    color: AppColors.primaryGreen,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -562,16 +554,13 @@ class _ModernProfessionalRegistrationState
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: const Color(0xFF2E7D32).withOpacity(0.2),
+              color: AppColors.primaryGreen.withOpacity(0.2),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: const Color(0xFF2E7D32).withOpacity(0.3),
-              ),
             ),
             child: Text(
               '${_currentStep + 1}/5',
-              style: const TextStyle(
-                color: Color(0xFF66BB6A),
+              style: TextStyle(
+                color: AppColors.primaryGreen,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -610,8 +599,8 @@ class _ModernProfessionalRegistrationState
             child: LinearProgressIndicator(
               value: (_currentStep + _progressAnimation.value) / 5,
               backgroundColor: Colors.white.withOpacity(0.1),
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                Color(0xFF2E7D32),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                AppColors.primaryGreen,
               ),
               minHeight: 6,
             ),
@@ -647,12 +636,12 @@ class _ModernProfessionalRegistrationState
                               shape: BoxShape.circle,
                               gradient: LinearGradient(
                                 colors: [
-                                  const Color(0xFF2E7D32).withOpacity(0.2),
-                                  const Color(0xFF1B5E20).withOpacity(0.1),
+                                  AppColors.primaryGreen.withOpacity(0.2),
+                                  AppColors.mediumGreen.withOpacity(0.1),
                                 ],
                               ),
                               border: Border.all(
-                                color: const Color(0xFF2E7D32).withOpacity(0.3),
+                                color: AppColors.primaryGreen.withOpacity(0.3),
                                 width: 2,
                               ),
                             ),
@@ -666,7 +655,7 @@ class _ModernProfessionalRegistrationState
                                 : Icon(
                                     Icons.person_outline_rounded,
                                     size: 48,
-                                    color: const Color(0xFF66BB6A).withOpacity(0.5),
+                                    color: AppColors.primaryGreen.withOpacity(0.5),
                                   ),
                           ),
                           Positioned(
@@ -828,7 +817,7 @@ class _ModernProfessionalRegistrationState
                         color: Colors.white.withOpacity(0.05),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: const Color(0xFF2E7D32).withOpacity(0.3),
+                          color: AppColors.primaryGreen.withOpacity(0.3),
                         ),
                       ),
                       child: Column(
@@ -838,7 +827,7 @@ class _ModernProfessionalRegistrationState
                             children: [
                               Icon(
                                 Icons.category_outlined,
-                                color: const Color(0xFF66BB6A),
+                                color: AppColors.primaryGreen,
                                 size: 20,
                               ),
                               const SizedBox(width: 8),
@@ -971,20 +960,20 @@ class _ModernProfessionalRegistrationState
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            const Color(0xFF2E7D32).withOpacity(0.1),
-                            const Color(0xFF1B5E20).withOpacity(0.05),
+                            AppColors.primaryGreen.withOpacity(0.1),
+                            AppColors.mediumGreen.withOpacity(0.05),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: const Color(0xFF2E7D32).withOpacity(0.3),
+                          color: AppColors.primaryGreen.withOpacity(0.3),
                         ),
                       ),
                       child: Row(
                         children: [
                           const Icon(
                             Icons.lightbulb_outline_rounded,
-                            color: Color(0xFF66BB6A),
+                            color: AppColors.primaryGreen,
                             size: 20,
                           ),
                           const SizedBox(width: 12),
@@ -1042,14 +1031,14 @@ class _ModernProfessionalRegistrationState
                                 shape: BoxShape.circle,
                                 gradient: LinearGradient(
                                   colors: [
-                                    const Color(0xFF2E7D32).withOpacity(0.2),
-                                    const Color(0xFF1B5E20).withOpacity(0.1),
+                                    AppColors.primaryGreen.withOpacity(0.2),
+                                    AppColors.mediumGreen.withOpacity(0.1),
                                   ],
                                 ),
                               ),
                               child: const Icon(
                                 Icons.security_rounded,
-                                color: Color(0xFF66BB6A),
+                                color: AppColors.primaryGreen,
                                 size: 48,
                               ),
                             ),
@@ -1180,7 +1169,7 @@ class _ModernProfessionalRegistrationState
                           : IconButton(
                               icon: const Icon(
                                 Icons.search,
-                                color: Color(0xFF66BB6A),
+                                color: AppColors.primaryGreen,
                               ),
                               onPressed: _searchCep,
                             ),
@@ -1372,7 +1361,7 @@ class _ModernProfessionalRegistrationState
                         color: Colors.white.withOpacity(0.05),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: const Color(0xFF2E7D32).withOpacity(0.3),
+                          color: AppColors.primaryGreen.withOpacity(0.3),
                         ),
                       ),
                       child: Column(
@@ -1382,7 +1371,7 @@ class _ModernProfessionalRegistrationState
                             children: [
                               const Icon(
                                 Icons.school_outlined,
-                                color: Color(0xFF66BB6A),
+                                color: AppColors.primaryGreen,
                                 size: 20,
                               ),
                               const SizedBox(width: 8),
@@ -1422,7 +1411,7 @@ class _ModernProfessionalRegistrationState
                                     children: [
                                       const Icon(
                                         Icons.insert_drive_file_outlined,
-                                        color: Color(0xFF66BB6A),
+                                        color: AppColors.primaryGreen,
                                         size: 20,
                                       ),
                                       const SizedBox(width: 8),
@@ -1461,7 +1450,7 @@ class _ModernProfessionalRegistrationState
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
                                   border: Border.all(
-                                    color: const Color(0xFF2E7D32).withOpacity(0.3),
+                                    color: AppColors.primaryGreen.withOpacity(0.3),
                                     style: BorderStyle.solid,
                                     width: 2,
                                   ),
@@ -1472,7 +1461,7 @@ class _ModernProfessionalRegistrationState
                                   children: [
                                     const Icon(
                                       Icons.add_circle_outline,
-                                      color: Color(0xFF66BB6A),
+                                      color: AppColors.primaryGreen,
                                       size: 20,
                                     ),
                                     const SizedBox(width: 8),
@@ -1480,7 +1469,7 @@ class _ModernProfessionalRegistrationState
                                       'Adicionar Certificado',
                                       style: TextStyle(
                                         fontSize: 14,
-                                        color: const Color(0xFF66BB6A),
+                                        color: AppColors.primaryGreen,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -1565,12 +1554,12 @@ class _DocumentUploadCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: file != null
-              ? const Color(0xFF2E7D32).withOpacity(0.1)
+              ? AppColors.primaryGreen.withOpacity(0.1)
               : Colors.white.withOpacity(0.05),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: file != null
-                ? const Color(0xFF2E7D32).withOpacity(0.5)
+                ? AppColors.primaryGreen.withOpacity(0.5)
                 : Colors.white.withOpacity(0.1),
             width: file != null ? 2 : 1,
           ),
@@ -1582,14 +1571,14 @@ class _DocumentUploadCard extends StatelessWidget {
               height: 48,
               decoration: BoxDecoration(
                 color: file != null
-                    ? const Color(0xFF2E7D32).withOpacity(0.2)
+                    ? AppColors.primaryGreen.withOpacity(0.2)
                     : Colors.white.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 file != null ? Icons.check_circle : icon,
                 color: file != null
-                    ? const Color(0xFF66BB6A)
+                    ? AppColors.primaryGreen
                     : Colors.white.withOpacity(0.5),
                 size: 24,
               ),
@@ -1625,7 +1614,7 @@ class _DocumentUploadCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       color: file != null
-                          ? const Color(0xFF66BB6A)
+                          ? AppColors.primaryGreen
                           : Colors.white.withOpacity(0.6),
                     ),
                   ),
@@ -1694,7 +1683,7 @@ class _ModernTextField extends StatelessWidget {
         ),
         prefixIcon: Icon(
           icon,
-          color: const Color(0xFF66BB6A).withOpacity(0.7),
+          color: AppColors.primaryGreen.withOpacity(0.7),
         ),
         suffixIcon: suffixIcon,
         filled: true,
@@ -1713,8 +1702,8 @@ class _ModernTextField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(
-            color: Color(0xFF2E7D32),
+          borderSide: BorderSide(
+            color: AppColors.primaryGreen,
             width: 2,
           ),
         ),
@@ -1764,15 +1753,10 @@ class _ModernButton extends StatelessWidget {
           decoration: BoxDecoration(
             gradient: !isOutlined
                 ? LinearGradient(
-                    colors: isProfessional
-                        ? [
-                            const Color(0xFF2E7D32),
-                            const Color(0xFF1B5E20),
-                          ]
-                        : [
-                            AppColors.primaryGreen,
-                            AppColors.mediumGreen,
-                          ],
+                    colors: [
+                      AppColors.primaryGreen,
+                      AppColors.mediumGreen,
+                    ],
                   )
                 : null,
             color: isOutlined ? Colors.transparent : null,
@@ -1846,8 +1830,8 @@ class _PasswordStrengthIndicator extends StatelessWidget {
     if (strength < 30) return Colors.red;
     if (strength < 50) return Colors.orange;
     if (strength < 70) return Colors.yellow;
-    if (strength < 90) return const Color(0xFF66BB6A);
-    return const Color(0xFF2E7D32);
+    if (strength < 90) return AppColors.primaryGreen;
+    return AppColors.primaryGreen;
   }
 
   @override
@@ -1962,7 +1946,7 @@ class _SuccessDialogState extends State<_SuccessDialog>
                   color: AppColors.deepBlack,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: const Color(0xFF2E7D32).withOpacity(0.3),
+                    color: AppColors.primaryGreen.withOpacity(0.3),
                   ),
                 ),
                 child: Column(
