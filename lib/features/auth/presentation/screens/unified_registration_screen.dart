@@ -400,34 +400,48 @@ class _UnifiedRegistrationScreenState extends State<UnifiedRegistrationScreen>
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
           // Background
           _buildBackground(size, isDarkMode),
           
-          // Content
+          // Content with full scroll
           SafeArea(
             child: Column(
               children: [
-                // Header
+                // Fixed Header
                 _buildHeader(isDarkMode),
                 
-                // Progress Indicator
-                _buildProgressIndicator(isDarkMode),
-                
-                // Step Info
-                _buildStepInfo(isDarkMode),
-                
-                // Form Content
+                // Scrollable Content
                 Expanded(
-                  child: PageView(
-                    controller: _pageController,
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: _buildStepPages(isDarkMode),
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      children: [
+                        // Progress Indicator
+                        _buildProgressIndicator(isDarkMode),
+                        
+                        // Step Info
+                        _buildStepInfo(isDarkMode),
+                        
+                        // Form Content with dynamic height
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.6,
+                          child: PageView(
+                            controller: _pageController,
+                            physics: const NeverScrollableScrollPhysics(),
+                            children: _buildStepPages(isDarkMode),
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 20),
+                      ],
+                    ),
                   ),
                 ),
                 
-                // Navigation Buttons
+                // Fixed Navigation Buttons at bottom
                 _buildNavigationButtons(isDarkMode),
               ],
             ),
@@ -739,7 +753,7 @@ class _UnifiedRegistrationScreenState extends State<UnifiedRegistrationScreen>
   }
   
   Widget _buildPersonalInfoStep(bool isDarkMode) {
-    return SingleChildScrollView(
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Form(
         key: _personalFormKey,
@@ -835,7 +849,7 @@ class _UnifiedRegistrationScreenState extends State<UnifiedRegistrationScreen>
   }
   
   Widget _buildProfessionalInfoStep(bool isDarkMode) {
-    return SingleChildScrollView(
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Form(
         key: _professionalFormKey,
@@ -903,7 +917,7 @@ class _UnifiedRegistrationScreenState extends State<UnifiedRegistrationScreen>
   }
   
   Widget _buildPasswordStep(bool isDarkMode) {
-    return SingleChildScrollView(
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Form(
         key: _credentialsFormKey,
@@ -998,7 +1012,7 @@ class _UnifiedRegistrationScreenState extends State<UnifiedRegistrationScreen>
   }
   
   Widget _buildAddressStep(bool isDarkMode) {
-    return SingleChildScrollView(
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Form(
         key: _addressFormKey,
@@ -1140,7 +1154,7 @@ class _UnifiedRegistrationScreenState extends State<UnifiedRegistrationScreen>
   }
   
   Widget _buildConfirmationStep(bool isDarkMode) {
-    return SingleChildScrollView(
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
