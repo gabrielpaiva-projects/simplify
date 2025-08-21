@@ -1,44 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
-import 'dart:io';
 import 'dart:async';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:file_picker/file_picker.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../core/constants/app_colors.dart';
 import '../../data/models/address_model.dart';
 import '../../data/models/user_model.dart';
 import '../../data/services/cep_service.dart';
 import '../widgets/terms_and_conditions_step.dart';
-import 'professional_analysis_screen.dart';
 
-class ModernProfessionalRegistration extends StatefulWidget {
-  const ModernProfessionalRegistration({super.key});
+class ModernClientRegistration extends StatefulWidget {
+  const ModernClientRegistration({super.key});
 
   @override
-  State<ModernProfessionalRegistration> createState() => 
-      _ModernProfessionalRegistrationState();
+  State<ModernClientRegistration> createState() => _ModernClientRegistrationState();
 }
 
-class _ModernProfessionalRegistrationState 
-    extends State<ModernProfessionalRegistration>
+class _ModernClientRegistrationState extends State<ModernClientRegistration>
     with TickerProviderStateMixin {
   // Controllers
   final PageController _pageController = PageController();
   
-  // Step 1: Dados Pessoais
+  // Personal Data
   final _nameController = TextEditingController();
   final _cpfController = TextEditingController();
-  final _rgController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   
-  // Step 2: Senha
+  // Password
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   
-  // Step 3: Endereço
+  // Address
   final _cepController = TextEditingController();
   final _streetController = TextEditingController();
   final _numberController = TextEditingController();
@@ -51,20 +44,11 @@ class _ModernProfessionalRegistrationState
   final _personalFormKey = GlobalKey<FormState>();
   final _passwordFormKey = GlobalKey<FormState>();
   final _addressFormKey = GlobalKey<FormState>();
-  final _documentsFormKey = GlobalKey<FormState>();
   final _termsFormKey = GlobalKey<FormState>();
-  
-  // Terms acceptance state
-  bool _termsAccepted = false;
   
   // Masks
   final _cpfMask = MaskTextInputFormatter(
     mask: '###.###.###-##',
-    filter: {"#": RegExp(r'[0-9]')},
-  );
-  
-  final _rgMask = MaskTextInputFormatter(
-    mask: '##.###.###-#',
     filter: {"#": RegExp(r'[0-9]')},
   );
   
@@ -84,8 +68,7 @@ class _ModernProfessionalRegistrationState
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   bool _isSearchingCep = false;
-  File? _addressProofFile;
-  String? _addressProofFileName;
+  bool _termsAccepted = false;
   
   // Animation Controllers
   late AnimationController _progressController;
@@ -98,13 +81,14 @@ class _ModernProfessionalRegistrationState
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   
-  // Image Picker
-  final ImagePicker _imagePicker = ImagePicker();
+  // Auto-save data
+  final Map<String, dynamic> _savedData = {};
   
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
+    _loadSavedData();
   }
   
   void _initializeAnimations() {
@@ -124,7 +108,7 @@ class _ModernProfessionalRegistrationState
     );
     
     _stepControllers = List.generate(
-      5, // 5 steps (including terms)
+      4, // 4 steps including terms
       (index) => AnimationController(
         duration: const Duration(milliseconds: 600),
         vsync: this,
@@ -161,6 +145,19 @@ class _ModernProfessionalRegistrationState
     _stepControllers[0].forward();
   }
   
+  void _loadSavedData() {
+    // TODO: Load from SharedPreferences
+  }
+  
+  void _saveData() {
+    // Auto-save current form data
+    _savedData['name'] = _nameController.text;
+    _savedData['cpf'] = _cpfController.text;
+    _savedData['email'] = _emailController.text;
+    _savedData['phone'] = _phoneController.text;
+    // TODO: Save to SharedPreferences
+  }
+  
   @override
   void dispose() {
     _progressController.dispose();
@@ -173,7 +170,6 @@ class _ModernProfessionalRegistrationState
     // Dispose text controllers
     _nameController.dispose();
     _cpfController.dispose();
-    _rgController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
@@ -185,8 +181,6 @@ class _ModernProfessionalRegistrationState
     _neighborhoodController.dispose();
     _cityController.dispose();
     _stateController.dispose();
-    
-    _pageController.dispose();
     
     super.dispose();
   }
@@ -209,17 +203,6 @@ class _ModernProfessionalRegistrationState
         isValid = _addressFormKey.currentState?.validate() ?? false;
         break;
       case 3:
-        isValid = _addressProofFile != null;
-        if (!isValid) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Por favor, anexe o comprovante de residência'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        break;
-      case 4:
         // Validate terms acceptance
         isValid = _termsAccepted;
         if (!isValid) {
@@ -234,7 +217,9 @@ class _ModernProfessionalRegistrationState
     }
     
     if (isValid) {
-      if (_currentStep < 4) {
+      _saveData();
+      
+      if (_currentStep < 3) {
         // Animate to next step
         await _stepControllers[_currentStep].reverse();
         
@@ -292,17 +277,26 @@ class _ModernProfessionalRegistrationState
       _isLoading = false;
     });
     
-    // Navega para a tela de análise com confetes
+    // Show success and navigate
     if (mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => const ProfessionalAnalysisScreen(),
-        ),
-      );
+      _showSuccessDialog();
     }
   }
   
-
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => _SuccessDialog(
+        onContinue: () {
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            '/home',
+            (route) => false,
+          );
+        },
+      ),
+    );
+  }
   
   Future<void> _searchCep() async {
     final cep = _cepController.text.replaceAll(RegExp(r'[^0-9]'), '');
@@ -378,93 +372,6 @@ class _ModernProfessionalRegistrationState
     }
   }
   
-  Future<void> _pickDocument() async {
-    // Show options dialog
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: AppColors.charcoalGrey,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Escolha uma opção',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 24),
-            ListTile(
-              leading: Icon(Icons.camera_alt, color: AppColors.primaryGreen),
-              title: const Text(
-                'Tirar foto',
-                style: TextStyle(color: Colors.white),
-              ),
-              onTap: () async {
-                Navigator.pop(context);
-                final XFile? photo = await _imagePicker.pickImage(
-                  source: ImageSource.camera,
-                );
-                if (photo != null) {
-                  setState(() {
-                    _addressProofFile = File(photo.path);
-                    _addressProofFileName = photo.name;
-                  });
-                }
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.photo_library, color: AppColors.primaryGreen),
-              title: const Text(
-                'Escolher da galeria',
-                style: TextStyle(color: Colors.white),
-              ),
-              onTap: () async {
-                Navigator.pop(context);
-                final XFile? image = await _imagePicker.pickImage(
-                  source: ImageSource.gallery,
-                );
-                if (image != null) {
-                  setState(() {
-                    _addressProofFile = File(image.path);
-                    _addressProofFileName = image.name;
-                  });
-                }
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.file_present, color: AppColors.primaryGreen),
-              title: const Text(
-                'Escolher arquivo PDF',
-                style: TextStyle(color: Colors.white),
-              ),
-              onTap: () async {
-                Navigator.pop(context);
-                FilePickerResult? result = await FilePicker.platform.pickFiles(
-                  type: FileType.custom,
-                  allowedExtensions: ['pdf'],
-                );
-                if (result != null) {
-                  setState(() {
-                    _addressProofFile = File(result.files.single.path!);
-                    _addressProofFileName = result.files.single.name;
-                  });
-                }
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -482,6 +389,33 @@ class _ModernProfessionalRegistrationState
                   AppColors.charcoalGrey.withOpacity(0.5),
                 ],
               ),
+            ),
+          ),
+          
+          // Animated background elements
+          Positioned(
+            top: -100,
+            right: -100,
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.0, end: 1.0),
+              duration: const Duration(seconds: 2),
+              builder: (context, value, child) {
+                return Transform.rotate(
+                  angle: value * 0.5,
+                  child: Container(
+                    width: 300,
+                    height: 300,
+                    decoration: BoxDecoration(
+                      gradient: RadialGradient(
+                        colors: [
+                          AppColors.primaryGreen.withOpacity(0.1),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
           
@@ -508,9 +442,8 @@ class _ModernProfessionalRegistrationState
                           _buildPersonalDataStep(),
                           _buildPasswordStep(),
                           _buildAddressStep(),
-                          _buildDocumentsStep(),
                           TermsAndConditionsStep(
-                            animationController: _stepControllers[4],
+                            animationController: _stepControllers[3],
                             formKey: _termsFormKey,
                             onAcceptanceChanged: (accepted) {
                               setState(() {
@@ -587,8 +520,8 @@ class _ModernProfessionalRegistrationState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Cadastro Profissional',
+                Text(
+                  'Cadastro de Cliente',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -617,7 +550,7 @@ class _ModernProfessionalRegistrationState
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              '${_currentStep + 1}/5',
+              '${_currentStep + 1}/4',
               style: TextStyle(
                 color: AppColors.primaryGreen,
                 fontWeight: FontWeight.bold,
@@ -638,8 +571,6 @@ class _ModernProfessionalRegistrationState
       case 2:
         return 'Endereço';
       case 3:
-        return 'Comprovante de Residência';
-      case 4:
         return 'Termos e Condições';
       default:
         return '';
@@ -648,21 +579,15 @@ class _ModernProfessionalRegistrationState
   
   Widget _buildProgressIndicator() {
     return Container(
-      height: 6,
+      height: 4,
       margin: const EdgeInsets.symmetric(horizontal: 24),
       child: AnimatedBuilder(
         animation: _progressAnimation,
         builder: (context, child) {
-          return ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: LinearProgressIndicator(
-              value: (_currentStep + _progressAnimation.value) / 5,
-              backgroundColor: Colors.white.withOpacity(0.1),
-              valueColor: AlwaysStoppedAnimation<Color>(
-                AppColors.primaryGreen,
-              ),
-              minHeight: 6,
-            ),
+          return LinearProgressIndicator(
+            value: (_currentStep + _progressAnimation.value) / 4,
+            backgroundColor: Colors.white.withOpacity(0.1),
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
           );
         },
       ),
@@ -693,30 +618,14 @@ class _ModernProfessionalRegistrationState
                       icon: Icons.person_outline_rounded,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Por favor, insira seu nome completo';
+                          return 'Por favor, insira seu nome';
                         }
                         if (value.split(' ').length < 2) {
                           return 'Por favor, insira seu nome completo';
                         }
                         return null;
                       },
-                    ),
-                    
-                    const SizedBox(height: 20),
-                    
-                    // RG field
-                    _ModernTextField(
-                      controller: _rgController,
-                      label: 'RG',
-                      icon: Icons.badge_outlined,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [_rgMask],
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Por favor, insira seu RG';
-                        }
-                        return null;
-                      },
+                      onChanged: (_) => _saveData(),
                     ),
                     
                     const SizedBox(height: 20),
@@ -725,7 +634,7 @@ class _ModernProfessionalRegistrationState
                     _ModernTextField(
                       controller: _cpfController,
                       label: 'CPF',
-                      icon: Icons.credit_card_outlined,
+                      icon: Icons.badge_outlined,
                       keyboardType: TextInputType.number,
                       inputFormatters: [_cpfMask],
                       validator: (value) {
@@ -738,27 +647,7 @@ class _ModernProfessionalRegistrationState
                         }
                         return null;
                       },
-                    ),
-                    
-                    const SizedBox(height: 20),
-                    
-                    // Phone field
-                    _ModernTextField(
-                      controller: _phoneController,
-                      label: 'Telefone para contato',
-                      icon: Icons.phone_outlined,
-                      keyboardType: TextInputType.phone,
-                      inputFormatters: [_phoneMask],
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Por favor, insira seu telefone';
-                        }
-                        final phone = value.replaceAll(RegExp(r'[^0-9]'), '');
-                        if (phone.length != 11) {
-                          return 'Telefone inválido';
-                        }
-                        return null;
-                      },
+                      onChanged: (_) => _saveData(),
                     ),
                     
                     const SizedBox(height: 20),
@@ -779,6 +668,62 @@ class _ModernProfessionalRegistrationState
                         }
                         return null;
                       },
+                      onChanged: (_) => _saveData(),
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // Phone field
+                    _ModernTextField(
+                      controller: _phoneController,
+                      label: 'Telefone',
+                      icon: Icons.phone_outlined,
+                      keyboardType: TextInputType.phone,
+                      inputFormatters: [_phoneMask],
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor, insira seu telefone';
+                        }
+                        final phone = value.replaceAll(RegExp(r'[^0-9]'), '');
+                        if (phone.length != 11) {
+                          return 'Telefone inválido';
+                        }
+                        return null;
+                      },
+                      onChanged: (_) => _saveData(),
+                    ),
+                    
+                    const SizedBox(height: 32),
+                    
+                    // Info card
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryGreen.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppColors.primaryGreen.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline_rounded,
+                            color: AppColors.primaryGreen,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Seus dados estão seguros e não serão compartilhados',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white.withOpacity(0.7),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -807,49 +752,9 @@ class _ModernProfessionalRegistrationState
                   children: [
                     const SizedBox(height: 24),
                     
-                    // Info card
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryGreen.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: AppColors.primaryGreen.withOpacity(0.3),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.security,
-                            color: AppColors.primaryGreen,
-                            size: 24,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Crie uma senha segura',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Mínimo de 8 caracteres com letras e números',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.white.withOpacity(0.7),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                    // Password strength indicator
+                    _PasswordStrengthIndicator(
+                      password: _passwordController.text,
                     ),
                     
                     const SizedBox(height: 32),
@@ -880,21 +785,16 @@ class _ModernProfessionalRegistrationState
                         if (value.length < 8) {
                           return 'A senha deve ter pelo menos 8 caracteres';
                         }
-                        if (!RegExp(r'^(?=.*[A-Za-z])(?=.*\d).+$').hasMatch(value)) {
-                          return 'A senha deve conter letras e números';
+                        if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)')
+                            .hasMatch(value)) {
+                          return 'Use letras maiúsculas, minúsculas e números';
                         }
                         return null;
                       },
                       onChanged: (value) {
-                        // Trigger rebuild for password strength indicator
                         setState(() {});
                       },
                     ),
-                    
-                    const SizedBox(height: 12),
-                    
-                    // Password strength indicator
-                    _buildPasswordStrengthIndicator(),
                     
                     const SizedBox(height: 20),
                     
@@ -927,6 +827,35 @@ class _ModernProfessionalRegistrationState
                         return null;
                       },
                     ),
+                    
+                    const SizedBox(height: 32),
+                    
+                    // Password tips
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Dicas para uma senha forte:',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white.withOpacity(0.9),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildPasswordTip('Mínimo de 8 caracteres'),
+                          _buildPasswordTip('Letras maiúsculas e minúsculas'),
+                          _buildPasswordTip('Pelo menos um número'),
+                          _buildPasswordTip('Caracteres especiais (opcional)'),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -937,66 +866,23 @@ class _ModernProfessionalRegistrationState
     );
   }
   
-  Widget _buildPasswordStrengthIndicator() {
-    final password = _passwordController.text;
-    int strength = 0;
-    String strengthText = 'Muito fraca';
-    Color strengthColor = Colors.red;
-    
-    if (password.isNotEmpty) {
-      if (password.length >= 8) strength++;
-      if (RegExp(r'[A-Z]').hasMatch(password)) strength++;
-      if (RegExp(r'[a-z]').hasMatch(password)) strength++;
-      if (RegExp(r'[0-9]').hasMatch(password)) strength++;
-      if (RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password)) strength++;
-      
-      switch (strength) {
-        case 1:
-          strengthText = 'Fraca';
-          strengthColor = Colors.orange;
-          break;
-        case 2:
-          strengthText = 'Regular';
-          strengthColor = Colors.yellow;
-          break;
-        case 3:
-          strengthText = 'Boa';
-          strengthColor = Colors.lightGreen;
-          break;
-        case 4:
-        case 5:
-          strengthText = 'Forte';
-          strengthColor = AppColors.primaryGreen;
-          break;
-      }
-    }
-    
-    return AnimatedOpacity(
-      duration: const Duration(milliseconds: 300),
-      opacity: password.isEmpty ? 0.0 : 1.0,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildPasswordTip(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: LinearProgressIndicator(
-                  value: strength / 5,
-                  backgroundColor: Colors.white.withOpacity(0.1),
-                  valueColor: AlwaysStoppedAnimation<Color>(strengthColor),
-                  minHeight: 4,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                strengthText,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: strengthColor,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+          Icon(
+            Icons.check_circle_outline,
+            size: 16,
+            color: AppColors.primaryGreen.withOpacity(0.7),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.white.withOpacity(0.6),
+            ),
           ),
         ],
       ),
@@ -1031,11 +917,8 @@ class _ModernProfessionalRegistrationState
                           ? const SizedBox(
                               width: 20,
                               height: 20,
-                              child: Padding(
-                                padding: EdgeInsets.all(12.0),
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
                               ),
                             )
                           : IconButton(
@@ -1081,7 +964,7 @@ class _ModernProfessionalRegistrationState
                     
                     const SizedBox(height: 20),
                     
-                    // Number and complement row
+                    // Number and complement
                     Row(
                       children: [
                         Expanded(
@@ -1105,7 +988,7 @@ class _ModernProfessionalRegistrationState
                           child: _ModernTextField(
                             controller: _complementController,
                             label: 'Complemento',
-                            icon: Icons.home_work_outlined,
+                            icon: Icons.add_home_outlined,
                           ),
                         ),
                       ],
@@ -1128,220 +1011,45 @@ class _ModernProfessionalRegistrationState
                     
                     const SizedBox(height: 20),
                     
-                    // City field
-                    _ModernTextField(
-                      controller: _cityController,
-                      label: 'Cidade',
-                      icon: Icons.location_city,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Por favor, insira a cidade';
-                        }
-                        return null;
-                      },
-                    ),
-                    
-                    const SizedBox(height: 20),
-                    
-                    // State field
-                    _ModernTextField(
-                      controller: _stateController,
-                      label: 'Estado',
-                      icon: Icons.map_outlined,
-                      textCapitalization: TextCapitalization.characters,
-                      inputFormatters: [
-                        LengthLimitingTextInputFormatter(2),
-                        FilteringTextInputFormatter.allow(RegExp(r'[A-Z]')),
+                    // City and state
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: _ModernTextField(
+                            controller: _cityController,
+                            label: 'Cidade',
+                            icon: Icons.location_city,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Obrigatório';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          flex: 1,
+                          child: _ModernTextField(
+                            controller: _stateController,
+                            label: 'UF',
+                            icon: Icons.map_outlined,
+                            textCapitalization: TextCapitalization.characters,
+                            inputFormatters: [
+                              LengthLimitingTextInputFormatter(2),
+                              FilteringTextInputFormatter.allow(RegExp(r'[A-Z]')),
+                            ],
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'UF';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
                       ],
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Por favor, insira o estado';
-                        }
-                        if (value.length != 2) {
-                          return 'Use a sigla do estado (ex: SP)';
-                        }
-                        return null;
-                      },
                     ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-  
-  Widget _buildDocumentsStep() {
-    return AnimatedBuilder(
-      animation: _stepControllers[3],
-      builder: (context, child) {
-        return Transform.scale(
-          scale: 0.9 + (_stepControllers[3].value * 0.1),
-          child: Opacity(
-            opacity: _stepControllers[3].value,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Form(
-                key: _documentsFormKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 24),
-                    
-                    // Title
-                    const Text(
-                      'Comprovante de Residência',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 8),
-                    
-                    Text(
-                      'Anexe um comprovante de residência recente (últimos 3 meses)',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white.withOpacity(0.7),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 32),
-                    
-                    // Upload area
-                    GestureDetector(
-                      onTap: _pickDocument,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        height: 200,
-                        decoration: BoxDecoration(
-                          color: _addressProofFile != null
-                              ? AppColors.primaryGreen.withOpacity(0.1)
-                              : Colors.white.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: _addressProofFile != null
-                                ? AppColors.primaryGreen
-                                : Colors.white.withOpacity(0.2),
-                            width: 2,
-                            style: _addressProofFile != null
-                                ? BorderStyle.solid
-                                : BorderStyle.none,
-                          ),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 300),
-                              child: Icon(
-                                _addressProofFile != null
-                                    ? Icons.check_circle
-                                    : Icons.cloud_upload_outlined,
-                                key: ValueKey(_addressProofFile != null),
-                                color: _addressProofFile != null
-                                    ? AppColors.primaryGreen
-                                    : Colors.white.withOpacity(0.5),
-                                size: 64,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              _addressProofFile != null
-                                  ? 'Arquivo anexado com sucesso!'
-                                  : 'Clique para anexar arquivo',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: _addressProofFile != null
-                                    ? AppColors.primaryGreen
-                                    : Colors.white,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            if (_addressProofFile != null && _addressProofFileName != null)
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 24),
-                                child: Text(
-                                  _addressProofFileName!,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.white.withOpacity(0.7),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              )
-                            else
-                              Text(
-                                'PDF, JPG, JPEG ou PNG',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.white.withOpacity(0.5),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Info card
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryGreen.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: AppColors.primaryGreen.withOpacity(0.3),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.info_outline,
-                            color: AppColors.primaryGreen,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Aceitamos: Conta de luz, água, telefone ou internet',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.white.withOpacity(0.7),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    
-                    if (_addressProofFile != null) ...[
-                      const SizedBox(height: 16),
-                      // Remove file button
-                      TextButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            _addressProofFile = null;
-                            _addressProofFileName = null;
-                          });
-                        },
-                        icon: const Icon(
-                          Icons.delete_outline,
-                          color: Colors.red,
-                        ),
-                        label: const Text(
-                          'Remover arquivo',
-                          style: TextStyle(color: Colors.red),
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),
@@ -1370,7 +1078,7 @@ class _ModernProfessionalRegistrationState
             flex: 2,
             child: _ModernButton(
               onPressed: _isLoading ? null : _nextStep,
-              text: _currentStep == 4 ? 'Finalizar Cadastro' : 'Continuar',
+              text: _currentStep == 3 ? 'Finalizar Cadastro' : 'Continuar',
               isLoading: _isLoading,
             ),
           ),
@@ -1392,7 +1100,6 @@ class _ModernTextField extends StatelessWidget {
   final Widget? suffixIcon;
   final Function(String)? onChanged;
   final TextCapitalization textCapitalization;
-  final int maxLines;
 
   const _ModernTextField({
     required this.controller,
@@ -1405,7 +1112,6 @@ class _ModernTextField extends StatelessWidget {
     this.suffixIcon,
     this.onChanged,
     this.textCapitalization = TextCapitalization.none,
-    this.maxLines = 1,
   });
 
   @override
@@ -1418,7 +1124,6 @@ class _ModernTextField extends StatelessWidget {
       validator: validator,
       onChanged: onChanged,
       textCapitalization: textCapitalization,
-      maxLines: maxLines,
       style: const TextStyle(
         color: Colors.white,
         fontSize: 16,
@@ -1525,7 +1230,7 @@ class _ModernButton extends StatelessWidget {
                   )
                 : Text(
                     text,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -1535,6 +1240,232 @@ class _ModernButton extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// Password Strength Indicator Widget
+class _PasswordStrengthIndicator extends StatelessWidget {
+  final String password;
+
+  const _PasswordStrengthIndicator({
+    required this.password,
+  });
+
+  int _calculateStrength() {
+    if (password.isEmpty) return 0;
+    
+    int strength = 0;
+    if (password.length >= 8) strength++;
+    if (password.length >= 12) strength++;
+    if (RegExp(r'[A-Z]').hasMatch(password)) strength++;
+    if (RegExp(r'[a-z]').hasMatch(password)) strength++;
+    if (RegExp(r'[0-9]').hasMatch(password)) strength++;
+    if (RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password)) strength++;
+    
+    return (strength * 100 / 6).round();
+  }
+
+  String _getStrengthText() {
+    final strength = _calculateStrength();
+    if (strength < 30) return 'Fraca';
+    if (strength < 50) return 'Regular';
+    if (strength < 70) return 'Boa';
+    if (strength < 90) return 'Forte';
+    return 'Muito forte';
+  }
+
+  Color _getStrengthColor() {
+    final strength = _calculateStrength();
+    if (strength < 30) return Colors.red;
+    if (strength < 50) return Colors.orange;
+    if (strength < 70) return Colors.yellow;
+    if (strength < 90) return AppColors.primaryGreen;
+    return AppColors.primaryGreen;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final strength = _calculateStrength();
+    final color = _getStrengthColor();
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Força da senha',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.white.withOpacity(0.7),
+              ),
+            ),
+            if (password.isNotEmpty)
+              Text(
+                _getStrengthText(),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: strength / 100,
+            minHeight: 8,
+            backgroundColor: Colors.white.withOpacity(0.1),
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// Success Dialog Widget
+class _SuccessDialog extends StatefulWidget {
+  final VoidCallback onContinue;
+
+  const _SuccessDialog({
+    required this.onContinue,
+  });
+
+  @override
+  State<_SuccessDialog> createState() => _SuccessDialogState();
+}
+
+class _SuccessDialogState extends State<_SuccessDialog>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    
+    _scaleAnimation = Tween<double>(
+      begin: 0.8,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutBack,
+    ));
+    
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeIn,
+    ));
+    
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return FadeTransition(
+          opacity: _fadeAnimation,
+          child: ScaleTransition(
+            scale: _scaleAnimation,
+            child: Dialog(
+              backgroundColor: Colors.transparent,
+              child: Container(
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  color: AppColors.deepBlack,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: AppColors.primaryGreen.withOpacity(0.3),
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Success icon with animation
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0.0, end: 1.0),
+                      duration: const Duration(milliseconds: 800),
+                      builder: (context, value, child) {
+                        return Transform.scale(
+                          scale: value,
+                          child: Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppColors.primaryGreen,
+                                  AppColors.mediumGreen,
+                                ],
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.check_rounded,
+                              color: Colors.white,
+                              size: 48,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    const Text(
+                      'Cadastro realizado!',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 12),
+                    
+                    Text(
+                      'Sua conta foi criada com sucesso.\nBem-vindo ao Simplify!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white.withOpacity(0.7),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 32),
+                    
+                    _ModernButton(
+                      onPressed: widget.onContinue,
+                      text: 'Começar',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:simplify_auth_module/simplify_auth_module.dart';
 import '../../features/splash/presentation/screens/splash_screen.dart';
-import '../../modules/auth_module/auth_module.dart';
 
 class AppRoutes {
   static const String splash = '/';

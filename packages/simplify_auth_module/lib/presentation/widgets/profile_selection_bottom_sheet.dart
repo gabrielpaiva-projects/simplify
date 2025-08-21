@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../core/constants/app_colors.dart';
 import '../../data/models/user_model.dart';
 
 class ProfileSelectionBottomSheet extends StatefulWidget {
