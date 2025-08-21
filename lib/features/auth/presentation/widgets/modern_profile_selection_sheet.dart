@@ -271,7 +271,7 @@ class _ModernProfileSelectionSheetState extends State<ModernProfileSelectionShee
                                       ),
                                       const SizedBox(height: 8),
                                       Text(
-                                        'Escolha como deseja usar o Simplify',
+                                        'Conecte-se com diaristas ou clientes',
                                         style: TextStyle(
                                           fontSize: 16,
                                           color: Colors.white.withOpacity(0.6),
