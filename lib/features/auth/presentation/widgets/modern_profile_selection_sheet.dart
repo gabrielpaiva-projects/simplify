@@ -190,104 +190,106 @@ class _ModernProfileSelectionSheetState extends State<ModernProfileSelectionShee
                       
                       // Content
                       SafeArea(
-                        child: Column(
-                          children: [
-                            // Handle
-                            Container(
-                              margin: const EdgeInsets.only(top: 12, bottom: 8),
-                              width: 40,
-                              height: 4,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                            
-                            // Header
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                              child: ScaleTransition(
-                                scale: _itemAnimations[0],
-                                child: Column(
-                                  children: [
-                                    // Animated Icon
-                                    TweenAnimationBuilder<double>(
-                                      tween: Tween(begin: 0.0, end: 1.0),
-                                      duration: const Duration(milliseconds: 800),
-                                      builder: (context, value, child) {
-                                        return Transform.rotate(
-                                          angle: value * 0.1,
-                                          child: Container(
-                                            width: 80,
-                                            height: 80,
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              gradient: LinearGradient(
-                                                begin: Alignment.topLeft,
-                                                end: Alignment.bottomRight,
-                                                colors: [
-                                                  AppColors.primaryGreen.withOpacity(0.2),
-                                                  AppColors.mediumGreen.withOpacity(0.1),
-                                                ],
-                                              ),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: AppColors.primaryGreen.withOpacity(0.2),
-                                                  blurRadius: 30,
-                                                  spreadRadius: 5,
-                                                ),
-                                              ],
-                                            ),
-                                            child: Icon(
-                                              Icons.rocket_launch_rounded,
-                                              color: AppColors.primaryGreen,
-                                              size: 40,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                    const SizedBox(height: 24),
-                                    
-                                    // Title with gradient
-                                    ShaderMask(
-                                      shaderCallback: (bounds) => LinearGradient(
-                                        colors: [
-                                          Colors.white,
-                                          AppColors.primaryGreen,
-                                        ],
-                                      ).createShader(bounds),
-                                      child: const Text(
-                                        'Vamos começar!',
-                                        style: TextStyle(
-                                          fontSize: 32,
-                                          fontWeight: FontWeight.w800,
-                                          color: Colors.white,
-                                          letterSpacing: -1,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'Escolha como deseja usar o Simplify',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.white.withOpacity(0.6),
-                                        letterSpacing: 0.3,
-                                      ),
-                                    ),
-                                  ],
+                        child: SingleChildScrollView(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Handle
+                              Container(
+                                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                                width: 40,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(2),
                                 ),
                               ),
-                            ),
-                            
-                            const SizedBox(height: 32),
-                            
-                            // Options
-                            Expanded(
-                              child: SingleChildScrollView(
+                              
+                              // Header
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                                child: ScaleTransition(
+                                  scale: _itemAnimations[0],
+                                  child: Column(
+                                    children: [
+                                      // Animated Icon
+                                      TweenAnimationBuilder<double>(
+                                        tween: Tween(begin: 0.0, end: 1.0),
+                                        duration: const Duration(milliseconds: 800),
+                                        builder: (context, value, child) {
+                                          return Transform.rotate(
+                                            angle: value * 0.1,
+                                            child: Container(
+                                              width: 80,
+                                              height: 80,
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                gradient: LinearGradient(
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                  colors: [
+                                                    AppColors.primaryGreen.withOpacity(0.2),
+                                                    AppColors.mediumGreen.withOpacity(0.1),
+                                                  ],
+                                                ),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: AppColors.primaryGreen.withOpacity(0.2),
+                                                    blurRadius: 30,
+                                                    spreadRadius: 5,
+                                                  ),
+                                                ],
+                                              ),
+                                              child: Icon(
+                                                Icons.rocket_launch_rounded,
+                                                color: AppColors.primaryGreen,
+                                                size: 40,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      const SizedBox(height: 24),
+                                      
+                                      // Title with gradient
+                                      ShaderMask(
+                                        shaderCallback: (bounds) => LinearGradient(
+                                          colors: [
+                                            Colors.white,
+                                            AppColors.primaryGreen,
+                                          ],
+                                        ).createShader(bounds),
+                                        child: const Text(
+                                          'Vamos começar!',
+                                          style: TextStyle(
+                                            fontSize: 32,
+                                            fontWeight: FontWeight.w800,
+                                            color: Colors.white,
+                                            letterSpacing: -1,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Escolha como deseja usar o Simplify',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.white.withOpacity(0.6),
+                                          letterSpacing: 0.3,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              
+                              const SizedBox(height: 32),
+                              
+                              // Options
+                              Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 24),
                                 child: Column(
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     // Cliente Option
                                     ScaleTransition(
@@ -331,12 +333,13 @@ class _ModernProfileSelectionSheetState extends State<ModernProfileSelectionShee
                                   ],
                                 ),
                               ),
-                            ),
-                            
-                            // Bottom Section
-                            Padding(
-                              padding: const EdgeInsets.all(24),
-                              child: Column(
+                              
+                              const SizedBox(height: 24),
+                              
+                              // Bottom Section
+                              Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: Column(
                                 children: [
                                   // Terms text
                                   Text(
@@ -572,6 +575,7 @@ class _ProfileOptionState extends State<_ProfileOption>
                             Expanded(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
@@ -596,19 +600,17 @@ class _ProfileOptionState extends State<_ProfileOption>
                                     ),
                                   ),
                                   const SizedBox(height: 4),
-                                  Flexible(
-                                    child: Text(
-                                      widget.description,
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: widget.isSelected
-                                            ? Colors.white.withOpacity(0.7)
-                                            : Colors.white.withOpacity(0.3),
-                                        height: 1.2,
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
+                                  Text(
+                                    widget.description,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: widget.isSelected
+                                          ? Colors.white.withOpacity(0.7)
+                                          : Colors.white.withOpacity(0.3),
+                                      height: 1.2,
                                     ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
                               ),
