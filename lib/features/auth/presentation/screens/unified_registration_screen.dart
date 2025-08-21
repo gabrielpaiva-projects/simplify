@@ -425,12 +425,13 @@ class _UnifiedRegistrationScreenState extends State<UnifiedRegistrationScreen>
                         // Step Info
                         _buildStepInfo(isDarkMode),
                         
-                        // Form Content with dynamic height
-                        SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.6,
-                          child: PageView(
-                            controller: _pageController,
-                            physics: const NeverScrollableScrollPhysics(),
+                        // Form Content - flexible height
+                        Container(
+                          constraints: BoxConstraints(
+                            minHeight: MediaQuery.of(context).size.height * 0.5,
+                          ),
+                          child: IndexedStack(
+                            index: _currentStep,
                             children: _buildStepPages(isDarkMode),
                           ),
                         ),
@@ -753,8 +754,9 @@ class _UnifiedRegistrationScreenState extends State<UnifiedRegistrationScreen>
   }
   
   Widget _buildPersonalInfoStep(bool isDarkMode) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
+      physics: const ClampingScrollPhysics(),
       child: Form(
         key: _personalFormKey,
         child: Column(
@@ -849,8 +851,9 @@ class _UnifiedRegistrationScreenState extends State<UnifiedRegistrationScreen>
   }
   
   Widget _buildProfessionalInfoStep(bool isDarkMode) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
+      physics: const ClampingScrollPhysics(),
       child: Form(
         key: _professionalFormKey,
         child: Column(
@@ -917,8 +920,9 @@ class _UnifiedRegistrationScreenState extends State<UnifiedRegistrationScreen>
   }
   
   Widget _buildPasswordStep(bool isDarkMode) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
+      physics: const ClampingScrollPhysics(),
       child: Form(
         key: _credentialsFormKey,
         child: Column(
@@ -1012,8 +1016,9 @@ class _UnifiedRegistrationScreenState extends State<UnifiedRegistrationScreen>
   }
   
   Widget _buildAddressStep(bool isDarkMode) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
+      physics: const ClampingScrollPhysics(),
       child: Form(
         key: _addressFormKey,
         child: Column(
@@ -1154,8 +1159,9 @@ class _UnifiedRegistrationScreenState extends State<UnifiedRegistrationScreen>
   }
   
   Widget _buildConfirmationStep(bool isDarkMode) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
+      physics: const ClampingScrollPhysics(),
       child: Column(
         children: [
           // Success Icon
