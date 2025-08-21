@@ -489,7 +489,7 @@ class _ProfileOptionState extends State<_ProfileOption>
               duration: const Duration(milliseconds: 300),
               opacity: opacity,
               child: Container(
-                constraints: const BoxConstraints(minHeight: 140),
+                constraints: const BoxConstraints(minHeight: 120),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
@@ -550,6 +550,7 @@ class _ProfileOptionState extends State<_ProfileOption>
                       Padding(
                         padding: const EdgeInsets.all(16),
                         child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             // Icon
                             Container(
@@ -575,7 +576,6 @@ class _ProfileOptionState extends State<_ProfileOption>
                             Expanded(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
-                                mainAxisSize: MainAxisSize.min,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
@@ -617,10 +617,9 @@ class _ProfileOptionState extends State<_ProfileOption>
                             ),
                             
                             // Arrow
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              width: widget.isSelected ? 32 : 28,
-                              height: widget.isSelected ? 32 : 28,
+                            Container(
+                              width: 32,
+                              height: 32,
                               decoration: BoxDecoration(
                                 color: widget.isSelected
                                     ? Colors.white.withOpacity(0.2)
@@ -632,7 +631,7 @@ class _ProfileOptionState extends State<_ProfileOption>
                                 color: widget.isSelected
                                     ? Colors.white
                                     : Colors.white.withOpacity(0.3),
-                                size: widget.isSelected ? 18 : 16,
+                                size: 18,
                               ),
                             ),
                           ],
