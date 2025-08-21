@@ -333,7 +333,7 @@ class _UnifiedRegistrationScreenState extends State<UnifiedRegistrationScreen>
     });
     
     try {
-      final address = await CepService.searchCep(cep);
+      final address = await CepService.fetchAddressByCep(cep);
       
       if (address != null) {
         setState(() {
@@ -471,7 +471,7 @@ class _UnifiedRegistrationScreenState extends State<UnifiedRegistrationScreen>
                       colors: [
                         (widget.userType == UserType.professional
                                 ? AppColors.primaryGreen
-                                : const Color(0xFF667EEA))
+                                : AppColors.primaryGreen)
                             .withOpacity(0.1),
                         Colors.transparent,
                       ],
@@ -491,7 +491,7 @@ class _UnifiedRegistrationScreenState extends State<UnifiedRegistrationScreen>
                       colors: [
                         (widget.userType == UserType.professional
                                 ? AppColors.mediumGreen
-                                : const Color(0xFF764BA2))
+                                : AppColors.mediumGreen)
                             .withOpacity(0.08),
                         Colors.transparent,
                       ],
@@ -545,7 +545,7 @@ class _UnifiedRegistrationScreenState extends State<UnifiedRegistrationScreen>
               gradient: LinearGradient(
                 colors: widget.userType == UserType.professional
                     ? [AppColors.primaryGreen, AppColors.mediumGreen]
-                    : [const Color(0xFF667EEA), const Color(0xFF764BA2)],
+                    : [AppColors.primaryGreen, AppColors.mediumGreen],
               ),
             ),
             child: Row(
@@ -608,7 +608,7 @@ class _UnifiedRegistrationScreenState extends State<UnifiedRegistrationScreen>
                             gradient: LinearGradient(
                               colors: widget.userType == UserType.professional
                                   ? [AppColors.primaryGreen, AppColors.mediumGreen]
-                                  : [const Color(0xFF667EEA), const Color(0xFF764BA2)],
+                                  : [AppColors.primaryGreen, AppColors.mediumGreen],
                             ),
                           ),
                         ),
@@ -665,8 +665,8 @@ class _UnifiedRegistrationScreenState extends State<UnifiedRegistrationScreen>
                                 AppColors.mediumGreen.withOpacity(0.1),
                               ]
                             : [
-                                const Color(0xFF667EEA).withOpacity(0.1),
-                                const Color(0xFF764BA2).withOpacity(0.1),
+                                AppColors.primaryGreen.withOpacity(0.1),
+                                AppColors.mediumGreen.withOpacity(0.1),
                               ],
                       ),
                     ),
@@ -674,7 +674,7 @@ class _UnifiedRegistrationScreenState extends State<UnifiedRegistrationScreen>
                       currentStep.icon,
                       color: widget.userType == UserType.professional
                           ? AppColors.primaryGreen
-                          : const Color(0xFF667EEA),
+                          : AppColors.primaryGreen,
                       size: 32,
                     ),
                   ),
@@ -1147,7 +1147,7 @@ class _UnifiedRegistrationScreenState extends State<UnifiedRegistrationScreen>
               gradient: LinearGradient(
                 colors: widget.userType == UserType.professional
                     ? [AppColors.primaryGreen, AppColors.mediumGreen]
-                    : [const Color(0xFF667EEA), const Color(0xFF764BA2)],
+                    : [AppColors.primaryGreen, AppColors.mediumGreen],
               ),
             ),
             child: const Icon(
@@ -1302,7 +1302,7 @@ class _UnifiedRegistrationScreenState extends State<UnifiedRegistrationScreen>
                 icon,
                 color: widget.userType == UserType.professional
                     ? AppColors.primaryGreen
-                    : const Color(0xFF667EEA),
+                    : AppColors.primaryGreen,
                 size: 22,
               ),
               suffixIcon: suffixIcon,
@@ -1523,7 +1523,7 @@ class _UnifiedRegistrationScreenState extends State<UnifiedRegistrationScreen>
               fontWeight: FontWeight.w600,
               color: widget.userType == UserType.professional
                   ? AppColors.primaryGreen
-                  : const Color(0xFF667EEA),
+                  : AppColors.primaryGreen,
             ),
           ),
           const SizedBox(height: 12),
@@ -1590,13 +1590,13 @@ class _UnifiedRegistrationScreenState extends State<UnifiedRegistrationScreen>
             gradient: LinearGradient(
               colors: widget.userType == UserType.professional
                   ? [AppColors.primaryGreen, AppColors.mediumGreen]
-                  : [const Color(0xFF667EEA), const Color(0xFF764BA2)],
+                  : [AppColors.primaryGreen, AppColors.mediumGreen],
             ),
             boxShadow: [
               BoxShadow(
                 color: (widget.userType == UserType.professional
                         ? AppColors.primaryGreen
-                        : const Color(0xFF667EEA))
+                        : AppColors.primaryGreen)
                     .withOpacity(0.3),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
@@ -1645,7 +1645,7 @@ class _UnifiedRegistrationScreenState extends State<UnifiedRegistrationScreen>
                 valueColor: AlwaysStoppedAnimation<Color>(
                   widget.userType == UserType.professional
                       ? AppColors.primaryGreen
-                      : const Color(0xFF667EEA),
+                      : AppColors.primaryGreen,
                 ),
               ),
               const SizedBox(height: 16),
@@ -1771,7 +1771,7 @@ class _SuccessDialogState extends State<_SuccessDialog>
                     gradient: LinearGradient(
                       colors: widget.userType == UserType.professional
                           ? [AppColors.primaryGreen, AppColors.mediumGreen]
-                          : [const Color(0xFF667EEA), const Color(0xFF764BA2)],
+                          : [AppColors.primaryGreen, AppColors.mediumGreen],
                     ),
                   ),
                   child: const Icon(
@@ -1816,7 +1816,7 @@ class _SuccessDialogState extends State<_SuccessDialog>
                     gradient: LinearGradient(
                       colors: widget.userType == UserType.professional
                           ? [AppColors.primaryGreen, AppColors.mediumGreen]
-                          : [const Color(0xFF667EEA), const Color(0xFF764BA2)],
+                          : [AppColors.primaryGreen, AppColors.mediumGreen],
                     ),
                   ),
                   child: Material(

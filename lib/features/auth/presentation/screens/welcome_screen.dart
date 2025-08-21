@@ -271,8 +271,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               ),
               _buildGradientOverlay(
                 colors: [
-                  AppColors.accentOrange.withOpacity(0.1),
-                  AppColors.warningYellow.withOpacity(0.05),
+                  AppColors.primaryGreen.withOpacity(0.1),
+                  AppColors.mediumGreen.withOpacity(0.05),
                 ],
                 begin: Alignment.bottomLeft,
                 end: Alignment.topRight,
@@ -355,8 +355,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      AppColors.accentOrange.withOpacity(0.08),
-                      AppColors.accentOrange.withOpacity(0.0),
+                      AppColors.mediumGreen.withOpacity(0.08),
+                      AppColors.mediumGreen.withOpacity(0.0),
                     ],
                   ),
                 ),

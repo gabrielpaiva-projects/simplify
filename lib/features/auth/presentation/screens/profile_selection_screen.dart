@@ -326,12 +326,12 @@ class _ProfileSelectionScreenState extends State<ProfileSelectionScreen>
             title: 'Quero contratar',
             subtitle: 'Encontre profissionais qualificados para cuidar de quem você ama',
             icon: Icons.favorite_rounded,
-            gradient: const LinearGradient(
+            gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Color(0xFF667EEA),
-                Color(0xFF764BA2),
+                AppColors.primaryGreen.withOpacity(0.9),
+                AppColors.mediumGreen.withOpacity(0.9),
               ],
             ),
             features: const [
