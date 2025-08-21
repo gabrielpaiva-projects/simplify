@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../widgets/profile_selection_bottom_sheet.dart';
-import 'client_registration_screen.dart';
-import 'professional_registration_screen.dart';
+import 'welcome_registration_screen.dart';
 import '../../data/models/user_model.dart';
 
 class LoginScreen extends StatefulWidget {
