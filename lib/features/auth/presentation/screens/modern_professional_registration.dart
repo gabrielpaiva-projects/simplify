@@ -307,18 +307,28 @@ class _ModernProfessionalRegistrationState
   Future<void> _searchCep() async {
     final cep = _cepController.text.replaceAll(RegExp(r'[^0-9]'), '');
     
-    if (cep.length != 8) return;
+    print('CEP digitado: ${_cepController.text}');
+    print('CEP limpo: $cep (${cep.length} dígitos)');
+    
+    if (cep.length != 8) {
+      print('CEP incompleto, ignorando busca');
+      return;
+    }
     
     // Evita múltiplas chamadas simultâneas
-    if (_isSearchingCep) return;
+    if (_isSearchingCep) {
+      print('Já está buscando CEP, ignorando');
+      return;
+    }
     
     setState(() {
       _isSearchingCep = true;
     });
     
     try {
-      print('Buscando CEP: $cep');
+      print('Iniciando busca do CEP: $cep');
       final address = await CepService.fetchAddressByCep(cep);
+      print('Resposta da API: $address');
       
       if (address != null && mounted) {
         setState(() {
@@ -327,25 +337,43 @@ class _ModernProfessionalRegistrationState
           _cityController.text = address.localidade;
           _stateController.text = address.uf;
         });
-        print('CEP encontrado: ${address.logradouro}, ${address.localidade}');
-      } else {
-        print('CEP não encontrado');
+        print('✅ CEP encontrado e campos preenchidos');
+        print('Rua: ${address.logradouro}');
+        print('Bairro: ${address.bairro}');
+        print('Cidade: ${address.localidade}');
+        print('Estado: ${address.uf}');
+        
+        // Mostra mensagem de sucesso
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('CEP não encontrado'),
+              content: const Text('CEP encontrado!'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      } else {
+        print('❌ CEP não encontrado ou resposta nula');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('CEP $cep não encontrado'),
               backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 3),
             ),
           );
         }
       }
-    } catch (e) {
-      print('Erro ao buscar CEP: $e');
+    } catch (e, stackTrace) {
+      print('❌ Erro ao buscar CEP: $e');
+      print('Stack trace: $stackTrace');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Erro ao buscar CEP'),
+            content: Text('Erro ao buscar CEP: ${e.toString()}'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -354,6 +382,7 @@ class _ModernProfessionalRegistrationState
         setState(() {
           _isSearchingCep = false;
         });
+        print('Busca de CEP finalizada');
       }
     }
   }
