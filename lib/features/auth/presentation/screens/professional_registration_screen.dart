@@ -82,7 +82,6 @@ class _ProfessionalRegistrationScreenState extends State<ProfessionalRegistratio
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   bool _isSearchingCep = false;
-  bool _acceptedTerms = false;
   File? _addressProofFile;
   String? _addressProofFileName;
   
@@ -440,18 +439,12 @@ class _ProfessionalRegistrationScreenState extends State<ProfessionalRegistratio
         if (_addressProofFile == null) {
           _showErrorSnackBar('Por favor, anexe o comprovante de endereço');
           return;
-      case 4:
-        if (!_acceptedTerms) {
-          _showErrorSnackBar('Você precisa aceitar os termos e condições para continuar');
-          return;
         }
         _submitRegistration();
         return;
-        }
-        break;
     }
     
-    if (isValid && _currentStep < 4) {
+    if (isValid && _currentStep < 3) {
       setState(() => _currentStep++);
       _pageController.nextPage(
         duration: const Duration(milliseconds: 400),
@@ -756,7 +749,7 @@ class _ProfessionalRegistrationScreenState extends State<ProfessionalRegistratio
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(
         children: [
-          for (int i = 0; i < 5; i++) ...[
+          for (int i = 0; i < 4; i++) ...[
             _buildStepDot(i),
             if (i < 3) _buildStepConnector(i),
           ],
@@ -1591,8 +1584,8 @@ class _ProfessionalRegistrationScreenState extends State<ProfessionalRegistratio
           Expanded(
             child: _buildPrimaryButton(
               onPressed: _isLoading ? null : _nextStep,
-              label: _currentStep == 4 ? 'Finalizar' : 'Próximo',
-              icon: _currentStep == 4 ? Icons.check : Icons.arrow_forward_ios,
+              label: _currentStep == 3 ? 'Finalizar' : 'Próximo',
+              icon: _currentStep == 3 ? Icons.check : Icons.arrow_forward_ios,
               isLoading: _isLoading,
             ),
           ),

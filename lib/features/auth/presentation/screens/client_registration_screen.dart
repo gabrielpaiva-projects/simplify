@@ -72,7 +72,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   bool _isSearchingCep = false;
-  bool _acceptedTerms = false;
   
   // Animations
   late AnimationController _fadeController;
@@ -238,19 +237,13 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
       case 2:
         isValid = _addressFormKey.currentState?.validate() ?? false;
         if (isValid) {
-        break;
-      case 3:
-        if (!_acceptedTerms) {
-          _showValidationError('Você precisa aceitar os termos e condições para continuar');
+          _submitRegistration();
           return;
-        }
-        _submitRegistration();
-        return;
         }
         break;
     }
     
-    if (isValid && _currentStep < 3) {
+    if (isValid && _currentStep < 2) {
       setState(() => _currentStep++);
       _pageController.nextPage(
         duration: const Duration(milliseconds: 400),
@@ -440,7 +433,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
                         _buildPersonalDataStep(),
                         _buildPasswordStep(),
                         _buildAddressStep(),
-                        _buildTermsStep(),
                       ],
                     ),
                   ),
@@ -544,8 +536,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
         return 'Crie sua senha de acesso';
       case 2:
         return 'Endereço completo';
-      case 3:
-        return 'Termos e Condições';
       default:
         return '';
     }
@@ -557,7 +547,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(
         children: [
-          for (int i = 0; i < 4; i++) ...[
+          for (int i = 0; i < 3; i++) ...[
             _buildStepDot(i),
             if (i < 2) _buildStepConnector(i),
           ],
@@ -1173,8 +1163,8 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
           Expanded(
             child: _buildPrimaryButton(
               onPressed: _isLoading ? null : _nextStep,
-              label: _currentStep == 3 ? 'Finalizar' : 'Próximo',
-              icon: _currentStep == 3 ? Icons.check : Icons.arrow_forward_ios,
+              label: _currentStep == 2 ? 'Finalizar' : 'Próximo',
+              icon: _currentStep == 2 ? Icons.check : Icons.arrow_forward_ios,
               isLoading: _isLoading,
             ),
           ),
