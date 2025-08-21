@@ -420,6 +420,9 @@ class _ProfessionalRegistrationScreenState extends State<ProfessionalRegistratio
   }
   
   void _nextStep() {
+    // Close keyboard before changing step
+    FocusScope.of(context).unfocus();
+    
     bool isValid = false;
     
     switch (_currentStep) {
@@ -456,6 +459,9 @@ class _ProfessionalRegistrationScreenState extends State<ProfessionalRegistratio
   }
   
   void _previousStep() {
+    // Close keyboard before changing step
+    FocusScope.of(context).unfocus();
+    
     if (_currentStep > 0) {
       setState(() => _currentStep--);
       _pageController.previousPage(
