@@ -288,10 +288,10 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
       
       if (address != null) {
         setState(() {
-          _streetController.text = address.street ?? '';
-          _neighborhoodController.text = address.neighborhood ?? '';
-          _cityController.text = address.city ?? '';
-          _stateController.text = address.state ?? '';
+          _streetController.text = address.logradouro;
+          _neighborhoodController.text = address.bairro;
+          _cityController.text = address.localidade;
+          _stateController.text = address.uf;
         });
       }
     } catch (e) {
