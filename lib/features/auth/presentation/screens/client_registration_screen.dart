@@ -237,6 +237,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
         break;
       case 2:
         isValid = _addressFormKey.currentState?.validate() ?? false;
+        if (isValid) {
         break;
       case 3:
         if (!_acceptedTerms) {
@@ -245,6 +246,8 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
         }
         _submitRegistration();
         return;
+        }
+        break;
     }
     
     if (isValid && _currentStep < 3) {
@@ -279,20 +282,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
       _fadeController.forward();
       _slideController.forward();
     }
-  }
-  
-  void _showValidationError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        margin: const EdgeInsets.all(20),
-      ),
-    );
   }
   
   Future<void> _submitRegistration() async {
@@ -1042,151 +1031,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
             const SizedBox(height: 40),
           ],
         ),
-      ),
-    );
-  }
-  
-  Widget _buildTermsStep() {
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Title
-          Text(
-            'Termos e Condições',
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Por favor, leia e aceite nossos termos',
-            style: TextStyle(
-              fontSize: 16,
-              color: AppColors.secondaryText.withOpacity(0.7),
-            ),
-          ),
-          const SizedBox(height: 32),
-          
-          // Terms Container
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColors.charcoalGrey.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: AppColors.lightGrey.withOpacity(0.1),
-                width: 1,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Resumo dos Termos',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  '• Seus dados pessoais serão protegidos conforme a LGPD\n'
-                  '• Você pode cancelar sua conta a qualquer momento\n'
-                  '• Os serviços agendados devem ser cancelados com 24h de antecedência\n'
-                  '• Pagamentos são processados de forma segura\n'
-                  '• Você deve manter suas informações atualizadas\n'
-                  '• É proibido usar a plataforma para atividades ilegais',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppColors.secondaryText.withOpacity(0.8),
-                    height: 1.6,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 32),
-          
-          // Accept terms checkbox
-          Container(
-            decoration: BoxDecoration(
-              color: _acceptedTerms 
-                ? AppColors.primaryGreen.withOpacity(0.1)
-                : AppColors.charcoalGrey.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: _acceptedTerms
-                  ? AppColors.primaryGreen.withOpacity(0.3)
-                  : AppColors.lightGrey.withOpacity(0.1),
-                width: 1,
-              ),
-            ),
-            child: CheckboxListTile(
-              value: _acceptedTerms,
-              onChanged: (value) {
-                setState(() {
-                  _acceptedTerms = value ?? false;
-                });
-              },
-              activeColor: AppColors.primaryGreen,
-              checkColor: Colors.white,
-              title: Text(
-                'Li e aceito os termos e condições e a política de privacidade',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: _acceptedTerms ? FontWeight.w600 : FontWeight.normal,
-                ),
-              ),
-              controlAffinity: ListTileControlAffinity.leading,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 8,
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 24),
-          
-          // Info message
-          if (!_acceptedTerms)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.orange.withOpacity(0.3),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: Colors.orange,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Você precisa aceitar os termos para criar sua conta',
-                      style: TextStyle(
-                        color: Colors.orange,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
       ),
     );
   }

@@ -440,8 +440,6 @@ class _ProfessionalRegistrationScreenState extends State<ProfessionalRegistratio
         if (_addressProofFile == null) {
           _showErrorSnackBar('Por favor, anexe o comprovante de endereço');
           return;
-        }
-        break;
       case 4:
         if (!_acceptedTerms) {
           _showErrorSnackBar('Você precisa aceitar os termos e condições para continuar');
@@ -449,6 +447,8 @@ class _ProfessionalRegistrationScreenState extends State<ProfessionalRegistratio
         }
         _submitRegistration();
         return;
+        }
+        break;
     }
     
     if (isValid && _currentStep < 4) {
@@ -644,7 +644,6 @@ class _ProfessionalRegistrationScreenState extends State<ProfessionalRegistratio
                         _buildPasswordStep(),
                         _buildAddressStep(),
                         _buildDocumentStep(),
-                        _buildTermsStep(),
                       ],
                     ),
                   ),
@@ -1452,153 +1451,6 @@ class _ProfessionalRegistrationScreenState extends State<ProfessionalRegistratio
           ],
           
           const SizedBox(height: 40),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildTermsStep() {
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Title
-          Text(
-            'Termos e Condições',
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Por favor, leia e aceite nossos termos para profissionais',
-            style: TextStyle(
-              fontSize: 16,
-              color: AppColors.secondaryText.withOpacity(0.7),
-            ),
-          ),
-          const SizedBox(height: 32),
-          
-          // Professional Terms Container
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColors.charcoalGrey.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: AppColors.lightGrey.withOpacity(0.1),
-                width: 1,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Termos para Profissionais',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  '• Você declara possuir as qualificações necessárias\n'
-                  '• Compromete-se a prestar serviços com qualidade\n'
-                  '• Manterá seus documentos e certificações atualizados\n'
-                  '• Respeitará os horários agendados com clientes\n'
-                  '• Comissão de 15% sobre cada serviço prestado\n'
-                  '• Pagamentos semanais via PIX ou transferência\n'
-                  '• Avaliações afetam sua visibilidade na plataforma\n'
-                  '• Cancelamentos frequentes podem resultar em suspensão',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppColors.secondaryText.withOpacity(0.8),
-                    height: 1.6,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 32),
-          
-          // Accept terms checkbox
-          Container(
-            decoration: BoxDecoration(
-              color: _acceptedTerms 
-                ? AppColors.primaryGreen.withOpacity(0.1)
-                : AppColors.charcoalGrey.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: _acceptedTerms
-                  ? AppColors.primaryGreen.withOpacity(0.3)
-                  : AppColors.lightGrey.withOpacity(0.1),
-                width: 1,
-              ),
-            ),
-            child: CheckboxListTile(
-              value: _acceptedTerms,
-              onChanged: (value) {
-                setState(() {
-                  _acceptedTerms = value ?? false;
-                });
-              },
-              activeColor: AppColors.primaryGreen,
-              checkColor: Colors.white,
-              title: Text(
-                'Li e aceito os termos e condições, código de conduta e política de privacidade',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: _acceptedTerms ? FontWeight.w600 : FontWeight.normal,
-                ),
-              ),
-              controlAffinity: ListTileControlAffinity.leading,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 8,
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 24),
-          
-          // Info message
-          if (!_acceptedTerms)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.orange.withOpacity(0.3),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: Colors.orange,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Você precisa aceitar os termos para criar sua conta profissional',
-                      style: TextStyle(
-                        color: Colors.orange,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
         ],
       ),
     );
