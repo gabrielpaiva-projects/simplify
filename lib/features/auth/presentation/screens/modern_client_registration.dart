@@ -185,6 +185,9 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
   }
   
   void _nextStep() async {
+    // Close keyboard
+    FocusScope.of(context).unfocus();
+    
     // Validate current step
     bool isValid = false;
     
@@ -238,6 +241,9 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
   }
   
   void _previousStep() async {
+    // Close keyboard
+    FocusScope.of(context).unfocus();
+    
     if (_currentStep > 0) {
       await _stepControllers[_currentStep].reverse();
       
@@ -256,6 +262,9 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
   }
   
   void _completeRegistration() async {
+    // Close keyboard
+    FocusScope.of(context).unfocus();
+    
     setState(() {
       _isLoading = true;
     });
@@ -436,6 +445,9 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
           // Back button
           IconButton(
             onPressed: () {
+              // Close keyboard
+              FocusScope.of(context).unfocus();
+              
               if (_currentStep > 0) {
                 _previousStep();
               } else {

@@ -190,6 +190,9 @@ class _ModernProfessionalRegistrationState
   }
   
   void _nextStep() async {
+    // Close keyboard
+    FocusScope.of(context).unfocus();
+    
     // Validate current step
     bool isValid = false;
     
@@ -252,6 +255,9 @@ class _ModernProfessionalRegistrationState
   }
   
   void _previousStep() async {
+    // Close keyboard
+    FocusScope.of(context).unfocus();
+    
     if (_currentStep > 0) {
       await _stepControllers[_currentStep].reverse();
       
@@ -270,6 +276,9 @@ class _ModernProfessionalRegistrationState
   }
   
   void _completeRegistration() async {
+    // Close keyboard
+    FocusScope.of(context).unfocus();
+    
     setState(() {
       _isLoading = true;
     });
@@ -594,6 +603,9 @@ class _ModernProfessionalRegistrationState
           // Back button
           IconButton(
             onPressed: () {
+              // Close keyboard
+              FocusScope.of(context).unfocus();
+              
               if (_currentStep > 0) {
                 _previousStep();
               } else {
