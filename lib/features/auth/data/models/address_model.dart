@@ -54,4 +54,11 @@ class AddressModel {
   }
 
   bool get isValid => cep.isNotEmpty && logradouro.isNotEmpty;
+  
+  // Getters com nomes em inglês para facilitar o uso
+  String get street => logradouro;
+  String get neighborhood => bairro;
+  String get city => localidade;
+  String get state => uf;
+  String get zipCode => cep;
 }
