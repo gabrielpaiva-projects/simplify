@@ -337,16 +337,7 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
         print('Cidade: ${address.localidade}');
         print('Estado: ${address.uf}');
         
-        // Mostra mensagem de sucesso
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('CEP encontrado!'),
-              backgroundColor: Colors.green,
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
+        // CEP encontrado com sucesso - não exibe snackbar
       } else {
         print('❌ CEP não encontrado ou resposta nula');
         if (mounted) {
