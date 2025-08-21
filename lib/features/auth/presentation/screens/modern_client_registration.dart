@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
+import 'dart:async';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../data/models/address_model.dart';
@@ -68,6 +69,7 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
   bool _isConfirmPasswordVisible = false;
   bool _isSearchingCep = false;
   bool _termsAccepted = false;
+  Timer? _cepDebounceTimer;
   
   // Animation Controllers
   late AnimationController _progressController;
@@ -159,6 +161,7 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
   
   @override
   void dispose() {
+    _cepDebounceTimer?.cancel();
     _progressController.dispose();
     _fadeController.dispose();
     _slideController.dispose();
@@ -302,27 +305,52 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
     
     if (cep.length != 8) return;
     
+    // Evita múltiplas chamadas simultâneas
+    if (_isSearchingCep) return;
+    
     setState(() {
       _isSearchingCep = true;
     });
     
     try {
+      print('Buscando CEP: $cep');
       final address = await CepService.fetchAddressByCep(cep);
       
-      if (address != null) {
+      if (address != null && mounted) {
         setState(() {
           _streetController.text = address.logradouro;
           _neighborhoodController.text = address.bairro;
           _cityController.text = address.localidade;
           _stateController.text = address.uf;
         });
+        print('CEP encontrado: ${address.logradouro}, ${address.localidade}');
+      } else {
+        print('CEP não encontrado');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('CEP não encontrado'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
       }
     } catch (e) {
-      // Handle error
+      print('Erro ao buscar CEP: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Erro ao buscar CEP'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } finally {
-      setState(() {
-        _isSearchingCep = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isSearchingCep = false;
+        });
+      }
     }
   }
   
@@ -893,8 +921,15 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
                         return null;
                       },
                       onChanged: (value) {
-                        if (value.replaceAll(RegExp(r'[^0-9]'), '').length == 8) {
-                          _searchCep();
+                        // Cancela o timer anterior se existir
+                        _cepDebounceTimer?.cancel();
+                        
+                        final cleanCep = value.replaceAll(RegExp(r'[^0-9]'), '');
+                        if (cleanCep.length == 8) {
+                          // Aguarda 500ms após parar de digitar para buscar
+                          _cepDebounceTimer = Timer(const Duration(milliseconds: 500), () {
+                            _searchCep();
+                          });
                         }
                       },
                     ),
