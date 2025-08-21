@@ -9,6 +9,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../data/models/address_model.dart';
 import '../../data/models/user_model.dart';
 import '../../data/services/cep_service.dart';
+import '../widgets/terms_and_conditions_step.dart';
 
 class ModernProfessionalRegistration extends StatefulWidget {
   const ModernProfessionalRegistration({super.key});
@@ -49,6 +50,10 @@ class _ModernProfessionalRegistrationState
   final _passwordFormKey = GlobalKey<FormState>();
   final _addressFormKey = GlobalKey<FormState>();
   final _documentsFormKey = GlobalKey<FormState>();
+  final _termsFormKey = GlobalKey<FormState>();
+  
+  // Terms acceptance state
+  bool _termsAccepted = false;
   
   // Masks
   final _cpfMask = MaskTextInputFormatter(
@@ -117,7 +122,7 @@ class _ModernProfessionalRegistrationState
     );
     
     _stepControllers = List.generate(
-      4, // 4 steps
+      5, // 5 steps (including terms)
       (index) => AnimationController(
         duration: const Duration(milliseconds: 600),
         vsync: this,
@@ -209,10 +214,22 @@ class _ModernProfessionalRegistrationState
           );
         }
         break;
+      case 4:
+        // Validate terms acceptance
+        isValid = _termsAccepted;
+        if (!isValid) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Você deve aceitar os termos e condições para continuar'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        break;
     }
     
     if (isValid) {
-      if (_currentStep < 3) {
+      if (_currentStep < 4) {
         // Animate to next step
         await _stepControllers[_currentStep].reverse();
         
@@ -528,6 +545,15 @@ class _ModernProfessionalRegistrationState
                           _buildPasswordStep(),
                           _buildAddressStep(),
                           _buildDocumentsStep(),
+                          TermsAndConditionsStep(
+                            animationController: _stepControllers[4],
+                            formKey: _termsFormKey,
+                            onAcceptanceChanged: (accepted) {
+                              setState(() {
+                                _termsAccepted = accepted;
+                              });
+                            },
+                          ),
                         ],
                       ),
                     ),
@@ -624,7 +650,7 @@ class _ModernProfessionalRegistrationState
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              '${_currentStep + 1}/4',
+              '${_currentStep + 1}/5',
               style: TextStyle(
                 color: AppColors.primaryGreen,
                 fontWeight: FontWeight.bold,
@@ -646,6 +672,8 @@ class _ModernProfessionalRegistrationState
         return 'Endereço';
       case 3:
         return 'Comprovante de Residência';
+      case 4:
+        return 'Termos e Condições';
       default:
         return '';
     }
@@ -661,7 +689,7 @@ class _ModernProfessionalRegistrationState
           return ClipRRect(
             borderRadius: BorderRadius.circular(3),
             child: LinearProgressIndicator(
-              value: (_currentStep + _progressAnimation.value) / 4,
+              value: (_currentStep + _progressAnimation.value) / 5,
               backgroundColor: Colors.white.withOpacity(0.1),
               valueColor: AlwaysStoppedAnimation<Color>(
                 AppColors.primaryGreen,
@@ -1373,7 +1401,7 @@ class _ModernProfessionalRegistrationState
             flex: 2,
             child: _ModernButton(
               onPressed: _isLoading ? null : _nextStep,
-              text: _currentStep == 3 ? 'Finalizar Cadastro' : 'Continuar',
+              text: _currentStep == 4 ? 'Finalizar Cadastro' : 'Continuar',
               isLoading: _isLoading,
             ),
           ),

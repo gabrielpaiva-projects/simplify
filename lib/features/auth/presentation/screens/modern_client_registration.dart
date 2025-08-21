@@ -6,6 +6,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../data/models/address_model.dart';
 import '../../data/models/user_model.dart';
 import '../../data/services/cep_service.dart';
+import '../widgets/terms_and_conditions_step.dart';
 
 class ModernClientRegistration extends StatefulWidget {
   const ModernClientRegistration({super.key});
@@ -42,6 +43,7 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
   final _personalFormKey = GlobalKey<FormState>();
   final _passwordFormKey = GlobalKey<FormState>();
   final _addressFormKey = GlobalKey<FormState>();
+  final _termsFormKey = GlobalKey<FormState>();
   
   // Masks
   final _cpfMask = MaskTextInputFormatter(
@@ -65,6 +67,7 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   bool _isSearchingCep = false;
+  bool _termsAccepted = false;
   
   // Animation Controllers
   late AnimationController _progressController;
@@ -104,7 +107,7 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
     );
     
     _stepControllers = List.generate(
-      3,
+      4, // 4 steps including terms
       (index) => AnimationController(
         duration: const Duration(milliseconds: 600),
         vsync: this,
@@ -195,12 +198,24 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
       case 2:
         isValid = _addressFormKey.currentState?.validate() ?? false;
         break;
+      case 3:
+        // Validate terms acceptance
+        isValid = _termsAccepted;
+        if (!isValid) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Você deve aceitar os termos e condições para continuar'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        break;
     }
     
     if (isValid) {
       _saveData();
       
-      if (_currentStep < 2) {
+      if (_currentStep < 3) {
         // Animate to next step
         await _stepControllers[_currentStep].reverse();
         
@@ -372,6 +387,15 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
                           _buildPersonalDataStep(),
                           _buildPasswordStep(),
                           _buildAddressStep(),
+                          TermsAndConditionsStep(
+                            animationController: _stepControllers[3],
+                            formKey: _termsFormKey,
+                            onAcceptanceChanged: (accepted) {
+                              setState(() {
+                                _termsAccepted = accepted;
+                              });
+                            },
+                          ),
                         ],
                       ),
                     ),
@@ -468,7 +492,7 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              '${_currentStep + 1}/3',
+              '${_currentStep + 1}/4',
               style: TextStyle(
                 color: AppColors.primaryGreen,
                 fontWeight: FontWeight.bold,
@@ -488,6 +512,8 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
         return 'Criar Senha';
       case 2:
         return 'Endereço';
+      case 3:
+        return 'Termos e Condições';
       default:
         return '';
     }
@@ -501,7 +527,7 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
         animation: _progressAnimation,
         builder: (context, child) {
           return LinearProgressIndicator(
-            value: (_currentStep + _progressAnimation.value) / 3,
+            value: (_currentStep + _progressAnimation.value) / 4,
             backgroundColor: Colors.white.withOpacity(0.1),
             valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
           );
@@ -992,7 +1018,7 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
             flex: 2,
             child: _ModernButton(
               onPressed: _isLoading ? null : _nextStep,
-              text: _currentStep == 2 ? 'Finalizar' : 'Continuar',
+              text: _currentStep == 3 ? 'Finalizar Cadastro' : 'Continuar',
               isLoading: _isLoading,
             ),
           ),
