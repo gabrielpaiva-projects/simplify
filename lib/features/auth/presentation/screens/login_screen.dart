@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../widgets/profile_selection_bottom_sheet.dart';
-import 'client_registration_screen.dart';
-import 'professional_registration_screen.dart';
+import '../widgets/modern_profile_selection_sheet.dart';
+import 'modern_client_registration.dart';
+import 'modern_professional_registration.dart';
 import '../../data/models/user_model.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -810,7 +810,7 @@ class _LoginScreenState extends State<LoginScreen>
                 HapticFeedback.lightImpact();
                 
                 // Abre o BottomSheet para seleção do tipo de perfil
-                final UserType? selectedType = await ProfileSelectionBottomSheet.show(context);
+                final UserType? selectedType = await ModernProfileSelectionSheet.show(context);
                 
                 if (selectedType != null && mounted) {
                   // Navega para a tela de cadastro apropriada
@@ -818,14 +818,14 @@ class _LoginScreenState extends State<LoginScreen>
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const ClientRegistrationScreen(),
+                        builder: (context) => const ModernClientRegistration(),
                       ),
                     );
                   } else {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const ProfessionalRegistrationScreen(),
+                        builder: (context) => const ModernProfessionalRegistration(),
                       ),
                     );
                   }

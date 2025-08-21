@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Configuração padrão que permite tráfego cleartext (HTTP) -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    
+    <!-- Domínios específicos que sempre permitirão HTTP -->
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- ViaCEP API -->
+        <domain includeSubdomains="true">viacep.com.br</domain>
+        <!-- Adicione outros domínios conforme necessário -->
+    </domain-config>
+</network-security-config>
