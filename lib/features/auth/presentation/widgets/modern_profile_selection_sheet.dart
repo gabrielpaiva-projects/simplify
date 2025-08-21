@@ -134,7 +134,10 @@ class _ModernProfileSelectionSheetState extends State<ModernProfileSelectionShee
             child: FadeTransition(
               opacity: _fadeAnimation,
               child: Container(
-                height: size.height * 0.75,
+                constraints: BoxConstraints(
+                  maxHeight: size.height * 0.85,
+                  minHeight: size.height * 0.5,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black,
                   borderRadius: const BorderRadius.vertical(
@@ -282,7 +285,7 @@ class _ModernProfileSelectionSheetState extends State<ModernProfileSelectionShee
                             
                             // Options
                             Expanded(
-                              child: Padding(
+                              child: SingleChildScrollView(
                                 padding: const EdgeInsets.symmetric(horizontal: 24),
                                 child: Column(
                                   children: [
@@ -483,7 +486,7 @@ class _ProfileOptionState extends State<_ProfileOption>
               duration: const Duration(milliseconds: 300),
               opacity: opacity,
               child: Container(
-                height: 140,
+                constraints: const BoxConstraints(minHeight: 140),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
@@ -542,13 +545,13 @@ class _ProfileOptionState extends State<_ProfileOption>
                       
                       // Content
                       Padding(
-                        padding: const EdgeInsets.all(20),
+                        padding: const EdgeInsets.all(16),
                         child: Row(
                           children: [
                             // Icon
                             Container(
-                              width: 64,
-                              height: 64,
+                              width: 56,
+                              height: 56,
                               decoration: BoxDecoration(
                                 color: widget.isSelected
                                     ? Colors.white.withOpacity(0.2)
@@ -560,10 +563,10 @@ class _ProfileOptionState extends State<_ProfileOption>
                                 color: widget.isSelected
                                     ? Colors.white
                                     : Colors.white.withOpacity(0.5),
-                                size: 32,
+                                size: 28,
                               ),
                             ),
-                            const SizedBox(width: 20),
+                            const SizedBox(width: 16),
                             
                             // Text
                             Expanded(
@@ -574,33 +577,37 @@ class _ProfileOptionState extends State<_ProfileOption>
                                   Text(
                                     widget.title,
                                     style: TextStyle(
-                                      fontSize: 20,
+                                      fontSize: 18,
                                       fontWeight: FontWeight.bold,
                                       color: widget.isSelected
                                           ? Colors.white
                                           : Colors.white.withOpacity(0.8),
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
+                                  const SizedBox(height: 2),
                                   Text(
                                     widget.subtitle,
                                     style: TextStyle(
-                                      fontSize: 14,
+                                      fontSize: 13,
                                       fontWeight: FontWeight.w600,
                                       color: widget.isSelected
                                           ? Colors.white.withOpacity(0.9)
                                           : Colors.white.withOpacity(0.5),
                                     ),
                                   ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    widget.description,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: widget.isSelected
-                                          ? Colors.white.withOpacity(0.7)
-                                          : Colors.white.withOpacity(0.3),
-                                      height: 1.3,
+                                  const SizedBox(height: 4),
+                                  Flexible(
+                                    child: Text(
+                                      widget.description,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: widget.isSelected
+                                            ? Colors.white.withOpacity(0.7)
+                                            : Colors.white.withOpacity(0.3),
+                                        height: 1.2,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ],
@@ -610,8 +617,8 @@ class _ProfileOptionState extends State<_ProfileOption>
                             // Arrow
                             AnimatedContainer(
                               duration: const Duration(milliseconds: 300),
-                              width: widget.isSelected ? 36 : 32,
-                              height: widget.isSelected ? 36 : 32,
+                              width: widget.isSelected ? 32 : 28,
+                              height: widget.isSelected ? 32 : 28,
                               decoration: BoxDecoration(
                                 color: widget.isSelected
                                     ? Colors.white.withOpacity(0.2)
@@ -623,7 +630,7 @@ class _ProfileOptionState extends State<_ProfileOption>
                                 color: widget.isSelected
                                     ? Colors.white
                                     : Colors.white.withOpacity(0.3),
-                                size: widget.isSelected ? 20 : 18,
+                                size: widget.isSelected ? 18 : 16,
                               ),
                             ),
                           ],
