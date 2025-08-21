@@ -3,13 +3,13 @@
 // Este arquivo documenta as mudanças realizadas no fluxo de cadastro:
 
 // 1. NOVO BOTTOM SHEET DE SELEÇÃO DE PERFIL
-//    - Arquivo: lib/features/auth/presentation/widgets/modern_profile_selection_sheet.dart
+//    - Arquivo: lib/modules/auth_module/presentation/widgets/modern_profile_selection_sheet.dart
 //    - Design moderno com animações fluidas
 //    - Gradientes e efeitos visuais aprimorados
 //    - Feedback háptico para melhor UX
 
 // 2. NOVO FLUXO DE CADASTRO DE CLIENTE
-//    - Arquivo: lib/features/auth/presentation/screens/modern_client_registration.dart
+//    - Arquivo: lib/modules/auth_module/presentation/screens/modern_client_registration.dart
 //    - 3 steps: Dados Pessoais, Senha, Endereço
 //    - Indicador de progresso visual
 //    - Validações em tempo real
@@ -17,7 +17,7 @@
 //    - Animações suaves entre steps
 
 // 3. NOVO FLUXO DE CADASTRO PROFISSIONAL
-//    - Arquivo: lib/features/auth/presentation/screens/modern_professional_registration.dart
+//    - Arquivo: lib/modules/auth_module/presentation/screens/modern_professional_registration.dart
 //    - 5 steps: Dados Pessoais, Dados Profissionais, Senha, Endereço, Documentação
 //    - Upload de imagens e documentos
 //    - Seleção de categorias de serviço
@@ -25,7 +25,7 @@
 //    - Validações completas
 
 // 4. INTEGRAÇÃO COM TELA DE LOGIN
-//    - Arquivo: lib/features/auth/presentation/screens/login_screen.dart
+//    - Arquivo: lib/modules/auth_module/presentation/screens/login_screen.dart
 //    - Atualizado para usar os novos componentes
 //    - Mantém a consistência visual
 
