@@ -422,7 +422,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               
               // Icon
               const Icon(
-                Icons.favorite_rounded,
+                Icons.cleaning_services_rounded,
                 color: Colors.white,
                 size: 60,
               ),
@@ -445,7 +445,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               end: Offset.zero,
             ).animate(_titleAnimation),
             child: Text(
-              'CareConnect',
+              'SIMPLIFY',
               style: TextStyle(
                 fontSize: 42,
                 fontWeight: FontWeight.bold,
@@ -467,7 +467,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               end: Offset.zero,
             ).animate(_subtitleAnimation),
             child: Text(
-              'Conectando cuidadores e famílias\ncom amor e profissionalismo',
+              'Simplificando sua limpeza e organização',
               style: TextStyle(
                 fontSize: 16,
                 color: isDarkMode

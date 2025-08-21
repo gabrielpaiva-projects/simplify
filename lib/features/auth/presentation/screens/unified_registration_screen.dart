@@ -238,6 +238,9 @@ class _UnifiedRegistrationScreenState extends State<UnifiedRegistrationScreen>
   }
   
   void _nextStep() async {
+    // Close keyboard
+    FocusScope.of(context).unfocus();
+    
     // Validate current step
     bool isValid = false;
     
@@ -304,6 +307,9 @@ class _UnifiedRegistrationScreenState extends State<UnifiedRegistrationScreen>
   }
   
   void _previousStep() {
+    // Close keyboard
+    FocusScope.of(context).unfocus();
+    
     if (_currentStep > 0) {
       HapticFeedback.lightImpact();
       
