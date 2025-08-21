@@ -804,30 +804,33 @@ class _LoginScreenState extends State<LoginScreen>
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: () async {
+              onTap: () {
                 HapticFeedback.lightImpact();
                 
-                // Abre o BottomSheet para seleção do tipo de perfil
-                final UserType? selectedType = await ProfileSelectionBottomSheet.show(context);
-                
-                if (selectedType != null && mounted) {
-                  // Navega para a tela de cadastro apropriada
-                  if (selectedType == UserType.client) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ClientRegistrationScreen(),
-                      ),
-                    );
-                  } else {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ProfessionalRegistrationScreen(),
-                      ),
-                    );
-                  }
-                }
+                // Navega para a nova tela de boas-vindas do cadastro
+                Navigator.push(
+                  context,
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) =>
+                        const WelcomeRegistrationScreen(),
+                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                      return FadeTransition(
+                        opacity: animation,
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0.0, 0.1),
+                            end: Offset.zero,
+                          ).animate(CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutCubic,
+                          )),
+                          child: child,
+                        ),
+                      );
+                    },
+                    transitionDuration: const Duration(milliseconds: 600),
+                  ),
+                );
               },
               borderRadius: BorderRadius.circular(16),
               child: Center(

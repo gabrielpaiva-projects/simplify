@@ -6,6 +6,11 @@ class CepService {
   static const String _baseUrl = 'https://viacep.com.br/ws';
 
   /// Busca endereço pelo CEP usando a API ViaCEP
+  static Future<AddressModel?> fetchAddress(String cep) async {
+    return fetchAddressByCep(cep);
+  }
+  
+  /// Busca endereço pelo CEP usando a API ViaCEP
   static Future<AddressModel?> fetchAddressByCep(String cep) async {
     try {
       // Remove caracteres não numéricos do CEP
