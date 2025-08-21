@@ -1129,15 +1129,10 @@ class _ModernProfessionalRegistrationState
                         return null;
                       },
                       onChanged: (value) {
-                        // Cancela o timer anterior se existir
-                        _cepDebounceTimer?.cancel();
-                        
                         final cleanCep = value.replaceAll(RegExp(r'[^0-9]'), '');
+                        // Quando atingir 8 dígitos (limite do CEP), busca automaticamente
                         if (cleanCep.length == 8) {
-                          // Aguarda 500ms após parar de digitar para buscar
-                          _cepDebounceTimer = Timer(const Duration(milliseconds: 500), () {
-                            _searchCep();
-                          });
+                          _searchCep();
                         }
                       },
                     ),
