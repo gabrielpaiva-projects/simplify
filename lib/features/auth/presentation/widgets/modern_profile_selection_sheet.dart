@@ -394,11 +394,13 @@ class _ModernProfileSelectionSheetState extends State<ModernProfileSelectionShee
                           ],
                         ),
                       ),
+                      )
                     ],
                   ),
                 ),
               ),
             ),
+          )
           );
         },
     );
