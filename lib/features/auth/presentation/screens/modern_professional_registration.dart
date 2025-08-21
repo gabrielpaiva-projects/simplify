@@ -24,20 +24,18 @@ class _ModernProfessionalRegistrationState
   // Controllers
   final PageController _pageController = PageController();
   
-  // Personal Data
+  // Step 1: Dados Pessoais
   final _nameController = TextEditingController();
   final _cpfController = TextEditingController();
   final _rgController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   
-
-  
-  // Password
+  // Step 2: Senha
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   
-  // Address
+  // Step 3: Endereço
   final _cepController = TextEditingController();
   final _streetController = TextEditingController();
   final _numberController = TextEditingController();
@@ -48,7 +46,6 @@ class _ModernProfessionalRegistrationState
   
   // Form Keys
   final _personalFormKey = GlobalKey<FormState>();
-  final _professionalFormKey = GlobalKey<FormState>();
   final _passwordFormKey = GlobalKey<FormState>();
   final _addressFormKey = GlobalKey<FormState>();
   final _documentsFormKey = GlobalKey<FormState>();
@@ -80,16 +77,8 @@ class _ModernProfessionalRegistrationState
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   bool _isSearchingCep = false;
-  
-  // Files
-  File? _profileImage;
-  File? _rgFrontImage;
-  File? _rgBackImage;
   File? _addressProofFile;
-  List<File> _certificateFiles = [];
-  
-  // Selected categories
-  final Set<String> _selectedCategories = {};
+  String? _addressProofFileName;
   
   // Animation Controllers
   late AnimationController _progressController;
@@ -104,26 +93,6 @@ class _ModernProfessionalRegistrationState
   
   // Image Picker
   final ImagePicker _imagePicker = ImagePicker();
-  
-  // Categories
-  final List<String> _availableCategories = [
-    'Eletricista',
-    'Encanador',
-    'Pintor',
-    'Pedreiro',
-    'Marceneiro',
-    'Jardineiro',
-    'Mecânico',
-    'Técnico em Informática',
-    'Diarista',
-    'Cozinheiro',
-    'Personal Trainer',
-    'Professor Particular',
-    'Cuidador',
-    'Motorista',
-    'Segurança',
-    'Outros',
-  ];
   
   @override
   void initState() {
@@ -148,7 +117,7 @@ class _ModernProfessionalRegistrationState
     );
     
     _stepControllers = List.generate(
-      4, // 4 steps: Dados, Senha, Endereço, Comprovante
+      4, // 4 steps
       (index) => AnimationController(
         duration: const Duration(milliseconds: 600),
         vsync: this,
@@ -210,6 +179,8 @@ class _ModernProfessionalRegistrationState
     _cityController.dispose();
     _stateController.dispose();
     
+    _pageController.dispose();
+    
     super.dispose();
   }
   
@@ -228,7 +199,15 @@ class _ModernProfessionalRegistrationState
         isValid = _addressFormKey.currentState?.validate() ?? false;
         break;
       case 3:
-        isValid = _documentsFormKey.currentState?.validate() ?? false;
+        isValid = _addressProofFile != null;
+        if (!isValid) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Por favor, anexe o comprovante de residência'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
         break;
     }
     
@@ -285,23 +264,106 @@ class _ModernProfessionalRegistrationState
       _isLoading = false;
     });
     
-    // Show success and navigate
-    if (mounted) {
-      _showSuccessDialog();
-    }
+    _showSuccessDialog();
   }
   
   void _showSuccessDialog() {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => _AnalysisDialog(
-        onContinue: () {
-          Navigator.of(context).pushNamedAndRemoveUntil(
-            '/login',
-            (route) => false,
-          );
-        },
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: AppColors.charcoalGrey,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: AppColors.primaryGreen.withOpacity(0.3),
+              width: 2,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Icon
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primaryGreen.withOpacity(0.2),
+                      AppColors.mediumGreen.withOpacity(0.1),
+                    ],
+                  ),
+                ),
+                child: Icon(
+                  Icons.access_time_filled,
+                  size: 40,
+                  color: AppColors.primaryGreen,
+                ),
+              ),
+              
+              const SizedBox(height: 24),
+              
+              // Title
+              const Text(
+                'Cadastro em Análise',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Message
+              Text(
+                'Seu cadastro foi recebido com sucesso!\n\nNossa equipe irá analisar suas informações e você receberá um e-mail em até 48 horas com o resultado.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.white.withOpacity(0.7),
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              
+              const SizedBox(height: 32),
+              
+              // Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      '/login',
+                      (route) => false,
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryGreen,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Entendi',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -335,49 +397,91 @@ class _ModernProfessionalRegistrationState
     }
   }
   
-  Future<void> _pickImage(String type) async {
-    final XFile? image = await _imagePicker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 80,
+  Future<void> _pickDocument() async {
+    // Show options dialog
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.charcoalGrey,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Escolha uma opção',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ListTile(
+              leading: Icon(Icons.camera_alt, color: AppColors.primaryGreen),
+              title: const Text(
+                'Tirar foto',
+                style: TextStyle(color: Colors.white),
+              ),
+              onTap: () async {
+                Navigator.pop(context);
+                final XFile? photo = await _imagePicker.pickImage(
+                  source: ImageSource.camera,
+                );
+                if (photo != null) {
+                  setState(() {
+                    _addressProofFile = File(photo.path);
+                    _addressProofFileName = photo.name;
+                  });
+                }
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.photo_library, color: AppColors.primaryGreen),
+              title: const Text(
+                'Escolher da galeria',
+                style: TextStyle(color: Colors.white),
+              ),
+              onTap: () async {
+                Navigator.pop(context);
+                final XFile? image = await _imagePicker.pickImage(
+                  source: ImageSource.gallery,
+                );
+                if (image != null) {
+                  setState(() {
+                    _addressProofFile = File(image.path);
+                    _addressProofFileName = image.name;
+                  });
+                }
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.file_present, color: AppColors.primaryGreen),
+              title: const Text(
+                'Escolher arquivo PDF',
+                style: TextStyle(color: Colors.white),
+              ),
+              onTap: () async {
+                Navigator.pop(context);
+                FilePickerResult? result = await FilePicker.platform.pickFiles(
+                  type: FileType.custom,
+                  allowedExtensions: ['pdf'],
+                );
+                if (result != null) {
+                  setState(() {
+                    _addressProofFile = File(result.files.single.path!);
+                    _addressProofFileName = result.files.single.name;
+                  });
+                }
+              },
+            ),
+          ],
+        ),
+      ),
     );
-    
-    if (image != null) {
-      setState(() {
-        switch (type) {
-          case 'profile':
-            _profileImage = File(image.path);
-            break;
-          case 'rg_front':
-            _rgFrontImage = File(image.path);
-            break;
-          case 'rg_back':
-            _rgBackImage = File(image.path);
-            break;
-        }
-      });
-    }
-  }
-  
-  Future<void> _pickDocument(String type) async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
-    );
-    
-    if (result != null) {
-      setState(() {
-        switch (type) {
-          case 'address':
-            _addressProofFile = File(result.files.single.path!);
-            break;
-          case 'certificate':
-            if (_certificateFiles.length < 5) {
-              _certificateFiles.add(File(result.files.single.path!));
-            }
-            break;
-        }
-      });
-    }
   }
   
   @override
@@ -386,7 +490,7 @@ class _ModernProfessionalRegistrationState
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Background gradient with animation
+          // Background gradient
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -397,33 +501,6 @@ class _ModernProfessionalRegistrationState
                   AppColors.charcoalGrey.withOpacity(0.5),
                 ],
               ),
-            ),
-          ),
-          
-          // Animated background elements
-          Positioned(
-            top: -150,
-            left: -150,
-            child: TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0.0, end: 1.0),
-              duration: const Duration(seconds: 3),
-              builder: (context, value, child) {
-                return Transform.rotate(
-                  angle: value * 0.3,
-                  child: Container(
-                    width: 400,
-                    height: 400,
-                    decoration: BoxDecoration(
-                                        gradient: RadialGradient(
-                    colors: [
-                      AppColors.primaryGreen.withOpacity(0.1),
-                      Colors.transparent,
-                    ],
-                  ),
-                    ),
-                  ),
-                );
-              },
             ),
           ),
           
@@ -448,7 +525,6 @@ class _ModernProfessionalRegistrationState
                         physics: const NeverScrollableScrollPhysics(),
                         children: [
                           _buildPersonalDataStep(),
-                          _buildProfessionalDataStep(),
                           _buildPasswordStep(),
                           _buildAddressStep(),
                           _buildDocumentsStep(),
@@ -613,69 +689,7 @@ class _ModernProfessionalRegistrationState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Profile Image Picker
-                    Center(
-                      child: Stack(
-                        children: [
-                          Container(
-                            width: 120,
-                            height: 120,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                colors: [
-                                  AppColors.primaryGreen.withOpacity(0.2),
-                                  AppColors.mediumGreen.withOpacity(0.1),
-                                ],
-                              ),
-                              border: Border.all(
-                                color: AppColors.primaryGreen.withOpacity(0.3),
-                                width: 2,
-                              ),
-                            ),
-                            child: _profileImage != null
-                                ? ClipOval(
-                                    child: Image.file(
-                                      _profileImage!,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  )
-                                : Icon(
-                                    Icons.person_outline_rounded,
-                                    size: 48,
-                                    color: AppColors.primaryGreen.withOpacity(0.5),
-                                  ),
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: GestureDetector(
-                              onTap: () => _pickImage('profile'),
-                              child: Container(
-                                width: 36,
-                                height: 36,
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      Color(0xFF2E7D32),
-                                      Color(0xFF1B5E20),
-                                    ],
-                                  ),
-                                ),
-                                child: const Icon(
-                                  Icons.camera_alt_rounded,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
                     
                     // Name field
                     _ModernTextField(
@@ -684,10 +698,27 @@ class _ModernProfessionalRegistrationState
                       icon: Icons.person_outline_rounded,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Por favor, insira seu nome';
+                          return 'Por favor, insira seu nome completo';
                         }
                         if (value.split(' ').length < 2) {
                           return 'Por favor, insira seu nome completo';
+                        }
+                        return null;
+                      },
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // RG field
+                    _ModernTextField(
+                      controller: _rgController,
+                      label: 'RG',
+                      icon: Icons.badge_outlined,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [_rgMask],
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor, insira seu RG';
                         }
                         return null;
                       },
@@ -699,7 +730,7 @@ class _ModernProfessionalRegistrationState
                     _ModernTextField(
                       controller: _cpfController,
                       label: 'CPF',
-                      icon: Icons.badge_outlined,
+                      icon: Icons.credit_card_outlined,
                       keyboardType: TextInputType.number,
                       inputFormatters: [_cpfMask],
                       validator: (value) {
@@ -716,16 +747,20 @@ class _ModernProfessionalRegistrationState
                     
                     const SizedBox(height: 20),
                     
-                    // RG field
+                    // Phone field
                     _ModernTextField(
-                      controller: _rgController,
-                      label: 'RG',
-                      icon: Icons.credit_card_outlined,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [_rgMask],
+                      controller: _phoneController,
+                      label: 'Telefone para contato',
+                      icon: Icons.phone_outlined,
+                      keyboardType: TextInputType.phone,
+                      inputFormatters: [_phoneMask],
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Por favor, insira seu RG';
+                          return 'Por favor, insira seu telefone';
+                        }
+                        final phone = value.replaceAll(RegExp(r'[^0-9]'), '');
+                        if (phone.length != 11) {
+                          return 'Telefone inválido';
                         }
                         return null;
                       },
@@ -750,233 +785,6 @@ class _ModernProfessionalRegistrationState
                         return null;
                       },
                     ),
-                    
-                    const SizedBox(height: 20),
-                    
-                    // Phone field
-                    _ModernTextField(
-                      controller: _phoneController,
-                      label: 'Telefone',
-                      icon: Icons.phone_outlined,
-                      keyboardType: TextInputType.phone,
-                      inputFormatters: [_phoneMask],
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Por favor, insira seu telefone';
-                        }
-                        final phone = value.replaceAll(RegExp(r'[^0-9]'), '');
-                        if (phone.length != 11) {
-                          return 'Telefone inválido';
-                        }
-                        return null;
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-  
-  Widget _buildProfessionalDataStep() {
-    return AnimatedBuilder(
-      animation: _stepControllers[1],
-      builder: (context, child) {
-        return Transform.scale(
-          scale: 0.9 + (_stepControllers[1].value * 0.1),
-          child: Opacity(
-            opacity: _stepControllers[1].value,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Form(
-                key: _professionalFormKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 24),
-                    
-                    // Categories selection
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: AppColors.primaryGreen.withOpacity(0.3),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.category_outlined,
-                                color: AppColors.primaryGreen,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'Categorias de Serviço',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: _availableCategories.map((category) {
-                              final isSelected = _selectedCategories.contains(category);
-                              return GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    if (isSelected) {
-                                      _selectedCategories.remove(category);
-                                    } else {
-                                      _selectedCategories.add(category);
-                                    }
-                                  });
-                                },
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    gradient: isSelected
-                                        ? const LinearGradient(
-                                            colors: [
-                                              Color(0xFF2E7D32),
-                                              Color(0xFF1B5E20),
-                                            ],
-                                          )
-                                        : null,
-                                    color: !isSelected
-                                        ? Colors.white.withOpacity(0.1)
-                                        : null,
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: isSelected
-                                          ? Colors.transparent
-                                          : Colors.white.withOpacity(0.2),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    category,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: isSelected
-                                          ? Colors.white
-                                          : Colors.white.withOpacity(0.7),
-                                      fontWeight: isSelected
-                                          ? FontWeight.bold
-                                          : FontWeight.normal,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ],
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Profession field
-                    _ModernTextField(
-                      controller: _professionController,
-                      label: 'Profissão Principal',
-                      icon: Icons.work_outline_rounded,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Por favor, insira sua profissão';
-                        }
-                        return null;
-                      },
-                    ),
-                    
-                    const SizedBox(height: 20),
-                    
-                    // Experience field
-                    _ModernTextField(
-                      controller: _experienceController,
-                      label: 'Anos de Experiência',
-                      icon: Icons.timer_outlined,
-                      keyboardType: TextInputType.number,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Por favor, insira seus anos de experiência';
-                        }
-                        return null;
-                      },
-                    ),
-                    
-                    const SizedBox(height: 20),
-                    
-                    // Description field
-                    _ModernTextField(
-                      controller: _descriptionController,
-                      label: 'Sobre você e seus serviços',
-                      icon: Icons.description_outlined,
-                      maxLines: 4,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Por favor, descreva seus serviços';
-                        }
-                        if (value.length < 50) {
-                          return 'Mínimo de 50 caracteres';
-                        }
-                        return null;
-                      },
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Info card
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppColors.primaryGreen.withOpacity(0.1),
-                            AppColors.mediumGreen.withOpacity(0.05),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: AppColors.primaryGreen.withOpacity(0.3),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.lightbulb_outline_rounded,
-                            color: AppColors.primaryGreen,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Uma boa descrição ajuda a conseguir mais clientes',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.white.withOpacity(0.7),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -989,12 +797,12 @@ class _ModernProfessionalRegistrationState
   
   Widget _buildPasswordStep() {
     return AnimatedBuilder(
-      animation: _stepControllers[2],
+      animation: _stepControllers[1],
       builder: (context, child) {
         return Transform.scale(
-          scale: 0.9 + (_stepControllers[2].value * 0.1),
+          scale: 0.9 + (_stepControllers[1].value * 0.1),
           child: Opacity(
-            opacity: _stepControllers[2].value,
+            opacity: _stepControllers[1].value,
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Form(
@@ -1004,45 +812,52 @@ class _ModernProfessionalRegistrationState
                   children: [
                     const SizedBox(height: 24),
                     
-                    // Security icon with animation
-                    Center(
-                      child: TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0.0, end: 1.0),
-                        duration: const Duration(milliseconds: 800),
-                        builder: (context, value, child) {
-                          return Transform.scale(
-                            scale: value,
-                            child: Container(
-                              width: 100,
-                              height: 100,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: LinearGradient(
-                                  colors: [
-                                    AppColors.primaryGreen.withOpacity(0.2),
-                                    AppColors.mediumGreen.withOpacity(0.1),
-                                  ],
+                    // Info card
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryGreen.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.primaryGreen.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.security,
+                            color: AppColors.primaryGreen,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Crie uma senha segura',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
                                 ),
-                              ),
-                              child: const Icon(
-                                Icons.security_rounded,
-                                color: AppColors.primaryGreen,
-                                size: 48,
-                              ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Mínimo de 8 caracteres com letras e números',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.white.withOpacity(0.7),
+                                  ),
+                                ),
+                              ],
                             ),
-                          );
-                        },
+                          ),
+                        ],
                       ),
                     ),
                     
                     const SizedBox(height: 32),
-                    
-                    // Password strength indicator
-                    _PasswordStrengthIndicator(
-                      password: _passwordController.text,
-                    ),
-                    
-                    const SizedBox(height: 24),
                     
                     // Password field
                     _ModernTextField(
@@ -1070,16 +885,21 @@ class _ModernProfessionalRegistrationState
                         if (value.length < 8) {
                           return 'A senha deve ter pelo menos 8 caracteres';
                         }
-                        if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)')
-                            .hasMatch(value)) {
-                          return 'Use letras maiúsculas, minúsculas e números';
+                        if (!RegExp(r'^(?=.*[A-Za-z])(?=.*\d).+$').hasMatch(value)) {
+                          return 'A senha deve conter letras e números';
                         }
                         return null;
                       },
                       onChanged: (value) {
+                        // Trigger rebuild for password strength indicator
                         setState(() {});
                       },
                     ),
+                    
+                    const SizedBox(height: 12),
+                    
+                    // Password strength indicator
+                    _buildPasswordStrengthIndicator(),
                     
                     const SizedBox(height: 20),
                     
@@ -1122,14 +942,80 @@ class _ModernProfessionalRegistrationState
     );
   }
   
+  Widget _buildPasswordStrengthIndicator() {
+    final password = _passwordController.text;
+    int strength = 0;
+    String strengthText = 'Muito fraca';
+    Color strengthColor = Colors.red;
+    
+    if (password.isNotEmpty) {
+      if (password.length >= 8) strength++;
+      if (RegExp(r'[A-Z]').hasMatch(password)) strength++;
+      if (RegExp(r'[a-z]').hasMatch(password)) strength++;
+      if (RegExp(r'[0-9]').hasMatch(password)) strength++;
+      if (RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password)) strength++;
+      
+      switch (strength) {
+        case 1:
+          strengthText = 'Fraca';
+          strengthColor = Colors.orange;
+          break;
+        case 2:
+          strengthText = 'Regular';
+          strengthColor = Colors.yellow;
+          break;
+        case 3:
+          strengthText = 'Boa';
+          strengthColor = Colors.lightGreen;
+          break;
+        case 4:
+        case 5:
+          strengthText = 'Forte';
+          strengthColor = AppColors.primaryGreen;
+          break;
+      }
+    }
+    
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 300),
+      opacity: password.isEmpty ? 0.0 : 1.0,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: LinearProgressIndicator(
+                  value: strength / 5,
+                  backgroundColor: Colors.white.withOpacity(0.1),
+                  valueColor: AlwaysStoppedAnimation<Color>(strengthColor),
+                  minHeight: 4,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                strengthText,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: strengthColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+  
   Widget _buildAddressStep() {
     return AnimatedBuilder(
-      animation: _stepControllers[3],
+      animation: _stepControllers[2],
       builder: (context, child) {
         return Transform.scale(
-          scale: 0.9 + (_stepControllers[3].value * 0.1),
+          scale: 0.9 + (_stepControllers[2].value * 0.1),
           child: Opacity(
-            opacity: _stepControllers[3].value,
+            opacity: _stepControllers[2].value,
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Form(
@@ -1150,12 +1036,15 @@ class _ModernProfessionalRegistrationState
                           ? const SizedBox(
                               width: 20,
                               height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
+                              child: Padding(
+                                padding: EdgeInsets.all(12.0),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               ),
                             )
                           : IconButton(
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.search,
                                 color: AppColors.primaryGreen,
                               ),
@@ -1195,7 +1084,7 @@ class _ModernProfessionalRegistrationState
                     
                     const SizedBox(height: 20),
                     
-                    // Number and complement
+                    // Number and complement row
                     Row(
                       children: [
                         Expanded(
@@ -1219,7 +1108,7 @@ class _ModernProfessionalRegistrationState
                           child: _ModernTextField(
                             controller: _complementController,
                             label: 'Complemento',
-                            icon: Icons.add_home_outlined,
+                            icon: Icons.home_work_outlined,
                           ),
                         ),
                       ],
@@ -1242,44 +1131,40 @@ class _ModernProfessionalRegistrationState
                     
                     const SizedBox(height: 20),
                     
-                    // City and state
-                    Row(
-                      children: [
-                        Expanded(
-                          flex: 3,
-                          child: _ModernTextField(
-                            controller: _cityController,
-                            label: 'Cidade',
-                            icon: Icons.location_city,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Obrigatório';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          flex: 1,
-                          child: _ModernTextField(
-                            controller: _stateController,
-                            label: 'UF',
-                            icon: Icons.map_outlined,
-                            textCapitalization: TextCapitalization.characters,
-                            inputFormatters: [
-                              LengthLimitingTextInputFormatter(2),
-                              FilteringTextInputFormatter.allow(RegExp(r'[A-Z]')),
-                            ],
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'UF';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
+                    // City field
+                    _ModernTextField(
+                      controller: _cityController,
+                      label: 'Cidade',
+                      icon: Icons.location_city,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor, insira a cidade';
+                        }
+                        return null;
+                      },
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // State field
+                    _ModernTextField(
+                      controller: _stateController,
+                      label: 'Estado',
+                      icon: Icons.map_outlined,
+                      textCapitalization: TextCapitalization.characters,
+                      inputFormatters: [
+                        LengthLimitingTextInputFormatter(2),
+                        FilteringTextInputFormatter.allow(RegExp(r'[A-Z]')),
                       ],
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor, insira o estado';
+                        }
+                        if (value.length != 2) {
+                          return 'Use a sigla do estado (ex: SP)';
+                        }
+                        return null;
+                      },
                     ),
                   ],
                 ),
@@ -1293,12 +1178,12 @@ class _ModernProfessionalRegistrationState
   
   Widget _buildDocumentsStep() {
     return AnimatedBuilder(
-      animation: _stepControllers[4],
+      animation: _stepControllers[3],
       builder: (context, child) {
         return Transform.scale(
-          scale: 0.9 + (_stepControllers[4].value * 0.1),
+          scale: 0.9 + (_stepControllers[3].value * 0.1),
           child: Opacity(
-            opacity: _stepControllers[4].value,
+            opacity: _stepControllers[3].value,
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Form(
@@ -1308,166 +1193,158 @@ class _ModernProfessionalRegistrationState
                   children: [
                     const SizedBox(height: 24),
                     
-                    // Document upload cards
-                    _DocumentUploadCard(
-                      title: 'RG - Frente',
-                      subtitle: 'Foto da frente do documento',
-                      icon: Icons.badge_outlined,
-                      file: _rgFrontImage,
-                      onTap: () => _pickImage('rg_front'),
-                      isRequired: true,
+                    // Title
+                    const Text(
+                      'Comprovante de Residência',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                     
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
                     
-                    _DocumentUploadCard(
-                      title: 'RG - Verso',
-                      subtitle: 'Foto do verso do documento',
-                      icon: Icons.badge_outlined,
-                      file: _rgBackImage,
-                      onTap: () => _pickImage('rg_back'),
-                      isRequired: true,
+                    Text(
+                      'Anexe um comprovante de residência recente (últimos 3 meses)',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white.withOpacity(0.7),
+                      ),
                     ),
                     
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 32),
                     
-                    _DocumentUploadCard(
-                      title: 'Comprovante de Endereço',
-                      subtitle: 'Conta de luz, água ou telefone',
-                      icon: Icons.home_work_outlined,
-                      file: _addressProofFile,
-                      onTap: () => _pickDocument('address'),
-                      isRequired: true,
+                    // Upload area
+                    GestureDetector(
+                      onTap: _pickDocument,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        height: 200,
+                        decoration: BoxDecoration(
+                          color: _addressProofFile != null
+                              ? AppColors.primaryGreen.withOpacity(0.1)
+                              : Colors.white.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: _addressProofFile != null
+                                ? AppColors.primaryGreen
+                                : Colors.white.withOpacity(0.2),
+                            width: 2,
+                            style: _addressProofFile != null
+                                ? BorderStyle.solid
+                                : BorderStyle.none,
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 300),
+                              child: Icon(
+                                _addressProofFile != null
+                                    ? Icons.check_circle
+                                    : Icons.cloud_upload_outlined,
+                                key: ValueKey(_addressProofFile != null),
+                                color: _addressProofFile != null
+                                    ? AppColors.primaryGreen
+                                    : Colors.white.withOpacity(0.5),
+                                size: 64,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              _addressProofFile != null
+                                  ? 'Arquivo anexado com sucesso!'
+                                  : 'Clique para anexar arquivo',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: _addressProofFile != null
+                                    ? AppColors.primaryGreen
+                                    : Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            if (_addressProofFile != null && _addressProofFileName != null)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 24),
+                                child: Text(
+                                  _addressProofFileName!,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.white.withOpacity(0.7),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              )
+                            else
+                              Text(
+                                'PDF, JPG, JPEG ou PNG',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white.withOpacity(0.5),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
                     ),
                     
                     const SizedBox(height: 24),
                     
-                    // Certificates section
+                    // Info card
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(16),
+                        color: AppColors.primaryGreen.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: AppColors.primaryGreen.withOpacity(0.3),
                         ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Row(
                         children: [
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.school_outlined,
-                                color: AppColors.primaryGreen,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'Certificados (Opcional)',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
+                          Icon(
+                            Icons.info_outline,
+                            color: AppColors.primaryGreen,
+                            size: 20,
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Adicione certificados para aumentar sua credibilidade',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.white.withOpacity(0.6),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Aceitamos: Conta de luz, água, telefone ou internet',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white.withOpacity(0.7),
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 16),
-                          
-                          // Certificate list
-                          if (_certificateFiles.isNotEmpty)
-                            ...List.generate(
-                              _certificateFiles.length,
-                              (index) => Padding(
-                                padding: const EdgeInsets.only(bottom: 8),
-                                child: Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.05),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.insert_drive_file_outlined,
-                                        color: AppColors.primaryGreen,
-                                        size: 20,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          'Certificado ${index + 1}',
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.close,
-                                          color: Colors.red,
-                                          size: 20,
-                                        ),
-                                        onPressed: () {
-                                          setState(() {
-                                            _certificateFiles.removeAt(index);
-                                          });
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          
-                          // Add certificate button
-                          if (_certificateFiles.length < 5)
-                            GestureDetector(
-                              onTap: () => _pickDocument('certificate'),
-                              child: Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: AppColors.primaryGreen.withOpacity(0.3),
-                                    style: BorderStyle.solid,
-                                    width: 2,
-                                  ),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(
-                                      Icons.add_circle_outline,
-                                      color: AppColors.primaryGreen,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Adicionar Certificado',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: AppColors.primaryGreen,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
                         ],
                       ),
                     ),
+                    
+                    if (_addressProofFile != null) ...[
+                      const SizedBox(height: 16),
+                      // Remove file button
+                      TextButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _addressProofFile = null;
+                            _addressProofFileName = null;
+                          });
+                        },
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          color: Colors.red,
+                        ),
+                        label: const Text(
+                          'Remover arquivo',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -1481,14 +1358,6 @@ class _ModernProfessionalRegistrationState
   Widget _buildNavigationButtons() {
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.5),
-        border: Border(
-          top: BorderSide(
-            color: Colors.white.withOpacity(0.1),
-          ),
-        ),
-      ),
       child: Row(
         children: [
           if (_currentStep > 0)
@@ -1497,7 +1366,6 @@ class _ModernProfessionalRegistrationState
                 onPressed: _previousStep,
                 text: 'Voltar',
                 isOutlined: true,
-                isProfessional: true,
               ),
             ),
           if (_currentStep > 0) const SizedBox(width: 16),
@@ -1505,117 +1373,11 @@ class _ModernProfessionalRegistrationState
             flex: 2,
             child: _ModernButton(
               onPressed: _isLoading ? null : _nextStep,
-              text: _currentStep == 4 ? 'Finalizar Cadastro' : 'Continuar',
+              text: _currentStep == 3 ? 'Finalizar Cadastro' : 'Continuar',
               isLoading: _isLoading,
-              isProfessional: true,
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// Document Upload Card Widget
-class _DocumentUploadCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final File? file;
-  final VoidCallback onTap;
-  final bool isRequired;
-
-  const _DocumentUploadCard({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.file,
-    required this.onTap,
-    this.isRequired = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: file != null
-              ? AppColors.primaryGreen.withOpacity(0.1)
-              : Colors.white.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: file != null
-                ? AppColors.primaryGreen.withOpacity(0.5)
-                : Colors.white.withOpacity(0.1),
-            width: file != null ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: file != null
-                    ? AppColors.primaryGreen.withOpacity(0.2)
-                    : Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                file != null ? Icons.check_circle : icon,
-                color: file != null
-                    ? AppColors.primaryGreen
-                    : Colors.white.withOpacity(0.5),
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      if (isRequired)
-                        const Text(
-                          ' *',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.red,
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    file != null ? 'Documento anexado' : subtitle,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: file != null
-                          ? AppColors.primaryGreen
-                          : Colors.white.withOpacity(0.6),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              file != null ? Icons.edit_outlined : Icons.upload_outlined,
-              color: Colors.white.withOpacity(0.5),
-              size: 20,
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -1719,14 +1481,12 @@ class _ModernButton extends StatelessWidget {
   final String text;
   final bool isOutlined;
   final bool isLoading;
-  final bool isProfessional;
 
   const _ModernButton({
     required this.onPressed,
     required this.text,
     this.isOutlined = false,
     this.isLoading = false,
-    this.isProfessional = false,
   });
 
   @override
@@ -1778,233 +1538,6 @@ class _ModernButton extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-// Password Strength Indicator Widget
-class _PasswordStrengthIndicator extends StatelessWidget {
-  final String password;
-
-  const _PasswordStrengthIndicator({
-    required this.password,
-  });
-
-  int _calculateStrength() {
-    if (password.isEmpty) return 0;
-    
-    int strength = 0;
-    if (password.length >= 8) strength++;
-    if (password.length >= 12) strength++;
-    if (RegExp(r'[A-Z]').hasMatch(password)) strength++;
-    if (RegExp(r'[a-z]').hasMatch(password)) strength++;
-    if (RegExp(r'[0-9]').hasMatch(password)) strength++;
-    if (RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password)) strength++;
-    
-    return (strength * 100 / 6).round();
-  }
-
-  String _getStrengthText() {
-    final strength = _calculateStrength();
-    if (strength < 30) return 'Fraca';
-    if (strength < 50) return 'Regular';
-    if (strength < 70) return 'Boa';
-    if (strength < 90) return 'Forte';
-    return 'Muito forte';
-  }
-
-  Color _getStrengthColor() {
-    final strength = _calculateStrength();
-    if (strength < 30) return Colors.red;
-    if (strength < 50) return Colors.orange;
-    if (strength < 70) return Colors.yellow;
-    if (strength < 90) return AppColors.primaryGreen;
-    return AppColors.primaryGreen;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final strength = _calculateStrength();
-    final color = _getStrengthColor();
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Força da senha',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.white.withOpacity(0.7),
-              ),
-            ),
-            if (password.isNotEmpty)
-              Text(
-                _getStrengthText(),
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: strength / 100,
-            minHeight: 8,
-            backgroundColor: Colors.white.withOpacity(0.1),
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// Success Dialog Widget
-class _SuccessDialog extends StatefulWidget {
-  final VoidCallback onContinue;
-
-  const _SuccessDialog({
-    required this.onContinue,
-  });
-
-  @override
-  State<_SuccessDialog> createState() => _SuccessDialogState();
-}
-
-class _SuccessDialogState extends State<_SuccessDialog>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _fadeAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
-    
-    _scaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutBack,
-    ));
-    
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeIn,
-    ));
-    
-    _controller.forward();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return FadeTransition(
-          opacity: _fadeAnimation,
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: Dialog(
-              backgroundColor: Colors.transparent,
-              child: Container(
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  color: AppColors.deepBlack,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: AppColors.primaryGreen.withOpacity(0.3),
-                  ),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Success icon with animation
-                    TweenAnimationBuilder<double>(
-                      tween: Tween(begin: 0.0, end: 1.0),
-                      duration: const Duration(milliseconds: 800),
-                      builder: (context, value, child) {
-                        return Transform.scale(
-                          scale: value,
-                          child: Container(
-                            width: 80,
-                            height: 80,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                colors: [
-                                  Color(0xFF2E7D32),
-                                  Color(0xFF1B5E20),
-                                ],
-                              ),
-                            ),
-                            child: const Icon(
-                              Icons.check_rounded,
-                              color: Colors.white,
-                              size: 48,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    const Text(
-                      'Cadastro realizado!',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 12),
-                    
-                    Text(
-                      'Sua conta profissional foi criada.\nAgora você pode começar a oferecer seus serviços!',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white.withOpacity(0.7),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 32),
-                    
-                    _ModernButton(
-                      onPressed: widget.onContinue,
-                      text: 'Começar',
-                      isProfessional: true,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 }
