@@ -325,8 +325,7 @@ class _ModernProfessionalRegistrationState
     });
     
     try {
-      final cepService = CepService();
-      final address = await cepService.fetchAddress(cep);
+      final address = await CepService.fetchAddressByCep(cep);
       
       if (address != null) {
         setState(() {
