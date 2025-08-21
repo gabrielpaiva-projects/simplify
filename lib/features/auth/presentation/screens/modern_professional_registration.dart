@@ -200,9 +200,6 @@ class _ModernProfessionalRegistrationState
     _rgController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
-    _professionController.dispose();
-    _descriptionController.dispose();
-    _experienceController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _cepController.dispose();
