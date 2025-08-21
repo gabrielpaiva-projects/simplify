@@ -11,6 +11,7 @@ import '../../data/models/address_model.dart';
 import '../../data/models/user_model.dart';
 import '../../data/services/cep_service.dart';
 import '../widgets/terms_and_conditions_step.dart';
+import 'professional_analysis_screen.dart';
 
 class ModernProfessionalRegistration extends StatefulWidget {
   const ModernProfessionalRegistration({super.key});
@@ -85,7 +86,6 @@ class _ModernProfessionalRegistrationState
   bool _isSearchingCep = false;
   File? _addressProofFile;
   String? _addressProofFileName;
-  Timer? _cepDebounceTimer;
   
   // Animation Controllers
   late AnimationController _progressController;
@@ -163,7 +163,6 @@ class _ModernProfessionalRegistrationState
   
   @override
   void dispose() {
-    _cepDebounceTimer?.cancel();
     _progressController.dispose();
     _fadeController.dispose();
     _slideController.dispose();
@@ -293,109 +292,17 @@ class _ModernProfessionalRegistrationState
       _isLoading = false;
     });
     
-    _showSuccessDialog();
+    // Navega para a tela de análise com confetes
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => const ProfessionalAnalysisScreen(),
+        ),
+      );
+    }
   }
   
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            color: AppColors.charcoalGrey,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: AppColors.primaryGreen.withOpacity(0.3),
-              width: 2,
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Icon
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.primaryGreen.withOpacity(0.2),
-                      AppColors.mediumGreen.withOpacity(0.1),
-                    ],
-                  ),
-                ),
-                child: Icon(
-                  Icons.access_time_filled,
-                  size: 40,
-                  color: AppColors.primaryGreen,
-                ),
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Title
-              const Text(
-                'Cadastro em Análise',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              
-              const SizedBox(height: 16),
-              
-              // Message
-              Text(
-                'Seu cadastro foi recebido com sucesso!\n\nNossa equipe irá analisar suas informações e você receberá um e-mail em até 48 horas com o resultado.',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white.withOpacity(0.7),
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              
-              const SizedBox(height: 32),
-              
-              // Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pushNamedAndRemoveUntil(
-                      '/login',
-                      (route) => false,
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryGreen,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Entendi',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+
   
   Future<void> _searchCep() async {
     final cep = _cepController.text.replaceAll(RegExp(r'[^0-9]'), '');

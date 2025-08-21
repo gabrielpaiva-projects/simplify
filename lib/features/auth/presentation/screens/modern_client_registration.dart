@@ -69,7 +69,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
   bool _isConfirmPasswordVisible = false;
   bool _isSearchingCep = false;
   bool _termsAccepted = false;
-  Timer? _cepDebounceTimer;
   
   // Animation Controllers
   late AnimationController _progressController;
@@ -161,7 +160,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
   
   @override
   void dispose() {
-    _cepDebounceTimer?.cancel();
     _progressController.dispose();
     _fadeController.dispose();
     _slideController.dispose();
