@@ -138,4 +138,5 @@ class ProfessionalModel extends UserModel {
 enum UserType {
   client,
   professional,
+  admin,
 }

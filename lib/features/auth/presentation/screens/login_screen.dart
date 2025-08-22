@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../widgets/modern_profile_selection_sheet.dart';
 import 'modern_client_registration.dart';
 import 'modern_professional_registration.dart';
 import '../../data/models/user_model.dart';
+import '../providers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -152,16 +154,24 @@ class _LoginScreenState extends State<LoginScreen>
     });
 
     try {
-      // Simular chamada de API
-      await Future.delayed(const Duration(seconds: 2));
-
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      
       final email = _emailController.text.trim();
       final password = _passwordController.text;
 
-      // Validação de exemplo
-      if (email == 'user@example.com' && password == 'password123') {
+      // Fazer login com Firebase
+      final success = await authProvider.signIn(
+        email: email,
+        password: password,
+      );
+
+      if (success) {
         if (mounted) {
           HapticFeedback.lightImpact();
+          
+          // Obter tipo de usuário para redirecionar corretamente
+          final userType = authProvider.userType;
+          
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Row(
@@ -179,17 +189,31 @@ class _LoginScreenState extends State<LoginScreen>
               margin: const EdgeInsets.all(20),
             ),
           );
+          
+          // TODO: Navegar para a tela apropriada baseado no tipo de usuário
+          // Por exemplo:
+          // if (userType == UserType.client) {
+          //   Navigator.pushReplacementNamed(context, '/client-home');
+          // } else if (userType == UserType.professional) {
+          //   Navigator.pushReplacementNamed(context, '/professional-home');
+          // } else if (userType == UserType.admin) {
+          //   Navigator.pushReplacementNamed(context, '/admin-dashboard');
+          // }
         }
       } else {
         if (mounted) {
           HapticFeedback.heavyImpact();
+          
+          // Obter mensagem de erro do provider
+          final errorMessage = authProvider.errorMessage ?? 'E-mail ou senha incorretos';
+          
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Row(
                 children: [
                   const Icon(Icons.error_outline, color: Colors.white),
                   const SizedBox(width: 12),
-                  const Text('E-mail ou senha incorretos'),
+                  Expanded(child: Text(errorMessage)),
                 ],
               ),
               backgroundColor: AppColors.error,

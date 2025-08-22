@@ -6,11 +6,13 @@ import 'dart:async';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../data/models/address_model.dart';
 import '../../data/models/user_model.dart';
 import '../../data/services/cep_service.dart';
 import '../widgets/terms_and_conditions_step.dart';
+import '../providers/auth_provider.dart';
 import 'professional_analysis_screen.dart';
 
 class ModernProfessionalRegistration extends StatefulWidget {
@@ -285,20 +287,84 @@ class _ModernProfessionalRegistrationState
       _isLoading = true;
     });
     
-    // TODO: Implement registration logic
-    await Future.delayed(const Duration(seconds: 2));
-    
-    setState(() {
-      _isLoading = false;
-    });
-    
-    // Navega para a tela de análise com confetes
-    if (mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => const ProfessionalAnalysisScreen(),
-        ),
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      
+      // Criar modelo de profissional com os dados do formulário
+      final professional = ProfessionalModel(
+        cpf: _cpfController.text.replaceAll(RegExp(r'[^0-9]'), ''),
+        fullName: _nameController.text.trim(),
+        rg: _rgController.text.replaceAll(RegExp(r'[^0-9]'), ''),
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        cep: _cepController.text.replaceAll(RegExp(r'[^0-9]'), ''),
+        street: _streetController.text.trim(),
+        number: _numberController.text.trim(),
+        complement: _complementController.text.trim().isEmpty ? null : _complementController.text.trim(),
+        neighborhood: _neighborhoodController.text.trim(),
+        city: _cityController.text.trim(),
+        state: _stateController.text.trim(),
+        addressProofPath: _addressProofFileName, // Salvar o nome do arquivo por enquanto
       );
+      
+      // Registrar no Firebase
+      final success = await authProvider.signUpProfessional(
+        professional: professional,
+      );
+      
+      if (success) {
+        // Navega para a tela de análise com confetes
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => const ProfessionalAnalysisScreen(),
+            ),
+          );
+        }
+      } else {
+        // Mostrar erro
+        if (mounted) {
+          final errorMessage = authProvider.errorMessage ?? 'Erro ao criar conta';
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text(errorMessage)),
+                ],
+              ),
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              margin: const EdgeInsets.all(20),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao criar conta: $e'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(20),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
   

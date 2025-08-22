@@ -8,6 +8,9 @@ import '../network/dio_client.dart';
 import '../network/network_info.dart';
 import '../utils/logger_service.dart';
 import '../../features/auth/data/services/cep_service.dart';
+import '../../features/auth/data/services/firebase_auth_service.dart';
+import '../../features/auth/data/repositories/auth_repository.dart';
+import '../../features/auth/presentation/providers/auth_provider.dart';
 
 final sl = GetIt.instance;
 
@@ -53,7 +56,23 @@ void _initAuth() {
     () => CepService(),
   );
   
-  // TODO: Add repositories, use cases, and providers as we refactor
+  sl.registerLazySingleton<FirebaseAuthService>(
+    () => FirebaseAuthService(),
+  );
+  
+  // Repositories
+  sl.registerLazySingleton<AuthRepository>(
+    () => AuthRepositoryImpl(
+      authService: sl(),
+    ),
+  );
+  
+  // Providers
+  sl.registerFactory<AuthProvider>(
+    () => AuthProvider(
+      authRepository: sl(),
+    ),
+  );
 }
 
 Future<void> _initExternal() async {
