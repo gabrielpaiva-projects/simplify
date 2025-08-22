@@ -25,9 +25,13 @@ class FirebaseAuthService {
 
       // Salvar dados adicionais no Firestore
       if (credential.user != null) {
+        // Garantir que isBlocked seja false ao criar a conta
+        final clientData = client.toJson();
+        clientData['isBlocked'] = false;
+        
         await _saveUserToFirestore(
           uid: credential.user!.uid,
-          userData: client.toJson(),
+          userData: clientData,
         );
 
         // Atualizar nome do usuário no Firebase Auth
@@ -55,9 +59,10 @@ class FirebaseAuthService {
 
       // Salvar dados adicionais no Firestore
       if (credential.user != null) {
-        // Garantir que isVerified seja false ao criar a conta
+        // Garantir que isVerified e isBlocked sejam false ao criar a conta
         final professionalData = professional.toJson();
         professionalData['isVerified'] = false; // Sempre false na criação
+        professionalData['isBlocked'] = false; // Sempre false na criação
         
         await _saveUserToFirestore(
           uid: credential.user!.uid,
@@ -373,6 +378,64 @@ class FirebaseAuthService {
       }).toList();
     } catch (e) {
       throw Exception('Erro ao buscar profissionais não verificados: $e');
+    }
+  }
+
+  // Verificar se o usuário está bloqueado
+  Future<bool> isUserBlocked(String uid) async {
+    try {
+      final userData = await getUserData(uid);
+      if (userData != null) {
+        return userData['isBlocked'] ?? false;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Bloquear ou desbloquear usuário (apenas admin pode fazer isso)
+  Future<void> blockUser(String userUid, bool blocked) async {
+    try {
+      // Verificar se o usuário atual é admin
+      final currentUserData = await getUserData(currentUser?.uid ?? '');
+      if (currentUserData?['userType'] != 'admin') {
+        throw Exception('Apenas administradores podem bloquear/desbloquear usuários');
+      }
+
+      // Atualizar status de bloqueio
+      await _firestore.collection('users').doc(userUid).update({
+        'isBlocked': blocked,
+        'blockedAt': blocked ? FieldValue.serverTimestamp() : null,
+        'blockedBy': blocked ? currentUser?.uid : null,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      throw Exception('Erro ao bloquear/desbloquear usuário: $e');
+    }
+  }
+
+  // Obter lista de usuários bloqueados (para admin)
+  Future<List<Map<String, dynamic>>> getBlockedUsers() async {
+    try {
+      // Verificar se o usuário atual é admin
+      final currentUserData = await getUserData(currentUser?.uid ?? '');
+      if (currentUserData?['userType'] != 'admin') {
+        throw Exception('Apenas administradores podem acessar esta lista');
+      }
+
+      final query = await _firestore
+          .collection('users')
+          .where('isBlocked', isEqualTo: true)
+          .get();
+
+      return query.docs.map((doc) {
+        final data = doc.data();
+        data['uid'] = doc.id;
+        return data;
+      }).toList();
+    } catch (e) {
+      throw Exception('Erro ao buscar usuários bloqueados: $e');
     }
   }
 }

@@ -175,10 +175,18 @@ class _LoginScreenState extends State<LoginScreen>
           // Recarregar dados do usuário para garantir que temos as informações mais recentes
           await authProvider.reloadUserData();
           
+          // Verificar se a conta está bloqueada (para qualquer tipo de usuário)
+          if (authProvider.isBlocked) {
+            // Mostrar dialog de conta bloqueada e fazer logout
+            await _showAccountBlockedDialog();
+            await authProvider.signOut();
+            return;
+          }
+          
           // Obter tipo de usuário para redirecionar corretamente
           final userType = authProvider.userType;
           
-          // Verificar se é profissional não verificado
+          // Verificar se é profissional não verificado (apenas profissionais têm verificação)
           if (userType == UserType.professional && !authProvider.isProfessionalVerified) {
             // Mostrar dialog de verificação pendente
             await _showVerificationPendingDialog();
@@ -259,6 +267,194 @@ class _LoginScreenState extends State<LoginScreen>
         });
       }
     }
+  }
+
+  Future<void> _showAccountBlockedDialog() async {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 400),
+            decoration: BoxDecoration(
+              color: isDarkMode ? AppColors.charcoalGrey : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Ícone de bloqueio
+                  TweenAnimationBuilder<double>(
+                    duration: const Duration(milliseconds: 600),
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    builder: (context, value, child) {
+                      return Transform.scale(
+                        scale: value,
+                        child: Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: AppColors.error.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.block,
+                            size: 40,
+                            color: AppColors.error,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Título
+                  Text(
+                    'Conta Bloqueada',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: isDarkMode ? Colors.white : AppColors.deepBlack,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Mensagem
+                  Text(
+                    'Sua conta foi temporariamente bloqueada. Entre em contato com o suporte para mais informações.',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: isDarkMode 
+                          ? Colors.white.withValues(alpha: 0.8)
+                          : AppColors.charcoalGrey,
+                      height: 1.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  
+                  const SizedBox(height: 12),
+                  
+                  // Box de informação
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDarkMode
+                          ? AppColors.error.withValues(alpha: 0.1)
+                          : AppColors.error.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.error.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.warning_amber_rounded,
+                          size: 20,
+                          color: AppColors.error,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Se você acredita que isso é um erro, entre em contato com nosso suporte.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: isDarkMode
+                                  ? Colors.red.shade300
+                                  : Colors.red.shade700,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Botões
+                  Column(
+                    children: [
+                      // Botão Entender
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.error,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'Entendi',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 12),
+                      
+                      // Link de suporte
+                      TextButton(
+                        onPressed: () {
+                          // TODO: Abrir suporte
+                          Navigator.of(context).pop();
+                        },
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.support_agent,
+                              size: 20,
+                              color: AppColors.primaryGreen,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Falar com Suporte',
+                              style: TextStyle(
+                                color: AppColors.primaryGreen,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _showVerificationPendingDialog() async {

@@ -12,6 +12,7 @@ abstract class UserModel {
   final String city;
   final String state;
   final UserType userType;
+  final bool isBlocked; // Flag para bloquear conta
 
   UserModel({
     required this.cpf,
@@ -26,6 +27,7 @@ abstract class UserModel {
     required this.city,
     required this.state,
     required this.userType,
+    this.isBlocked = false, // Por padrão, conta não bloqueada
   });
 
   Map<String, dynamic> toJson();
@@ -45,6 +47,7 @@ class ClientModel extends UserModel {
     required String neighborhood,
     required String city,
     required String state,
+    bool isBlocked = false,
   }) : super(
           cpf: cpf,
           fullName: fullName,
@@ -58,6 +61,7 @@ class ClientModel extends UserModel {
           city: city,
           state: state,
           userType: UserType.client,
+          isBlocked: isBlocked,
         );
 
   @override
@@ -75,6 +79,7 @@ class ClientModel extends UserModel {
       'city': city,
       'state': state,
       'userType': 'client',
+      'isBlocked': isBlocked,
     };
   }
 }
@@ -100,6 +105,7 @@ class ProfessionalModel extends UserModel {
     required String state,
     this.addressProofPath,
     this.isVerified = false, // Por padrão, profissional não verificado
+    bool isBlocked = false,
   }) : super(
           cpf: cpf,
           fullName: fullName,
@@ -113,6 +119,7 @@ class ProfessionalModel extends UserModel {
           city: city,
           state: state,
           userType: UserType.professional,
+          isBlocked: isBlocked,
         );
 
   @override
@@ -133,6 +140,7 @@ class ProfessionalModel extends UserModel {
       'userType': 'professional',
       'addressProofPath': addressProofPath,
       'isVerified': isVerified,
+      'isBlocked': isBlocked,
     };
   }
 }

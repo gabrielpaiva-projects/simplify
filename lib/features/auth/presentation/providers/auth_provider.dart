@@ -27,6 +27,7 @@ class AuthProvider extends ChangeNotifier {
   String? _errorMessage;
   bool _isLoading = false;
   bool _isProfessionalVerified = false;
+  bool _isBlocked = false;
 
   // Getters
   AuthStatus get status => _status;
@@ -38,6 +39,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated => _status == AuthStatus.authenticated;
   String? get currentUserId => _user?.uid;
   bool get isProfessionalVerified => _isProfessionalVerified;
+  bool get isBlocked => _isBlocked;
 
   // Inicializar provider
   void _init() {
@@ -67,11 +69,14 @@ class AuthProvider extends ChangeNotifier {
       (data) {
         _userData = data;
         if (data != null) {
+          // Verificar se a conta está bloqueada (para todos os tipos de usuário)
+          _isBlocked = data['isBlocked'] ?? false;
+          
           final typeString = data['userType'] as String?;
           switch (typeString) {
             case 'client':
               _userType = UserType.client;
-              _isProfessionalVerified = false;
+              _isProfessionalVerified = false; // Cliente não tem verificação
               break;
             case 'professional':
               _userType = UserType.professional;
@@ -79,7 +84,7 @@ class AuthProvider extends ChangeNotifier {
               break;
             case 'admin':
               _userType = UserType.admin;
-              _isProfessionalVerified = false;
+              _isProfessionalVerified = false; // Admin não precisa de verificação
               break;
           }
         }
@@ -186,6 +191,7 @@ class AuthProvider extends ChangeNotifier {
         _userData = null;
         _userType = null;
         _isProfessionalVerified = false;
+        _isBlocked = false;
         _status = AuthStatus.unauthenticated;
       },
     );
