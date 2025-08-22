@@ -1,0 +1,50 @@
+name: simplify_auth_module
+description: Módulo de autenticação completo para o app Simplify. Inclui login, cadastro de clientes e profissionais.
+version: 1.0.0
+homepage: https://github.com/seu-usuario/simplify_auth_module
+repository: https://github.com/seu-usuario/simplify_auth_module
+
+environment:
+  sdk: ^3.0.0
+  flutter: ">=3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # HTTP requests
+  http: ^1.2.0
+  
+  # File handling
+  file_picker: ^8.0.0
+  image_picker: ^1.0.7
+  
+  # Input formatting
+  mask_text_input_formatter: ^2.9.0
+  
+  # Permissions
+  permission_handler: ^11.0.1
+  
+  # Local storage (for token persistence)
+  shared_preferences: ^2.2.2
+  
+  # State management (optional, but recommended)
+  provider: ^6.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+flutter:
+  # This section identifies your package as a Flutter package
+  plugin:
+    platforms:
+      android:
+        package: com.simplify.auth_module
+        pluginClass: SimplifyAuthModule
+      ios:
+        pluginClass: SimplifyAuthModule
+      web:
+        pluginClass: SimplifyAuthModuleWeb
+        fileName: simplify_auth_module_web.dart

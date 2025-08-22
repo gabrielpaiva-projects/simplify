@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:simplify_auth_module/simplify_auth_module.dart';
 import 'core/theme/app_theme.dart';
 import 'core/routes/app_routes.dart';
 import 'features/splash/presentation/screens/splash_screen.dart';
 
 void main() {
+  // Initialize the auth module
+  SimplifyAuthModule.initialize(
+    baseUrl: 'https://api.simplify.com',
+    useDarkTheme: true,
+  );
+  
   runApp(const MyApp());
 }
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../core/constants/app_colors.dart';
 import '../widgets/modern_profile_selection_sheet.dart';
 import 'modern_client_registration.dart';
 import 'modern_professional_registration.dart';

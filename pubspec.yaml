@@ -35,20 +35,9 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   
-  # HTTP requests
-  http: ^1.2.0
-  
-  # File picker for document upload
-  file_picker: ^8.0.0
-  
-  # Input masks
-  mask_text_input_formatter: ^2.9.0
-  
-  # Image picker for photos
-  image_picker: ^1.0.7
-  
-  # Permission handler
-  permission_handler: ^11.3.0
+  # Auth Module Package - Local
+  simplify_auth_module:
+    path: packages/simplify_auth_module
 
 dev_dependencies:
   flutter_test:

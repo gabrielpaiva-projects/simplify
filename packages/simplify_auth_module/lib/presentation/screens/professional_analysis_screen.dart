@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'dart:math' as math;
-import '../../../../core/constants/app_colors.dart';
+import '../../core/constants/app_colors.dart';
 
 class ProfessionalAnalysisScreen extends StatefulWidget {
   const ProfessionalAnalysisScreen({super.key});
