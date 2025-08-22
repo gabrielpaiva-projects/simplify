@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../widgets/modern_profile_selection_sheet.dart';
 import 'modern_client_registration.dart';
 import 'modern_professional_registration.dart';
 import '../../data/models/user_model.dart';
+import '../providers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -152,44 +154,87 @@ class _LoginScreenState extends State<LoginScreen>
     });
 
     try {
-      // Simular chamada de API
-      await Future.delayed(const Duration(seconds: 2));
-
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      
       final email = _emailController.text.trim();
       final password = _passwordController.text;
 
-      // Validação de exemplo
-      if (email == 'user@example.com' && password == 'password123') {
+      // Fazer login com Firebase
+      final success = await authProvider.signIn(
+        email: email,
+        password: password,
+      );
+
+      if (success) {
         if (mounted) {
           HapticFeedback.lightImpact();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.check_circle, color: Colors.white),
-                  const SizedBox(width: 12),
-                  const Text('Login realizado com sucesso!'),
-                ],
+          
+          // Aguardar um momento para garantir que os dados do usuário sejam carregados
+          await Future.delayed(const Duration(milliseconds: 500));
+          
+          // Recarregar dados do usuário para garantir que temos as informações mais recentes
+          await authProvider.reloadUserData();
+          
+          // Verificar se a conta está bloqueada (para qualquer tipo de usuário)
+          if (authProvider.isBlocked) {
+            // Mostrar dialog de conta bloqueada e fazer logout
+            await _showAccountBlockedDialog();
+            await authProvider.signOut();
+            return;
+          }
+          
+          // Obter tipo de usuário para redirecionar corretamente
+          final userType = authProvider.userType;
+          
+          // Verificar se é profissional não verificado (apenas profissionais têm verificação)
+          if (userType == UserType.professional && !authProvider.isProfessionalVerified) {
+            // Mostrar dialog de verificação pendente
+            await _showVerificationPendingDialog();
+          } else {
+            // Mostrar mensagem de sucesso normal
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.check_circle, color: Colors.white),
+                    const SizedBox(width: 12),
+                    const Text('Login realizado com sucesso!'),
+                  ],
+                ),
+                backgroundColor: AppColors.success,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                margin: const EdgeInsets.all(20),
               ),
-              backgroundColor: AppColors.success,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              margin: const EdgeInsets.all(20),
-            ),
-          );
+            );
+          }
+          
+          // TODO: Navegar para a tela apropriada baseado no tipo de usuário
+          // Por exemplo:
+          // if (userType == UserType.client) {
+          //   Navigator.pushReplacementNamed(context, '/client-home');
+          // } else if (userType == UserType.professional) {
+          //   Navigator.pushReplacementNamed(context, '/professional-home');
+          // } else if (userType == UserType.admin) {
+          //   Navigator.pushReplacementNamed(context, '/admin-dashboard');
+          // }
         }
       } else {
         if (mounted) {
           HapticFeedback.heavyImpact();
+          
+          // Obter mensagem de erro do provider
+          final errorMessage = authProvider.errorMessage ?? 'E-mail ou senha incorretos';
+          
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Row(
                 children: [
                   const Icon(Icons.error_outline, color: Colors.white),
                   const SizedBox(width: 12),
-                  const Text('E-mail ou senha incorretos'),
+                  Expanded(child: Text(errorMessage)),
                 ],
               ),
               backgroundColor: AppColors.error,
@@ -222,6 +267,407 @@ class _LoginScreenState extends State<LoginScreen>
         });
       }
     }
+  }
+
+  Future<void> _showAccountBlockedDialog() async {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 400),
+            decoration: BoxDecoration(
+              color: isDarkMode ? AppColors.charcoalGrey : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Ícone de bloqueio
+                  TweenAnimationBuilder<double>(
+                    duration: const Duration(milliseconds: 600),
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    builder: (context, value, child) {
+                      return Transform.scale(
+                        scale: value,
+                        child: Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: AppColors.error.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.block,
+                            size: 40,
+                            color: AppColors.error,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Título
+                  Text(
+                    'Conta Bloqueada',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: isDarkMode ? Colors.white : AppColors.deepBlack,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Mensagem
+                  Text(
+                    'Sua conta foi temporariamente bloqueada. Entre em contato com o suporte para mais informações.',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: isDarkMode 
+                          ? Colors.white.withValues(alpha: 0.8)
+                          : AppColors.charcoalGrey,
+                      height: 1.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  
+                  const SizedBox(height: 12),
+                  
+                  // Box de informação
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDarkMode
+                          ? AppColors.error.withValues(alpha: 0.1)
+                          : AppColors.error.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.error.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.warning_amber_rounded,
+                          size: 20,
+                          color: AppColors.error,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Se você acredita que isso é um erro, entre em contato com nosso suporte.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: isDarkMode
+                                  ? Colors.red.shade300
+                                  : Colors.red.shade700,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Botões
+                  Column(
+                    children: [
+                      // Botão Entender
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.error,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'Entendi',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 12),
+                      
+                      // Link de suporte
+                      TextButton(
+                        onPressed: () {
+                          // TODO: Abrir suporte
+                          Navigator.of(context).pop();
+                        },
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.support_agent,
+                              size: 20,
+                              color: AppColors.primaryGreen,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Falar com Suporte',
+                              style: TextStyle(
+                                color: AppColors.primaryGreen,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showVerificationPendingDialog() async {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 400),
+            decoration: BoxDecoration(
+              color: isDarkMode ? AppColors.charcoalGrey : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Ícone animado
+                  TweenAnimationBuilder<double>(
+                    duration: const Duration(milliseconds: 600),
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    builder: (context, value, child) {
+                      return Transform.scale(
+                        scale: value,
+                        child: Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.access_time_filled,
+                            size: 40,
+                            color: Colors.orange,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Título
+                  Text(
+                    'Documentação em Análise',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: isDarkMode ? Colors.white : AppColors.deepBlack,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Mensagem
+                  Text(
+                    'Sua documentação está sendo validada pelos nossos colaboradores.',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: isDarkMode 
+                          ? Colors.white.withValues(alpha: 0.8)
+                          : AppColors.charcoalGrey,
+                      height: 1.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  
+                  const SizedBox(height: 12),
+                  
+                  // Informação adicional
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDarkMode
+                          ? Colors.orange.withValues(alpha: 0.1)
+                          : Colors.orange.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.orange.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 20,
+                          color: Colors.orange.shade700,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Você receberá uma notificação assim que a verificação for concluída.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: isDarkMode
+                                  ? Colors.orange.shade300
+                                  : Colors.orange.shade700,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Botões
+                  Row(
+                    children: [
+                      // Botão Sair
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () async {
+                            Navigator.of(context).pop();
+                            // Fazer logout
+                            final authProvider = Provider.of<AuthProvider>(
+                              context, 
+                              listen: false,
+                            );
+                            await authProvider.signOut();
+                          },
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(
+                                color: isDarkMode
+                                    ? Colors.white.withValues(alpha: 0.3)
+                                    : AppColors.lightGrey,
+                              ),
+                            ),
+                          ),
+                          child: Text(
+                            'Sair',
+                            style: TextStyle(
+                              color: isDarkMode
+                                  ? Colors.white.withValues(alpha: 0.8)
+                                  : AppColors.charcoalGrey,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      
+                      const SizedBox(width: 12),
+                      
+                      // Botão Continuar
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            // TODO: Navegar para home com funcionalidades limitadas
+                            // Navigator.pushReplacementNamed(context, '/professional-home');
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryGreen,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'Continuar',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 12),
+                  
+                  // Link de ajuda
+                  TextButton(
+                    onPressed: () {
+                      // TODO: Abrir suporte ou FAQ
+                    },
+                    child: Text(
+                      'Precisa de ajuda? Fale conosco',
+                      style: TextStyle(
+                        color: AppColors.primaryGreen,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override

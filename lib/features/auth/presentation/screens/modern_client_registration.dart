@@ -3,11 +3,13 @@ import 'package:flutter/services.dart';
 import 'dart:ui';
 import 'dart:async';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../data/models/address_model.dart';
 import '../../data/models/user_model.dart';
 import '../../data/services/cep_service.dart';
 import '../widgets/terms_and_conditions_step.dart';
+import '../providers/auth_provider.dart';
 
 class ModernClientRegistration extends StatefulWidget {
   const ModernClientRegistration({super.key});
@@ -270,16 +272,78 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
       _isLoading = true;
     });
     
-    // TODO: Implement registration logic
-    await Future.delayed(const Duration(seconds: 2));
-    
-    setState(() {
-      _isLoading = false;
-    });
-    
-    // Show success and navigate
-    if (mounted) {
-      _showSuccessDialog();
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      
+      // Criar modelo de cliente com os dados do formulário
+      final client = ClientModel(
+        cpf: _cpfController.text.replaceAll(RegExp(r'[^0-9]'), ''),
+        fullName: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        cep: _cepController.text.replaceAll(RegExp(r'[^0-9]'), ''),
+        street: _streetController.text.trim(),
+        number: _numberController.text.trim(),
+        complement: _complementController.text.trim().isEmpty ? null : _complementController.text.trim(),
+        neighborhood: _neighborhoodController.text.trim(),
+        city: _cityController.text.trim(),
+        state: _stateController.text.trim(),
+      );
+      
+      // Registrar no Firebase
+      final success = await authProvider.signUpClient(
+        client: client,
+      );
+      
+      if (success) {
+        // Show success and navigate
+        if (mounted) {
+          _showSuccessDialog();
+        }
+      } else {
+        // Mostrar erro
+        if (mounted) {
+          final errorMessage = authProvider.errorMessage ?? 'Erro ao criar conta';
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text(errorMessage)),
+                ],
+              ),
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              margin: const EdgeInsets.all(20),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao criar conta: $e'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(20),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
   
