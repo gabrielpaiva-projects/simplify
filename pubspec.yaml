@@ -49,6 +49,33 @@ dependencies:
   
   # Permission handler
   permission_handler: ^11.3.0
+  
+  # State management
+  provider: ^6.1.1
+  
+  # HTTP client with interceptors
+  dio: ^5.4.0
+  
+  # Local storage
+  shared_preferences: ^2.2.2
+  
+  # Dependency injection
+  get_it: ^7.6.7
+  
+  # Equatable for object comparison
+  equatable: ^2.0.5
+  
+  # Functional programming
+  dartz: ^0.10.1
+  
+  # JSON serialization
+  json_annotation: ^4.8.1
+  
+  # Connectivity check
+  connectivity_plus: ^5.0.2
+  
+  # Logger
+  logger: ^2.0.2+1
 
 dev_dependencies:
   flutter_test:
@@ -63,6 +90,10 @@ dev_dependencies:
   
   # Flutter Launcher Icons - para configurar ícones do app
   flutter_launcher_icons: ^0.13.1
+  
+  # Code generation
+  build_runner: ^2.4.7
+  json_serializable: ^6.7.1
 
 # Configuração dos ícones do app
 flutter_launcher_icons:
