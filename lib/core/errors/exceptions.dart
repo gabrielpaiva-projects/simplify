@@ -1,0 +1,54 @@
+/// Base exception class
+class AppException implements Exception {
+  final String message;
+  final String? code;
+  final dynamic data;
+
+  AppException({
+    required this.message,
+    this.code,
+    this.data,
+  });
+
+  @override
+  String toString() => 'AppException: $message ${code != null ? '(Code: $code)' : ''}';
+}
+
+/// Server exception
+class ServerException extends AppException {
+  ServerException({
+    required super.message,
+    super.code,
+    super.data,
+  });
+}
+
+/// Cache exception
+class CacheException extends AppException {
+  CacheException({
+    required super.message,
+    super.code,
+    super.data,
+  });
+}
+
+/// Network exception
+class NetworkException extends AppException {
+  NetworkException({
+    required super.message,
+    super.code,
+    super.data,
+  });
+}
+
+/// Validation exception
+class ValidationException extends AppException {
+  final Map<String, List<String>>? errors;
+
+  ValidationException({
+    required super.message,
+    super.code,
+    super.data,
+    this.errors,
+  });
+}
