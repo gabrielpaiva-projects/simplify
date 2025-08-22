@@ -169,6 +169,12 @@ class _LoginScreenState extends State<LoginScreen>
         if (mounted) {
           HapticFeedback.lightImpact();
           
+          // Aguardar um momento para garantir que os dados do usuário sejam carregados
+          await Future.delayed(const Duration(milliseconds: 500));
+          
+          // Recarregar dados do usuário para garantir que temos as informações mais recentes
+          await authProvider.reloadUserData();
+          
           // Obter tipo de usuário para redirecionar corretamente
           final userType = authProvider.userType;
           

@@ -100,18 +100,23 @@ class AuthProvider extends ChangeNotifier {
       password: password,
     );
 
-    return result.fold(
-      (error) {
-        _setError(error);
-        _setLoading(false);
-        return false;
-      },
-      (credential) {
-        _user = credential?.user;
-        _setLoading(false);
-        return true;
-      },
-    );
+    if (result.isRight()) {
+      final credential = result.getOrElse(() => null);
+      _user = credential?.user;
+      
+      // Carregar dados do usuário imediatamente após o login
+      if (_user != null) {
+        await _loadUserData();
+      }
+      
+      _setLoading(false);
+      return true;
+    } else {
+      final error = result.fold((l) => l, (r) => '');
+      _setError(error);
+      _setLoading(false);
+      return false;
+    }
   }
 
   // Cadastro de Cliente
@@ -176,9 +181,11 @@ class AuthProvider extends ChangeNotifier {
         _setError(error);
       },
       (_) {
+        // Limpar todos os dados do usuário
         _user = null;
         _userData = null;
         _userType = null;
+        _isProfessionalVerified = false;
         _status = AuthStatus.unauthenticated;
       },
     );
