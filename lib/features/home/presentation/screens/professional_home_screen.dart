@@ -742,7 +742,7 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
-            childAspectRatio: constraints.width < 400 ? 1.8 : 1.5,
+            childAspectRatio: constraints.maxWidth < 400 ? 1.8 : 1.5,
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
           ),
@@ -762,7 +762,7 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                       ? _cardControllers[index].value 
                       : 1.0,
                   child: Container(
-                    padding: EdgeInsets.all(constraints.width < 400 ? 16 : 20),
+                    padding: EdgeInsets.all(constraints.maxWidth < 400 ? 16 : 20),
                     decoration: BoxDecoration(
                       color: isDarkMode ? AppColors.charcoalGrey : Colors.white,
                       borderRadius: BorderRadius.circular(16),
@@ -791,7 +791,7 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                                 child: Icon(
                                   stat['icon'] as IconData,
                                   color: stat['color'] as Color,
-                                  size: constraints.width < 400 ? 20 : 24,
+                                  size: constraints.maxWidth < 400 ? 20 : 24,
                                 ),
                               ),
                             ),
@@ -809,7 +809,7 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                                   stat['change'] as String,
                                   style: TextStyle(
                                     color: AppColors.success,
-                                    fontSize: constraints.width < 400 ? 11 : 12,
+                                    fontSize: constraints.maxWidth < 400 ? 11 : 12,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -826,7 +826,7 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                               child: Text(
                                 stat['value'] as String,
                                 style: TextStyle(
-                                  fontSize: constraints.width < 400 ? 20 : 24,
+                                  fontSize: constraints.maxWidth < 400 ? 20 : 24,
                                   fontWeight: FontWeight.bold,
                                   color: isDarkMode ? Colors.white : AppColors.deepBlack,
                                 ),
@@ -836,7 +836,7 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                             Text(
                               stat['title'] as String,
                               style: TextStyle(
-                                fontSize: constraints.width < 400 ? 12 : 14,
+                                fontSize: constraints.maxWidth < 400 ? 12 : 14,
                                 color: isDarkMode
                                     ? Colors.white.withValues(alpha: 0.6)
                                     : AppColors.charcoalGrey.withValues(alpha: 0.7),
