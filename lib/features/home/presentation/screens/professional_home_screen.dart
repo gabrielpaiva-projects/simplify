@@ -29,6 +29,7 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
   // State
   int _selectedMenuIndex = 0;
   bool _isMenuExpanded = true;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   
   @override
   void initState() {
@@ -110,60 +111,62 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth > 1200;
     final isTablet = screenWidth > 600 && screenWidth <= 1200;
+    final isMobile = screenWidth <= 600;
     
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: isDarkMode ? AppColors.deepBlack : AppColors.iceWhite,
-      body: Row(
-        children: [
-          // Side Navigation Menu (Desktop/Tablet)
-          if (isDesktop || isTablet)
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              width: _isMenuExpanded ? 280 : 80,
-              child: _buildSideMenu(isDarkMode),
-            ),
-          
-          // Main Content
-          Expanded(
-            child: Column(
-              children: [
-                // Top Bar
-                _buildTopBar(isDarkMode, isDesktop, isTablet),
-                
-                // Dashboard Content
-                Expanded(
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: _buildDashboardContent(isDarkMode),
+      drawer: isMobile ? _buildMobileDrawer(isDarkMode) : null,
+      body: SafeArea(
+        child: Row(
+          children: [
+            // Side Navigation Menu (Desktop/Tablet)
+            if (isDesktop || isTablet)
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: _isMenuExpanded ? 280 : 80,
+                child: _buildSideMenu(isDarkMode),
+              ),
+            
+            // Main Content
+            Expanded(
+              child: Column(
+                children: [
+                  // Top Bar
+                  _buildTopBar(isDarkMode, isDesktop, isTablet),
+                  
+                  // Dashboard Content
+                  Expanded(
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: SlideTransition(
+                        position: _slideAnimation,
+                        child: _buildDashboardContent(isDarkMode),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       
       // Bottom Navigation (Mobile)
-      bottomNavigationBar: (!isDesktop && !isTablet)
+      bottomNavigationBar: isMobile
           ? _buildBottomNavigation(isDarkMode)
           : null,
     );
   }
   
+  Widget _buildMobileDrawer(bool isDarkMode) {
+    return Drawer(
+      backgroundColor: isDarkMode ? AppColors.greyBlack : Colors.white,
+      child: _buildMenuContent(isDarkMode, true),
+    );
+  }
+  
   Widget _buildSideMenu(bool isDarkMode) {
-    final menuItems = [
-      {'icon': Icons.dashboard_rounded, 'label': 'Dashboard', 'badge': null},
-      {'icon': Icons.calendar_month_rounded, 'label': 'Agenda', 'badge': '3'},
-      {'icon': Icons.people_rounded, 'label': 'Clientes', 'badge': null},
-      {'icon': Icons.medical_services_rounded, 'label': 'Serviços', 'badge': null},
-      {'icon': Icons.attach_money_rounded, 'label': 'Financeiro', 'badge': null},
-      {'icon': Icons.bar_chart_rounded, 'label': 'Relatórios', 'badge': null},
-      {'icon': Icons.settings_rounded, 'label': 'Configurações', 'badge': null},
-    ];
-    
     return Container(
       decoration: BoxDecoration(
         color: isDarkMode ? AppColors.greyBlack : Colors.white,
@@ -175,7 +178,22 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
           ),
         ],
       ),
-      child: Column(
+      child: _buildMenuContent(isDarkMode, false),
+    );
+  }
+  
+  Widget _buildMenuContent(bool isDarkMode, bool isMobile) {
+    final menuItems = [
+      {'icon': Icons.dashboard_rounded, 'label': 'Dashboard', 'badge': null},
+      {'icon': Icons.calendar_month_rounded, 'label': 'Agenda', 'badge': '3'},
+      {'icon': Icons.people_rounded, 'label': 'Clientes', 'badge': null},
+      {'icon': Icons.medical_services_rounded, 'label': 'Serviços', 'badge': null},
+      {'icon': Icons.attach_money_rounded, 'label': 'Financeiro', 'badge': null},
+      {'icon': Icons.bar_chart_rounded, 'label': 'Relatórios', 'badge': null},
+      {'icon': Icons.settings_rounded, 'label': 'Configurações', 'badge': null},
+    ];
+    
+    return Column(
         children: [
           // Logo/Brand
           Container(
@@ -257,6 +275,10 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                           _selectedMenuIndex = index;
                         });
                         HapticFeedback.lightImpact();
+                        // Close drawer if mobile
+                        if (isMobile) {
+                          Navigator.of(context).pop();
+                        }
                       },
                       borderRadius: BorderRadius.circular(12),
                       child: AnimatedContainer(
@@ -330,28 +352,28 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
             ),
           ),
           
-          // Toggle Menu Button
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: IconButton(
-              onPressed: () {
-                setState(() {
-                  _isMenuExpanded = !_isMenuExpanded;
-                });
-              },
-              icon: Icon(
-                _isMenuExpanded
-                    ? Icons.keyboard_arrow_left
-                    : Icons.keyboard_arrow_right,
-                color: isDarkMode
-                    ? Colors.white.withValues(alpha: 0.6)
-                    : AppColors.charcoalGrey,
+          // Toggle Menu Button (only for desktop/tablet)
+          if (!isMobile)
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: IconButton(
+                onPressed: () {
+                  setState(() {
+                    _isMenuExpanded = !_isMenuExpanded;
+                  });
+                },
+                icon: Icon(
+                  _isMenuExpanded
+                      ? Icons.keyboard_arrow_left
+                      : Icons.keyboard_arrow_right,
+                  color: isDarkMode
+                      ? Colors.white.withValues(alpha: 0.6)
+                      : AppColors.charcoalGrey,
+                ),
               ),
             ),
-          ),
         ],
-      ),
-    );
+      );
   }
   
   Widget _buildTopBar(bool isDarkMode, bool isDesktop, bool isTablet) {
@@ -377,7 +399,7 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
           if (!isDesktop && !isTablet)
             IconButton(
               onPressed: () {
-                // Open drawer
+                _scaffoldKey.currentState?.openDrawer();
               },
               icon: Icon(
                 Icons.menu_rounded,
@@ -597,8 +619,13 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
   }
   
   Widget _buildDashboardContent(bool isDarkMode) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth > 1200;
+    final isTablet = screenWidth > 600 && screenWidth <= 1200;
+    final isMobile = screenWidth <= 600;
+    
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(isMobile ? 16 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -607,50 +634,76 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
           
           const SizedBox(height: 24),
           
-          // Charts and Recent Activities Row
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Chart
-              Expanded(
-                flex: 2,
-                child: _buildChartCard(isDarkMode),
+          // Charts and Recent Activities - Responsive Layout
+          if (isMobile) ...[
+            // Stack vertically on mobile
+            _buildChartCard(isDarkMode),
+            const SizedBox(height: 16),
+            _buildRecentActivitiesCard(isDarkMode),
+          ] else ...[
+            // Side by side on tablet/desktop
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Chart
+                  Expanded(
+                    flex: isDesktop ? 2 : 1,
+                    child: _buildChartCard(isDarkMode),
+                  ),
+                  
+                  const SizedBox(width: 24),
+                  
+                  // Recent Activities
+                  Expanded(
+                    flex: 1,
+                    child: _buildRecentActivitiesCard(isDarkMode),
+                  ),
+                ],
               ),
-              
-              const SizedBox(width: 24),
-              
-              // Recent Activities
-              Expanded(
-                child: _buildRecentActivitiesCard(isDarkMode),
-              ),
-            ],
-          ),
+            ),
+          ],
           
           const SizedBox(height: 24),
           
-          // Appointments and Tasks Row
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Today's Appointments
-              Expanded(
-                child: _buildAppointmentsCard(isDarkMode),
+          // Appointments and Tasks - Responsive Layout
+          if (isMobile) ...[
+            // Stack vertically on mobile
+            _buildAppointmentsCard(isDarkMode),
+            const SizedBox(height: 16),
+            _buildTasksCard(isDarkMode),
+          ] else ...[
+            // Side by side on tablet/desktop
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Today's Appointments
+                  Expanded(
+                    child: _buildAppointmentsCard(isDarkMode),
+                  ),
+                  
+                  const SizedBox(width: 24),
+                  
+                  // Tasks
+                  Expanded(
+                    child: _buildTasksCard(isDarkMode),
+                  ),
+                ],
               ),
-              
-              const SizedBox(width: 24),
-              
-              // Tasks
-              Expanded(
-                child: _buildTasksCard(isDarkMode),
-              ),
-            ],
-          ),
+            ),
+          ],
         ],
       ),
     );
   }
   
   Widget _buildStatsCards(bool isDarkMode) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final crossAxisCount = screenWidth > 1200 ? 4 : 
+                           screenWidth > 900 ? 3 : 
+                           screenWidth > 600 ? 2 : 1;
+    
     final stats = [
       {
         'title': 'Consultas Hoje',
@@ -682,102 +735,122 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
       },
     ];
     
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 300,
-        childAspectRatio: 1.5,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-      ),
-      itemCount: stats.length,
-      itemBuilder: (context, index) {
-        final stat = stats[index];
-        
-        return AnimatedBuilder(
-          animation: _cardControllers[index],
-          builder: (context, child) {
-            return Transform.scale(
-              scale: _cardControllers[index].value,
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: isDarkMode ? AppColors.charcoalGrey : Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            childAspectRatio: constraints.width < 400 ? 1.8 : 1.5,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+          ),
+          itemCount: stats.length,
+          itemBuilder: (context, index) {
+            if (index >= stats.length) return const SizedBox();
+            
+            final stat = stats[index];
+            
+            return AnimatedBuilder(
+              animation: index < _cardControllers.length 
+                  ? _cardControllers[index] 
+                  : _cardControllers.last,
+              builder: (context, child) {
+                return Transform.scale(
+                  scale: index < _cardControllers.length 
+                      ? _cardControllers[index].value 
+                      : 1.0,
+                  child: Container(
+                    padding: EdgeInsets.all(constraints.width < 400 ? 16 : 20),
+                    decoration: BoxDecoration(
+                      color: isDarkMode ? AppColors.charcoalGrey : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: (stat['color'] as Color).withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            stat['icon'] as IconData,
-                            color: stat['color'] as Color,
-                            size: 24,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.success.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            stat['change'] as String,
-                            style: TextStyle(
-                              color: AppColors.success,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Flexible(
+                              child: Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: (stat['color'] as Color).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(
+                                  stat['icon'] as IconData,
+                                  color: stat['color'] as Color,
+                                  size: constraints.width < 400 ? 20 : 24,
+                                ),
+                              ),
                             ),
-                          ),
+                            Flexible(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.success.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  stat['change'] as String,
+                                  style: TextStyle(
+                                    color: AppColors.success,
+                                    fontSize: constraints.width < 400 ? 11 : 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                stat['value'] as String,
+                                style: TextStyle(
+                                  fontSize: constraints.width < 400 ? 20 : 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDarkMode ? Colors.white : AppColors.deepBlack,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              stat['title'] as String,
+                              style: TextStyle(
+                                fontSize: constraints.width < 400 ? 12 : 14,
+                                color: isDarkMode
+                                    ? Colors.white.withValues(alpha: 0.6)
+                                    : AppColors.charcoalGrey.withValues(alpha: 0.7),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          stat['value'] as String,
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: isDarkMode ? Colors.white : AppColors.deepBlack,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          stat['title'] as String,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: isDarkMode
-                                ? Colors.white.withValues(alpha: 0.6)
-                                : AppColors.charcoalGrey.withValues(alpha: 0.7),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             );
           },
         );
@@ -787,7 +860,7 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
   
   Widget _buildChartCard(bool isDarkMode) {
     return Container(
-      height: 300,
+      constraints: const BoxConstraints(minHeight: 300),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDarkMode ? AppColors.charcoalGrey : Colors.white,
@@ -867,7 +940,7 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
     ];
     
     return Container(
-      height: 300,
+      constraints: const BoxConstraints(minHeight: 300),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDarkMode ? AppColors.charcoalGrey : Colors.white,
@@ -968,7 +1041,7 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
     ];
     
     return Container(
-      height: 350,
+      constraints: const BoxConstraints(minHeight: 350, maxHeight: 400),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDarkMode ? AppColors.charcoalGrey : Colors.white,
@@ -1093,7 +1166,7 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
     ];
     
     return Container(
-      height: 350,
+      constraints: const BoxConstraints(minHeight: 350, maxHeight: 400),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDarkMode ? AppColors.charcoalGrey : Colors.white,
