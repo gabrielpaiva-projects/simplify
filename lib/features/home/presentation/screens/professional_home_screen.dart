@@ -356,7 +356,7 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
   
   Widget _buildTopBar(bool isDarkMode, bool isDesktop, bool isTablet) {
     final authProvider = context.watch<AuthProvider>();
-    final userName = authProvider.currentUser?.name ?? 'Profissional';
+    final userName = authProvider.userData?['name'] ?? 'Profissional';
     
     return Container(
       height: 80,
@@ -1258,7 +1258,7 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
     );
     
     if (shouldLogout == true) {
-      await authProvider.logout();
+      await authProvider.signOut();
       if (mounted) {
         Navigator.of(context).pushReplacementNamed('/login');
       }
