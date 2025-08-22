@@ -211,15 +211,18 @@ class _LoginScreenState extends State<LoginScreen>
             );
           }
           
-          // TODO: Navegar para a tela apropriada baseado no tipo de usuário
-          // Por exemplo:
-          // if (userType == UserType.client) {
-          //   Navigator.pushReplacementNamed(context, '/client-home');
-          // } else if (userType == UserType.professional) {
-          //   Navigator.pushReplacementNamed(context, '/professional-home');
-          // } else if (userType == UserType.admin) {
-          //   Navigator.pushReplacementNamed(context, '/admin-dashboard');
-          // }
+          // Navegar para a tela apropriada baseado no tipo de usuário
+          final userType = authProvider.userType;
+          if (userType == UserType.client) {
+            Navigator.pushReplacementNamed(context, '/home'); // Por enquanto vai para a mesma tela
+          } else if (userType == UserType.professional) {
+            Navigator.pushReplacementNamed(context, '/professional-home');
+          } else if (userType == UserType.admin) {
+            Navigator.pushReplacementNamed(context, '/home'); // Admin usa a mesma tela por enquanto
+          } else {
+            // Fallback para a home padrão se o tipo não for identificado
+            Navigator.pushReplacementNamed(context, '/home');
+          }
         }
       } else {
         if (mounted) {
