@@ -359,7 +359,7 @@ class _LoginScreenState extends State<LoginScreen>
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'Este processo pode levar até 48 horas úteis. Você receberá uma notificação assim que a verificação for concluída.',
+                            'Você receberá uma notificação assim que a verificação for concluída.',
                             style: TextStyle(
                               fontSize: 13,
                               color: isDarkMode
