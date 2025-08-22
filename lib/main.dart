@@ -23,20 +23,23 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        // Add your providers here as you refactor each feature
-        // Example:
-        // ChangeNotifierProvider(create: (_) => di.sl<AuthProvider>()),
-      ],
-      child: MaterialApp(
-        title: 'Simplify',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.darkTheme, // Usando tema escuro por padrão
-        initialRoute: AppRoutes.splash,
-        onGenerateRoute: AppRoutes.generateRoute,
-        home: const SplashScreen(),
-      ),
+    // TODO: Wrap with MultiProvider when providers are ready
+    // return MultiProvider(
+    //   providers: [
+    //     // Add your providers here as you refactor each feature
+    //     // Example:
+    //     // ChangeNotifierProvider(create: (_) => di.sl<AuthProvider>()),
+    //   ],
+    //   child: MaterialApp(...),
+    // );
+    
+    return MaterialApp(
+      title: 'Simplify',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.darkTheme, // Usando tema escuro por padrão
+      initialRoute: AppRoutes.splash,
+      onGenerateRoute: AppRoutes.generateRoute,
+      home: const SplashScreen(),
     );
   }
 }
