@@ -28,8 +28,8 @@ class AuthDrawer extends StatelessWidget {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      AppColors.primaryBlue,
-                      AppColors.primaryBlue.withValues(alpha: 0.7),
+                      AppColors.primaryGreen,
+                      AppColors.primaryGreen.withValues(alpha: 0.7),
                     ],
                   ),
                 ),
@@ -44,7 +44,7 @@ class AuthDrawer extends StatelessWidget {
                       child: Icon(
                         _getIconForUserType(userType),
                         size: 35,
-                        color: AppColors.primaryBlue,
+                        color: AppColors.primaryGreen,
                       ),
                     ),
                     const SizedBox(height: 12),
