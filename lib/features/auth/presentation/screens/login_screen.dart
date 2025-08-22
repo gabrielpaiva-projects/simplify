@@ -211,15 +211,16 @@ class _LoginScreenState extends State<LoginScreen>
             );
           }
           
-          // TODO: Navegar para a tela apropriada baseado no tipo de usuário
-          // Por exemplo:
-          // if (userType == UserType.client) {
-          //   Navigator.pushReplacementNamed(context, '/client-home');
-          // } else if (userType == UserType.professional) {
-          //   Navigator.pushReplacementNamed(context, '/professional-home');
-          // } else if (userType == UserType.admin) {
-          //   Navigator.pushReplacementNamed(context, '/admin-dashboard');
-          // }
+          // Navegar para a tela apropriada baseado no tipo de usuário
+          if (userType == UserType.client) {
+            // TODO: Criar home para clientes
+            Navigator.pushReplacementNamed(context, '/client-home');
+          } else if (userType == UserType.professional) {
+            Navigator.pushReplacementNamed(context, '/professional-home');
+          } else if (userType == UserType.admin) {
+            // TODO: Criar dashboard para admin
+            Navigator.pushReplacementNamed(context, '/admin-dashboard');
+          }
         }
       } else {
         if (mounted) {
@@ -622,8 +623,8 @@ class _LoginScreenState extends State<LoginScreen>
                         child: ElevatedButton(
                           onPressed: () {
                             Navigator.of(context).pop();
-                            // TODO: Navegar para home com funcionalidades limitadas
-                            // Navigator.pushReplacementNamed(context, '/professional-home');
+                            // Navegar para home com funcionalidades limitadas
+                            Navigator.pushReplacementNamed(context, '/professional-home');
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryGreen,
