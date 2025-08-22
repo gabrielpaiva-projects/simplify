@@ -29,6 +29,12 @@ abstract class AuthRepository {
 
   Future<Either<String, bool>> isCpfInUse(String cpf);
 
+  Future<Either<String, bool>> isProfessionalVerified(String uid);
+
+  Future<Either<String, void>> verifyProfessional(String professionalUid, bool verified);
+
+  Future<Either<String, List<Map<String, dynamic>>>> getUnverifiedProfessionals();
+
   Stream<User?> get authStateChanges;
 
   User? get currentUser;
@@ -167,6 +173,36 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final inUse = await _authService.isCpfInUse(cpf);
       return Right(inUse);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  @override
+  Future<Either<String, bool>> isProfessionalVerified(String uid) async {
+    try {
+      final verified = await _authService.isProfessionalVerified(uid);
+      return Right(verified);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  @override
+  Future<Either<String, void>> verifyProfessional(String professionalUid, bool verified) async {
+    try {
+      await _authService.verifyProfessional(professionalUid, verified);
+      return const Right(null);
+    } catch (e) {
+      return Left(e.toString());
+    }
+  }
+
+  @override
+  Future<Either<String, List<Map<String, dynamic>>>> getUnverifiedProfessionals() async {
+    try {
+      final professionals = await _authService.getUnverifiedProfessionals();
+      return Right(professionals);
     } catch (e) {
       return Left(e.toString());
     }

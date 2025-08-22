@@ -26,6 +26,7 @@ class AuthProvider extends ChangeNotifier {
   Map<String, dynamic>? _userData;
   String? _errorMessage;
   bool _isLoading = false;
+  bool _isProfessionalVerified = false;
 
   // Getters
   AuthStatus get status => _status;
@@ -36,6 +37,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _status == AuthStatus.authenticated;
   String? get currentUserId => _user?.uid;
+  bool get isProfessionalVerified => _isProfessionalVerified;
 
   // Inicializar provider
   void _init() {
@@ -69,12 +71,15 @@ class AuthProvider extends ChangeNotifier {
           switch (typeString) {
             case 'client':
               _userType = UserType.client;
+              _isProfessionalVerified = false;
               break;
             case 'professional':
               _userType = UserType.professional;
+              _isProfessionalVerified = data['isVerified'] ?? false;
               break;
             case 'admin':
               _userType = UserType.admin;
+              _isProfessionalVerified = false;
               break;
           }
         }
@@ -248,6 +253,59 @@ class AuthProvider extends ChangeNotifier {
           ? AuthStatus.authenticated
           : AuthStatus.unauthenticated;
     }
+  }
+
+  // Verificar profissional (apenas para admins)
+  Future<bool> verifyProfessional(String professionalUid, bool verified) async {
+    if (_userType != UserType.admin) {
+      _setError('Apenas administradores podem verificar profissionais');
+      return false;
+    }
+
+    _setLoading(true);
+    _clearError();
+
+    final result = await _authRepository.verifyProfessional(professionalUid, verified);
+
+    return result.fold(
+      (error) {
+        _setError(error);
+        _setLoading(false);
+        return false;
+      },
+      (_) {
+        _setLoading(false);
+        return true;
+      },
+    );
+  }
+
+  // Obter profissionais não verificados (apenas para admins)
+  Future<List<Map<String, dynamic>>> getUnverifiedProfessionals() async {
+    if (_userType != UserType.admin) {
+      _setError('Apenas administradores podem acessar esta lista');
+      return [];
+    }
+
+    final result = await _authRepository.getUnverifiedProfessionals();
+
+    return result.fold(
+      (error) {
+        _setError(error);
+        return [];
+      },
+      (professionals) => professionals,
+    );
+  }
+
+  // Verificar se um profissional específico está verificado
+  Future<bool> checkProfessionalVerification(String uid) async {
+    final result = await _authRepository.isProfessionalVerified(uid);
+
+    return result.fold(
+      (error) => false,
+      (verified) => verified,
+    );
   }
 
   // Limpar provider

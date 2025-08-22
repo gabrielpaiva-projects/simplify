@@ -55,9 +55,13 @@ class FirebaseAuthService {
 
       // Salvar dados adicionais no Firestore
       if (credential.user != null) {
+        // Garantir que isVerified seja false ao criar a conta
+        final professionalData = professional.toJson();
+        professionalData['isVerified'] = false; // Sempre false na criação
+        
         await _saveUserToFirestore(
           uid: credential.user!.uid,
-          userData: professional.toJson(),
+          userData: professionalData,
         );
 
         // Atualizar nome do usuário no Firebase Auth
@@ -304,6 +308,71 @@ class FirebaseAuthService {
       await currentUser?.reload();
     } catch (e) {
       throw Exception('Erro ao recarregar usuário: $e');
+    }
+  }
+
+  // Verificar se o profissional está verificado
+  Future<bool> isProfessionalVerified(String uid) async {
+    try {
+      final userData = await getUserData(uid);
+      if (userData != null && userData['userType'] == 'professional') {
+        return userData['isVerified'] ?? false;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Atualizar status de verificação do profissional (apenas admin pode fazer isso)
+  Future<void> verifyProfessional(String professionalUid, bool verified) async {
+    try {
+      // Verificar se o usuário atual é admin
+      final currentUserData = await getUserData(currentUser?.uid ?? '');
+      if (currentUserData?['userType'] != 'admin') {
+        throw Exception('Apenas administradores podem verificar profissionais');
+      }
+
+      // Verificar se o usuário a ser verificado é um profissional
+      final professionalData = await getUserData(professionalUid);
+      if (professionalData?['userType'] != 'professional') {
+        throw Exception('Apenas profissionais podem ser verificados');
+      }
+
+      // Atualizar status de verificação
+      await _firestore.collection('users').doc(professionalUid).update({
+        'isVerified': verified,
+        'verifiedAt': verified ? FieldValue.serverTimestamp() : null,
+        'verifiedBy': verified ? currentUser?.uid : null,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      throw Exception('Erro ao verificar profissional: $e');
+    }
+  }
+
+  // Obter lista de profissionais não verificados (para admin)
+  Future<List<Map<String, dynamic>>> getUnverifiedProfessionals() async {
+    try {
+      // Verificar se o usuário atual é admin
+      final currentUserData = await getUserData(currentUser?.uid ?? '');
+      if (currentUserData?['userType'] != 'admin') {
+        throw Exception('Apenas administradores podem acessar esta lista');
+      }
+
+      final query = await _firestore
+          .collection('users')
+          .where('userType', isEqualTo: 'professional')
+          .where('isVerified', isEqualTo: false)
+          .get();
+
+      return query.docs.map((doc) {
+        final data = doc.data();
+        data['uid'] = doc.id;
+        return data;
+      }).toList();
+    } catch (e) {
+      throw Exception('Erro ao buscar profissionais não verificados: $e');
     }
   }
 }

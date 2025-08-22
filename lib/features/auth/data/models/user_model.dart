@@ -83,6 +83,7 @@ class ClientModel extends UserModel {
 class ProfessionalModel extends UserModel {
   final String rg;
   final String? addressProofPath; // Caminho do comprovante de endereço
+  final bool isVerified; // Flag de verificação do profissional
 
   ProfessionalModel({
     required String cpf,
@@ -98,6 +99,7 @@ class ProfessionalModel extends UserModel {
     required String city,
     required String state,
     this.addressProofPath,
+    this.isVerified = false, // Por padrão, profissional não verificado
   }) : super(
           cpf: cpf,
           fullName: fullName,
@@ -130,6 +132,7 @@ class ProfessionalModel extends UserModel {
       'state': state,
       'userType': 'professional',
       'addressProofPath': addressProofPath,
+      'isVerified': isVerified,
     };
   }
 }

@@ -70,24 +70,73 @@ class AuthDrawer extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     
-                    // Tipo de usuário
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        _getUserTypeLabel(userType),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                    // Tipo de usuário e status de verificação
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            _getUserTypeLabel(userType),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ),
-                      ),
+                        // Mostrar badge de verificação para profissionais
+                        if (userType == UserType.professional) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: authProvider.isProfessionalVerified
+                                  ? Colors.green.withValues(alpha: 0.3)
+                                  : Colors.orange.withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: authProvider.isProfessionalVerified
+                                    ? Colors.green.withValues(alpha: 0.5)
+                                    : Colors.orange.withValues(alpha: 0.5),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  authProvider.isProfessionalVerified
+                                      ? Icons.verified
+                                      : Icons.pending,
+                                  size: 12,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  authProvider.isProfessionalVerified
+                                      ? 'Verificado'
+                                      : 'Pendente',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ),
