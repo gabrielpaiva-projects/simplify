@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../auth/data/models/user_model.dart';
+import '../../../home/presentation/screens/professional_home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -101,21 +105,64 @@ class _SplashScreenState extends State<SplashScreen>
     // Navigate after delay
     Future.delayed(const Duration(milliseconds: 3000), () {
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) =>
-                const LoginScreen(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(
-                opacity: animation,
-                child: child,
-              );
-            },
-            transitionDuration: const Duration(milliseconds: 500),
-          ),
-        );
+        _checkAuthAndNavigate();
       }
     });
+  }
+
+  void _checkAuthAndNavigate() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    
+    // Verificar se o usuário está autenticado
+    if (authProvider.isAuthenticated) {
+      // Navegar para a tela apropriada baseado no tipo de usuário
+      final userType = authProvider.userType;
+      
+      Widget destinationScreen;
+      String routeName;
+      
+      if (userType == UserType.professional) {
+        destinationScreen = const ProfessionalHomeScreen();
+        routeName = '/professional-home';
+      } else if (userType == UserType.client) {
+        // Por enquanto, clientes vão para a mesma tela
+        destinationScreen = const ProfessionalHomeScreen();
+        routeName = '/home';
+      } else {
+        // Admin ou tipo não identificado
+        destinationScreen = const ProfessionalHomeScreen();
+        routeName = '/home';
+      }
+      
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              destinationScreen,
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: child,
+            );
+          },
+          transitionDuration: const Duration(milliseconds: 500),
+        ),
+      );
+    } else {
+      // Usuário não autenticado, ir para login
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              const LoginScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: child,
+            );
+          },
+          transitionDuration: const Duration(milliseconds: 500),
+        ),
+      );
+    }
   }
 
   @override

@@ -77,6 +77,9 @@ dependencies:
   # Logger
   logger: ^2.0.2+1
   
+  # Internationalization
+  intl: ^0.19.0
+  
   # Firebase
   firebase_core: ^3.8.0
   firebase_auth: ^5.3.3
