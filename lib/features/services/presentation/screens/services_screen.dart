@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../../core/constants/app_colors.dart';
 
 class ServicesScreen extends StatefulWidget {
   const ServicesScreen({super.key});
@@ -116,12 +117,12 @@ class _ServicesScreenState extends State<ServicesScreen>
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: const Color(0xFF4CAF50).withOpacity(0.1),
+                color: AppColors.primaryGreen.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.check_circle_outline,
-                color: Color(0xFF4CAF50),
+                color: AppColors.primaryGreen,
                 size: 32,
               ),
             ),
@@ -147,10 +148,10 @@ class _ServicesScreenState extends State<ServicesScreen>
               width: double.infinity,
               child: TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text(
+                child: Text(
                   'Fechar',
                   style: TextStyle(
-                    color: Color(0xFF4CAF50),
+                    color: AppColors.primaryGreen,
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
@@ -325,14 +326,14 @@ class _ServicesScreenState extends State<ServicesScreen>
               decoration: BoxDecoration(
                 color: isDestructive 
                     ? Colors.red.withOpacity(0.1)
-                    : const Color(0xFF4CAF50).withOpacity(0.1),
+                    : AppColors.primaryGreen.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 icon,
                 color: isDestructive 
                     ? Colors.red
-                    : const Color(0xFF4CAF50),
+                    : AppColors.primaryGreen,
                 size: 24,
               ),
             ),
@@ -376,7 +377,7 @@ class _ServicesScreenState extends State<ServicesScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: AppColors.iceWhite,
       body: SafeArea(
         bottom: false,
         child: FadeTransition(
@@ -541,9 +542,9 @@ class _ServicesScreenState extends State<ServicesScreen>
                                   curve: Curves.easeInOut,
                                 );
                               },
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.chevron_left,
-                                color: Color(0xFF4CAF50),
+                                color: AppColors.primaryGreen,
                                 size: 24,
                               ),
                             ),
@@ -579,9 +580,9 @@ class _ServicesScreenState extends State<ServicesScreen>
                                   curve: Curves.easeInOut,
                                 );
                               },
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.chevron_right,
-                                color: Color(0xFF4CAF50),
+                                color: AppColors.primaryGreen,
                                 size: 24,
                               ),
                             ),
@@ -604,8 +605,8 @@ class _ServicesScreenState extends State<ServicesScreen>
                       height: 8,
                       decoration: BoxDecoration(
                         color: _currentPage == index 
-                            ? const Color(0xFF4CAF50)
-                            : const Color(0xFF4CAF50).withOpacity(0.3),
+                            ? AppColors.primaryGreen
+                            : AppColors.primaryGreen.withOpacity(0.3),
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
@@ -732,7 +733,7 @@ class _ServicesScreenState extends State<ServicesScreen>
                                         child: ElevatedButton(
                                           onPressed: () => _handleScheduleService(_cameraService),
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: const Color(0xFF4CAF50),
+                                            backgroundColor: AppColors.primaryGreen,
                                             foregroundColor: Colors.white,
                                             shape: RoundedRectangleBorder(
                                               borderRadius: BorderRadius.circular(6),
@@ -773,10 +774,17 @@ class _ServicesScreenState extends State<ServicesScreen>
       // Bottom Navigation Bar Customizado
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.deepBlack.withOpacity(0.95),
+              AppColors.deepBlack,
+            ],
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: AppColors.primaryGreen.withOpacity(0.1),
               blurRadius: 20,
               offset: const Offset(0, -5),
             ),
@@ -784,8 +792,9 @@ class _ServicesScreenState extends State<ServicesScreen>
         ),
         child: SafeArea(
           top: false,
-          child: SizedBox(
-            height: 56,
+          child: Container(
+            height: 65,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -796,13 +805,13 @@ class _ServicesScreenState extends State<ServicesScreen>
                   isSelected: _selectedNavIndex == 0,
                 ),
                 _buildNavItem(
-                  icon: Icons.chat_bubble_outline_rounded,
+                  icon: Icons.chat_bubble_rounded,
                   label: 'Chat',
                   index: 1,
                   isSelected: _selectedNavIndex == 1,
                 ),
                 _buildNavItem(
-                  icon: Icons.apps_rounded,
+                  icon: Icons.grid_view_rounded,
                   label: 'Mais',
                   index: 2,
                   isSelected: _selectedNavIndex == 2,
@@ -952,29 +961,41 @@ class _ServicesScreenState extends State<ServicesScreen>
             });
           }
         },
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 6),
+        borderRadius: BorderRadius.circular(16),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 8),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                icon,
-                color: isSelected 
-                    ? const Color(0xFF4CAF50)
-                    : Colors.grey[600],
-                size: 22,
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: EdgeInsets.all(isSelected ? 10 : 8),
+                decoration: BoxDecoration(
+                  color: isSelected 
+                      ? AppColors.primaryGreen.withOpacity(0.15)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: isSelected 
+                      ? AppColors.primaryGreen
+                      : AppColors.lightGrey.withOpacity(0.7),
+                  size: isSelected ? 24 : 22,
+                ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 4),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: 11,
                   color: isSelected 
-                      ? const Color(0xFF4CAF50)
-                      : Colors.grey[600],
+                      ? AppColors.primaryGreen
+                      : AppColors.lightGrey.withOpacity(0.7),
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  letterSpacing: 0.3,
                 ),
               ),
             ],
