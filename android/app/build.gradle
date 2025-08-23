@@ -25,7 +25,7 @@ if (flutterVersionName == null) {
 }
 
 android {
-    namespace = "com.example.simplify"
+    namespace = "com.pixelapps.simplify"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "27.0.12077973"  // Versão específica requerida pelos plugins
 
@@ -39,7 +39,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.simplify"
+        applicationId = "com.pixelapps.simplify"
         // IMPORTANTE: minSdkVersion alterado de 21 para 23 para compatibilidade com Firebase Auth
         minSdkVersion 23
         targetSdkVersion = flutter.targetSdkVersion
