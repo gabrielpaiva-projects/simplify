@@ -849,7 +849,7 @@ class _ServicesScreenState extends State<ServicesScreen>
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
         color: Colors.transparent,
         child: Container(
-          height: 70,
+          height: 65,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(24),
@@ -1043,38 +1043,38 @@ class _ServicesScreenState extends State<ServicesScreen>
         borderRadius: BorderRadius.circular(16),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: 6),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: EdgeInsets.all(isSelected ? 10 : 8),
+                padding: EdgeInsets.all(isSelected ? 8 : 6),
                 decoration: BoxDecoration(
                   color: isSelected 
                       ? AppColors.primaryGreen.withOpacity(0.1)
-                      : Colors.grey[50],
-                  borderRadius: BorderRadius.circular(14),
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   icon,
                   color: isSelected 
                       ? AppColors.primaryGreen
                       : Colors.grey[600],
-                  size: isSelected ? 26 : 24,
+                  size: isSelected ? 24 : 22,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 11,
                   color: isSelected 
                       ? AppColors.primaryGreen
                       : Colors.grey[600],
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  letterSpacing: 0.2,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  letterSpacing: 0.1,
                 ),
               ),
             ],
