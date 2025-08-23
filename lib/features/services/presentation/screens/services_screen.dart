@@ -616,9 +616,9 @@ class _ServicesScreenState extends State<ServicesScreen>
           ],
         ),
         child: SafeArea(
-          child: Container(
-            height: 65,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          top: false,
+          child: SizedBox(
+            height: 56,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -826,45 +826,41 @@ class _ServicesScreenState extends State<ServicesScreen>
     required int index,
     required bool isSelected,
   }) {
-    return InkWell(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        setState(() {
-          _selectedNavIndex = index;
-        });
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected 
-              ? const Color(0xFF4CAF50).withOpacity(0.1)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              color: isSelected 
-                  ? const Color(0xFF4CAF50)
-                  : Colors.grey[600],
-              size: 24,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
+    return Expanded(
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          setState(() {
+            _selectedNavIndex = index;
+          });
+        },
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
                 color: isSelected 
                     ? const Color(0xFF4CAF50)
                     : Colors.grey[600],
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                size: 22,
               ),
-            ),
-          ],
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: isSelected 
+                      ? const Color(0xFF4CAF50)
+                      : Colors.grey[600],
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
