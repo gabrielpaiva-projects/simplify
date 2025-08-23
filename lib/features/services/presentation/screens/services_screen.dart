@@ -651,161 +651,170 @@ class _ServicesScreenState extends State<ServicesScreen>
                       ),
                       const SizedBox(height: 16),
                       
-                      // Card do serviço de câmera
+                      // Card do serviço de câmera - Design Moderno
                       Container(
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              const Color(0xFF1E3C72),
+                              const Color(0xFF2A5298),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(24),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.08),
-                              blurRadius: 15,
-                              offset: const Offset(0, 5),
+                              color: const Color(0xFF1E3C72).withOpacity(0.3),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
                             ),
                           ],
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(24),
                           child: Stack(
                             children: [
-                              // Imagem de fundo
-                              Container(
-                                height: 200,
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  image: DecorationImage(
-                                    image: AssetImage(_cameraService.imagePath),
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
-                              
-                              // Gradient overlay
-                              Positioned.fill(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [
-                                        Colors.transparent,
-                                        Colors.black.withOpacity(0.7),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              
-                              // Badge Premium
+                              // Pattern de fundo
                               Positioned(
-                                top: 16,
-                                right: 16,
+                                right: -50,
+                                top: -50,
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
-                                  ),
+                                  width: 200,
+                                  height: 200,
                                   decoration: BoxDecoration(
-                                    color: Colors.amber,
-                                    borderRadius: BorderRadius.circular(20),
+                                    shape: BoxShape.circle,
+                                    color: Colors.white.withOpacity(0.05),
                                   ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: const [
-                                      Icon(
-                                        Icons.star,
-                                        size: 14,
-                                        color: Colors.white,
-                                      ),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        'Premium',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ],
+                                ),
+                              ),
+                              Positioned(
+                                left: -30,
+                                bottom: -30,
+                                child: Container(
+                                  width: 150,
+                                  height: 150,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.white.withOpacity(0.05),
                                   ),
                                 ),
                               ),
                               
                               // Conteúdo
-                              Positioned(
-                                bottom: 0,
-                                left: 0,
-                                right: 0,
-                                child: Container(
-                                  padding: const EdgeInsets.all(20),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
+                              Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: Row(
+                                  children: [
+                                    // Lado esquerdo - Informações
+                                    Expanded(
+                                      flex: 3,
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Container(
-                                            padding: const EdgeInsets.all(10),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 6,
+                                            ),
                                             decoration: BoxDecoration(
                                               color: Colors.white.withOpacity(0.2),
-                                              borderRadius: BorderRadius.circular(12),
+                                              borderRadius: BorderRadius.circular(20),
                                             ),
-                                            child: Icon(
-                                              _cameraService.icon,
-                                              color: Colors.white,
-                                              size: 24,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
                                               children: [
-                                                Text(
-                                                  _cameraService.title,
-                                                  style: const TextStyle(
-                                                    fontSize: 22,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.white,
-                                                  ),
+                                                Icon(
+                                                  Icons.verified_user,
+                                                  size: 16,
+                                                  color: Colors.white.withOpacity(0.9),
                                                 ),
-                                                const SizedBox(height: 4),
+                                                const SizedBox(width: 6),
                                                 Text(
-                                                  _cameraService.description,
+                                                  'Serviço Premium',
                                                   style: TextStyle(
-                                                    fontSize: 13,
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
                                                     color: Colors.white.withOpacity(0.9),
                                                   ),
                                                 ),
                                               ],
                                             ),
                                           ),
+                                          const SizedBox(height: 16),
+                                          const Text(
+                                            'Instalação de\nCâmeras',
+                                            style: TextStyle(
+                                              fontSize: 28,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                              height: 1.2,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 12),
+                                          Text(
+                                            'Sistema completo de segurança com instalação profissional e garantia',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.white.withOpacity(0.8),
+                                              height: 1.4,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 20),
+                                          Row(
+                                            children: [
+                                              _buildFeatureChip(Icons.shield_outlined, 'Garantia'),
+                                              const SizedBox(width: 8),
+                                              _buildFeatureChip(Icons.support_agent, 'Suporte'),
+                                              const SizedBox(width: 8),
+                                              _buildFeatureChip(Icons.phone_android, 'App'),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 20),
+                                          SizedBox(
+                                            height: 48,
+                                            child: ElevatedButton(
+                                              onPressed: () => _handleScheduleService(_cameraService),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Colors.white,
+                                                foregroundColor: const Color(0xFF1E3C72),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(12),
+                                                ),
+                                                elevation: 0,
+                                              ),
+                                              child: const Text(
+                                                'Solicitar Orçamento',
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
                                         ],
                                       ),
-                                      const SizedBox(height: 16),
-                                      SizedBox(
-                                        width: double.infinity,
-                                        height: 44,
-                                        child: ElevatedButton.icon(
-                                          onPressed: () => _handleScheduleService(_cameraService),
-                                          icon: const Icon(Icons.security, size: 20),
-                                          label: const Text(
-                                            'Solicitar Orçamento',
-                                            style: TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.amber,
-                                            foregroundColor: Colors.white,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(12),
-                                            ),
-                                            elevation: 0,
-                                          ),
+                                    ),
+                                    
+                                    // Lado direito - Imagem/Ícone
+                                    const SizedBox(width: 20),
+                                    Container(
+                                      width: 100,
+                                      height: 100,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Center(
+                                        child: Icon(
+                                          Icons.videocam,
+                                          size: 50,
+                                          color: Colors.white.withOpacity(0.9),
                                         ),
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
@@ -988,6 +997,39 @@ class _ServicesScreenState extends State<ServicesScreen>
   }
 
 
+
+  Widget _buildFeatureChip(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 14,
+            color: Colors.white.withOpacity(0.9),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: Colors.white.withOpacity(0.9),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildNavItem({
     required IconData icon,
