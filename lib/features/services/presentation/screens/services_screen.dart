@@ -842,7 +842,7 @@ class _ServicesScreenState extends State<ServicesScreen>
             top: false,
             bottom: false,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
@@ -1015,8 +1015,8 @@ class _ServicesScreenState extends State<ServicesScreen>
           borderRadius: BorderRadius.circular(16),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
-            margin: const EdgeInsets.symmetric(horizontal: 4),
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 10),
+            margin: const EdgeInsets.symmetric(horizontal: 3),
             decoration: BoxDecoration(
               color: isSelected 
                   ? AppColors.primaryGreen.withOpacity(0.08)
@@ -1032,13 +1032,13 @@ class _ServicesScreenState extends State<ServicesScreen>
                   color: isSelected 
                       ? AppColors.primaryGreen
                       : Colors.grey[600],
-                  size: 24,
+                  size: 22,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 10,
                     color: isSelected 
                         ? AppColors.primaryGreen
                         : Colors.grey[600],
