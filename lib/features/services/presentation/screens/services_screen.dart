@@ -10,11 +10,11 @@ class ServicesScreen extends StatefulWidget {
 
 class _ServicesScreenState extends State<ServicesScreen>
     with TickerProviderStateMixin {
-  // Controllers para animações
+  // Controllers
+  late PageController _pageController;
   late AnimationController _fadeController;
-  late AnimationController _slideController;
   late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
+  int _currentPage = 0;
   
   // Dados mockados dos serviços
   final List<ServiceModel> _services = [
@@ -38,16 +38,12 @@ class _ServicesScreenState extends State<ServicesScreen>
   @override
   void initState() {
     super.initState();
+    _pageController = PageController(viewportFraction: 0.85);
     _initializeAnimations();
   }
 
   void _initializeAnimations() {
     _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    );
-
-    _slideController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
@@ -60,32 +56,19 @@ class _ServicesScreenState extends State<ServicesScreen>
       curve: Curves.easeOut,
     ));
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutCubic,
-    ));
-
-    // Iniciar animações
     _fadeController.forward();
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (mounted) _slideController.forward();
-    });
   }
 
   @override
   void dispose() {
+    _pageController.dispose();
     _fadeController.dispose();
-    _slideController.dispose();
     super.dispose();
   }
 
   void _handleScheduleService(ServiceModel service) {
     HapticFeedback.mediumImpact();
     
-    // Por enquanto só mostra um snackbar
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Agendando ${service.title}...'),
@@ -94,6 +77,7 @@ class _ServicesScreenState extends State<ServicesScreen>
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
         ),
+        margin: const EdgeInsets.all(16),
       ),
     );
   }
@@ -102,139 +86,94 @@ class _ServicesScreenState extends State<ServicesScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: const Text(
-          'Nossos Serviços',
-          style: TextStyle(
-            color: Color(0xFF1A1A1A),
-            fontSize: 24,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        centerTitle: false,
-        systemOverlayStyle: SystemUiOverlayStyle.dark,
-      ),
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: SlideTransition(
-          position: _slideAnimation,
-          child: ListView(
-            padding: const EdgeInsets.all(16),
+      body: SafeArea(
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: Column(
             children: [
-              Theme(
-                data: Theme.of(context).copyWith(
-                  dividerColor: Colors.transparent,
+              // Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Nossos Serviços',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[900],
+                        letterSpacing: -1,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Deslize para conhecer',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
                 ),
-                child: ExpansionPanelList.radio(
-                  elevation: 0,
-                  expandedHeaderPadding: EdgeInsets.zero,
-                  animationDuration: const Duration(milliseconds: 400),
-                  children: _services.map((service) {
-                    return ExpansionPanelRadio(
-                      value: service.title,
-                      canTapOnHeader: true,
-                      backgroundColor: Colors.white,
-                      headerBuilder: (context, isExpanded) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          child: Row(
-                            children: [
-                              // Ícone
-                              Container(
-                                width: 48,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF4CAF50).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Icon(
-                                  _getServiceIcon(service.title),
-                                  color: const Color(0xFF4CAF50),
-                                  size: 24,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              // Título
-                              Expanded(
-                                child: Text(
-                                  service.title,
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF1A1A1A),
-                                  ),
-                                ),
-                              ),
-                            ],
+              ),
+              
+              // PageView
+              Expanded(
+                child: PageView.builder(
+                  controller: _pageController,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _currentPage = index;
+                    });
+                    HapticFeedback.selectionClick();
+                  },
+                  itemCount: _services.length,
+                  itemBuilder: (context, index) {
+                    final service = _services[index];
+                    return AnimatedBuilder(
+                      animation: _pageController,
+                      builder: (context, child) {
+                        double value = 1.0;
+                        if (_pageController.position.haveDimensions) {
+                          value = (_pageController.page ?? 0) - index;
+                          value = (1 - (value.abs() * 0.15)).clamp(0.0, 1.0);
+                        }
+                        
+                        return Center(
+                          child: SizedBox(
+                            height: Curves.easeOut.transform(value) * 
+                                MediaQuery.of(context).size.height * 0.65,
+                            child: child,
                           ),
                         );
                       },
-                      body: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Imagem
-                          Container(
-                            height: 180,
-                            width: double.infinity,
-                            margin: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              image: DecorationImage(
-                                image: AssetImage(service.imagePath),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          // Descrição
-                          Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  service.description,
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    color: Colors.grey[700],
-                                    height: 1.5,
-                                  ),
-                                ),
-                                const SizedBox(height: 20),
-                                // Botão
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 48,
-                                  child: ElevatedButton(
-                                    onPressed: () => _handleScheduleService(service),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF4CAF50),
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      elevation: 0,
-                                    ),
-                                    child: const Text(
-                                      'Agendar Serviço',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                      child: _buildServiceCard(service, index),
                     );
-                  }).toList(),
+                  },
+                ),
+              ),
+              
+              // Page Indicator
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    _services.length,
+                    (index) => AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      width: _currentPage == index ? 32 : 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: _currentPage == index 
+                            ? const Color(0xFF4CAF50)
+                            : Colors.grey[300],
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -244,21 +183,122 @@ class _ServicesScreenState extends State<ServicesScreen>
     );
   }
 
-  IconData _getServiceIcon(String title) {
-    switch (title) {
-      case 'Limpeza Padrão':
-        return Icons.cleaning_services;
-      case 'Limpeza Pesada':
-        return Icons.home_repair_service;
-      case 'Passadoria':
-        return Icons.iron;
-      default:
-        return Icons.cleaning_services;
-    }
+  Widget _buildServiceCard(ServiceModel service, int index) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 24),
+      child: Stack(
+        children: [
+          // Card principal
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Imagem
+                  Expanded(
+                    flex: 3,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image.asset(
+                          service.imagePath,
+                          fit: BoxFit.cover,
+                        ),
+                        // Gradient overlay
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withOpacity(0.4),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  // Conteúdo
+                  Expanded(
+                    flex: 2,
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            service.title,
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1A1A1A),
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            service.description,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[700],
+                              height: 1.4,
+                            ),
+                          ),
+                          const Spacer(),
+                          // Botão
+                          SizedBox(
+                            width: double.infinity,
+                            height: 56,
+                            child: ElevatedButton(
+                              onPressed: () => _handleScheduleService(service),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF4CAF50),
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                elevation: 0,
+                              ),
+                              child: const Text(
+                                'Agendar Serviço',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
-// Modelo de dados simplificado
+// Modelo de dados
 class ServiceModel {
   final String title;
   final String description;
