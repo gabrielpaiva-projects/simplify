@@ -7,6 +7,7 @@ import 'modern_client_registration.dart';
 import 'modern_professional_registration.dart';
 import '../../data/models/user_model.dart';
 import '../providers/auth_provider.dart';
+import '../../../services/presentation/screens/services_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -211,15 +212,31 @@ class _LoginScreenState extends State<LoginScreen>
             );
           }
           
-          // TODO: Navegar para a tela apropriada baseado no tipo de usuário
-          // Por exemplo:
-          // if (userType == UserType.client) {
-          //   Navigator.pushReplacementNamed(context, '/client-home');
-          // } else if (userType == UserType.professional) {
-          //   Navigator.pushReplacementNamed(context, '/professional-home');
-          // } else if (userType == UserType.admin) {
-          //   Navigator.pushReplacementNamed(context, '/admin-dashboard');
-          // }
+          // Navegar para a tela apropriada baseado no tipo de usuário
+          if (userType == UserType.client) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ServicesScreen(),
+              ),
+            );
+          } else if (userType == UserType.professional) {
+            // TODO: Implementar tela do profissional
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Tela do profissional em desenvolvimento'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          } else if (userType == UserType.admin) {
+            // TODO: Implementar tela do admin
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Tela do admin em desenvolvimento'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
         }
       } else {
         if (mounted) {
