@@ -160,16 +160,19 @@ class _ServicesScreenState extends State<ServicesScreen>
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       body: SafeArea(
+        bottom: false,
         child: FadeTransition(
           opacity: _fadeAnimation,
           child: ScaleTransition(
             scale: _scaleAnimation,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header Redesenhado
-                Container(
-                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header Redesenhado
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -429,11 +432,10 @@ class _ServicesScreenState extends State<ServicesScreen>
                   ),
                 ),
                 
-                const SizedBox(height: 24),
-                
-                // Próximos Agendamentos
-                Expanded(
-                  child: Container(
+                                  const SizedBox(height: 24),
+                  
+                  // Próximos Agendamentos
+                  Container(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -447,7 +449,19 @@ class _ServicesScreenState extends State<ServicesScreen>
                           ),
                         ),
                         const SizedBox(height: 16),
-                        Expanded(
+                        Container(
+                          height: 150,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.03),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
                           child: Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -480,9 +494,111 @@ class _ServicesScreenState extends State<ServicesScreen>
                       ],
                     ),
                   ),
-                ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Histórico de Serviços
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Serviços Recentes',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey[900],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ...List.generate(3, (index) {
+                          final services = ['Limpeza Padrão', 'Passadoria', 'Limpeza Pesada'];
+                          final dates = ['15 Jan', '10 Jan', '05 Jan'];
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.03),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF4CAF50).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(
+                                    Icons.check_circle_outline,
+                                    color: Color(0xFF4CAF50),
+                                    size: 24,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        services[index],
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF1A1A1A),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        dates[index],
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF4CAF50).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Text(
+                                    'Concluído',
+                                    style: TextStyle(
+                                      color: Color(0xFF4CAF50),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+                  
+                  // Espaço para o bottom navigation
+                  const SizedBox(height: 100),
               ],
             ),
+          ),
           ),
         ),
       ),
