@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import '../../../../core/constants/app_colors.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../auth/data/models/user_model.dart';
+import '../../../services/presentation/screens/services_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -98,24 +103,58 @@ class _SplashScreenState extends State<SplashScreen>
     _controller.forward();
     _textController.repeat();
 
-    // Navigate after delay
-    Future.delayed(const Duration(milliseconds: 3000), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) =>
-                const LoginScreen(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(
-                opacity: animation,
-                child: child,
-              );
-            },
-            transitionDuration: const Duration(milliseconds: 500),
-          ),
-        );
+    // Check authentication and navigate
+    _checkAuthAndNavigate();
+  }
+
+  Future<void> _checkAuthAndNavigate() async {
+    // Aguarda um tempo mínimo para mostrar a splash
+    await Future.delayed(const Duration(milliseconds: 2500));
+    
+    if (!mounted) return;
+    
+    // Verifica se o usuário está logado
+    final currentUser = FirebaseAuth.instance.currentUser;
+    
+    Widget targetScreen;
+    
+    if (currentUser != null) {
+      // Usuário está logado, verifica o tipo de usuário
+      final authProvider = context.read<AuthProvider>();
+      
+      // Aguarda carregar os dados do usuário
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      // Por enquanto, vamos direcionar todos para a tela de serviços
+      // No futuro, pode-se adicionar lógica para diferentes tipos de usuário
+      if (authProvider.userType == UserType.client) {
+        targetScreen = const ServicesScreen();
+      } else if (authProvider.userType == UserType.professional) {
+        // TODO: Implementar tela do profissional
+        targetScreen = const ServicesScreen(); // Por enquanto vai para serviços
+      } else {
+        // Se não conseguiu determinar o tipo, vai para login
+        targetScreen = const LoginScreen();
       }
-    });
+    } else {
+      // Usuário não está logado
+      targetScreen = const LoginScreen();
+    }
+    
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => targetScreen,
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: child,
+            );
+          },
+          transitionDuration: const Duration(milliseconds: 500),
+        ),
+      );
+    }
   }
 
   @override
