@@ -846,50 +846,56 @@ class _ServicesScreenState extends State<ServicesScreen>
       
       // Bottom Navigation Bar Customizado
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppColors.deepBlack.withOpacity(0.95),
-              AppColors.deepBlack,
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        color: Colors.transparent,
+        child: Container(
+          height: 70,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 20,
+                spreadRadius: 0,
+                offset: const Offset(0, 10),
+              ),
+              BoxShadow(
+                color: AppColors.primaryGreen.withOpacity(0.05),
+                blurRadius: 30,
+                spreadRadius: -5,
+                offset: const Offset(0, 15),
+              ),
             ],
           ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primaryGreen.withOpacity(0.1),
-              blurRadius: 20,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          top: false,
-          child: Container(
-            height: 65,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(
-                  icon: Icons.home_rounded,
-                  label: 'Início',
-                  index: 0,
-                  isSelected: _selectedNavIndex == 0,
-                ),
-                _buildNavItem(
-                  icon: Icons.chat_bubble_rounded,
-                  label: 'Chat',
-                  index: 1,
-                  isSelected: _selectedNavIndex == 1,
-                ),
-                _buildNavItem(
-                  icon: Icons.grid_view_rounded,
-                  label: 'Mais',
-                  index: 2,
-                  isSelected: _selectedNavIndex == 2,
-                ),
-              ],
+          child: SafeArea(
+            top: false,
+            bottom: false,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavItem(
+                    icon: Icons.home_rounded,
+                    label: 'Início',
+                    index: 0,
+                    isSelected: _selectedNavIndex == 0,
+                  ),
+                  _buildNavItem(
+                    icon: Icons.chat_bubble_rounded,
+                    label: 'Chat',
+                    index: 1,
+                    isSelected: _selectedNavIndex == 1,
+                  ),
+                  _buildNavItem(
+                    icon: Icons.grid_view_rounded,
+                    label: 'Mais',
+                    index: 2,
+                    isSelected: _selectedNavIndex == 2,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -1037,7 +1043,7 @@ class _ServicesScreenState extends State<ServicesScreen>
         borderRadius: BorderRadius.circular(16),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 10),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
@@ -1047,28 +1053,28 @@ class _ServicesScreenState extends State<ServicesScreen>
                 padding: EdgeInsets.all(isSelected ? 10 : 8),
                 decoration: BoxDecoration(
                   color: isSelected 
-                      ? AppColors.primaryGreen.withOpacity(0.15)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
+                      ? AppColors.primaryGreen.withOpacity(0.1)
+                      : Colors.grey[50],
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(
                   icon,
                   color: isSelected 
                       ? AppColors.primaryGreen
-                      : AppColors.lightGrey.withOpacity(0.7),
-                  size: isSelected ? 24 : 22,
+                      : Colors.grey[600],
+                  size: isSelected ? 26 : 24,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 12,
                   color: isSelected 
                       ? AppColors.primaryGreen
-                      : AppColors.lightGrey.withOpacity(0.7),
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  letterSpacing: 0.3,
+                      : Colors.grey[600],
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  letterSpacing: 0.2,
                 ),
               ),
             ],
