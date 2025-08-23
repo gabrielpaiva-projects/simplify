@@ -999,49 +999,46 @@ class _ServicesScreenState extends State<ServicesScreen>
     required bool isSelected,
   }) {
     return Expanded(
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          if (index == 2) { // Se for o botão "Mais"
-            _showMoreOptions();
-          } else {
-            setState(() {
-              _selectedNavIndex = index;
-            });
-          }
-        },
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: EdgeInsets.all(isSelected ? 7 : 6),
-                  decoration: BoxDecoration(
-                    color: isSelected 
-                        ? AppColors.primaryGreen.withOpacity(0.1)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: isSelected 
-                        ? AppColors.primaryGreen
-                        : Colors.grey[600],
-                    size: 22,
-                  ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            if (index == 2) { // Se for o botão "Mais"
+              _showMoreOptions();
+            } else {
+              setState(() {
+                _selectedNavIndex = index;
+              });
+            }
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            decoration: BoxDecoration(
+              color: isSelected 
+                  ? AppColors.primaryGreen.withOpacity(0.08)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  color: isSelected 
+                      ? AppColors.primaryGreen
+                      : Colors.grey[600],
+                  size: 24,
                 ),
-              ),
-              const SizedBox(height: 2),
-              Flexible(
-                child: Text(
+                const SizedBox(height: 4),
+                Text(
                   label,
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 11,
                     color: isSelected 
                         ? AppColors.primaryGreen
                         : Colors.grey[600],
@@ -1049,8 +1046,8 @@ class _ServicesScreenState extends State<ServicesScreen>
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
