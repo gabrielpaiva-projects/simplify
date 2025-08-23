@@ -19,8 +19,8 @@ class _ServicesScreenState extends State<ServicesScreen>
   int _currentPage = 0;
   int _selectedNavIndex = 0;
   
-  // Dados mockados dos serviços
-  final List<ServiceModel> _services = [
+  // Dados mockados dos serviços de limpeza
+  final List<ServiceModel> _cleaningServices = [
     ServiceModel(
       title: 'Limpeza Padrão',
       description: 'Limpeza na medida certa para as necessidades do dia-a-dia',
@@ -40,6 +40,14 @@ class _ServicesScreenState extends State<ServicesScreen>
       icon: Icons.iron_outlined,
     ),
   ];
+  
+  // Serviço especial de instalação
+  final ServiceModel _cameraService = ServiceModel(
+    title: 'Instalação de Câmeras',
+    description: 'Segurança profissional com instalação e configuração completa',
+    imagePath: 'assets/camera.jpeg',
+    icon: Icons.videocam_outlined,
+  );
 
   @override
   void initState() {
@@ -454,43 +462,56 @@ class _ServicesScreenState extends State<ServicesScreen>
                   ),
                 ),
                 
-                const SizedBox(height: 24),
-                
-                // Cards de Serviços com Indicador
-                Stack(
-                  children: [
-                    SizedBox(
-                      height: 280, // Altura reduzida
-                      child: PageView.builder(
-                        controller: _pageController,
-                        onPageChanged: (index) {
-                          setState(() {
-                            _currentPage = index;
-                          });
-                          HapticFeedback.selectionClick();
-                        },
-                        itemCount: _services.length,
-                        itemBuilder: (context, index) {
-                          final service = _services[index];
-                          return AnimatedBuilder(
-                            animation: _pageController,
-                            builder: (context, child) {
-                              double value = 1.0;
-                              if (_pageController.position.haveDimensions) {
-                                value = (_pageController.page ?? 0) - index;
-                                value = (1 - (value.abs() * 0.1)).clamp(0.0, 1.0);
-                              }
-                              
-                              return Transform.scale(
-                                scale: value,
-                                child: child,
-                              );
-                            },
-                            child: _buildServiceCard(service, index),
-                          );
-                        },
+                                  // Seção de Serviços de Limpeza
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Text(
+                      'Serviços de Limpeza',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[900],
                       ),
                     ),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Cards de Serviços de Limpeza com Indicador
+                  Stack(
+                    children: [
+                      SizedBox(
+                        height: 260, // Altura reduzida
+                        child: PageView.builder(
+                          controller: _pageController,
+                          onPageChanged: (index) {
+                            setState(() {
+                              _currentPage = index;
+                            });
+                            HapticFeedback.selectionClick();
+                          },
+                          itemCount: _cleaningServices.length,
+                          itemBuilder: (context, index) {
+                            final service = _cleaningServices[index];
+                            return AnimatedBuilder(
+                              animation: _pageController,
+                              builder: (context, child) {
+                                double value = 1.0;
+                                if (_pageController.position.haveDimensions) {
+                                  value = (_pageController.page ?? 0) - index;
+                                  value = (1 - (value.abs() * 0.1)).clamp(0.0, 1.0);
+                                }
+                                
+                                return Transform.scale(
+                                  scale: value,
+                                  child: child,
+                                );
+                              },
+                              child: _buildServiceCard(service, index),
+                            );
+                          },
+                        ),
+                      ),
                     
                     // Indicador de Scroll à Esquerda
                     if (_currentPage > 0)
@@ -530,8 +551,8 @@ class _ServicesScreenState extends State<ServicesScreen>
                         ),
                       ),
                     
-                    // Indicador de Scroll à Direita
-                    if (_currentPage < _services.length - 1)
+                                          // Indicador de Scroll à Direita
+                      if (_currentPage < _cleaningServices.length - 1)
                       Positioned(
                         right: 8,
                         top: 0,
@@ -575,7 +596,7 @@ class _ServicesScreenState extends State<ServicesScreen>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(
-                    _services.length,
+                    _cleaningServices.length,
                     (index) => AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
                       margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -591,10 +612,212 @@ class _ServicesScreenState extends State<ServicesScreen>
                   ),
                 ),
                 
+                const SizedBox(height: 32),
                 
-                  
-                  // Espaço para o bottom navigation
-                  const SizedBox(height: 100),
+                // Seção de Serviços Especializados
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              'NOVO',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.orange,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Serviços Especializados',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[900],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      // Card do serviço de câmera
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 15,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: Stack(
+                            children: [
+                              // Imagem de fundo
+                              Container(
+                                height: 200,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  image: DecorationImage(
+                                    image: AssetImage(_cameraService.imagePath),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              
+                              // Gradient overlay
+                              Positioned.fill(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Colors.transparent,
+                                        Colors.black.withOpacity(0.7),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              
+                              // Badge Premium
+                              Positioned(
+                                top: 16,
+                                right: 16,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: const [
+                                      Icon(
+                                        Icons.star,
+                                        size: 14,
+                                        color: Colors.white,
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'Premium',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              
+                              // Conteúdo
+                              Positioned(
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                child: Container(
+                                  padding: const EdgeInsets.all(20),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(10),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withOpacity(0.2),
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            child: Icon(
+                                              _cameraService.icon,
+                                              color: Colors.white,
+                                              size: 24,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  _cameraService.title,
+                                                  style: const TextStyle(
+                                                    fontSize: 22,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  _cameraService.description,
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    color: Colors.white.withOpacity(0.9),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 16),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        height: 44,
+                                        child: ElevatedButton.icon(
+                                          onPressed: () => _handleScheduleService(_cameraService),
+                                          icon: const Icon(Icons.security, size: 20),
+                                          label: const Text(
+                                            'Solicitar Orçamento',
+                                            style: TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.amber,
+                                            foregroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            elevation: 0,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // Espaço para o bottom navigation
+                const SizedBox(height: 100),
               ],
             ),
           ),
