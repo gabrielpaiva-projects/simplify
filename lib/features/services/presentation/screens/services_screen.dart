@@ -171,57 +171,26 @@ class _ServicesScreenState extends State<ServicesScreen>
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      barrierColor: Colors.black.withOpacity(0.4),
-      transitionAnimationController: AnimationController(
-        duration: const Duration(milliseconds: 400),
-        vsync: Navigator.of(context),
-      ),
-      constraints: BoxConstraints(
-        maxWidth: MediaQuery.of(context).size.width - 32,
-      ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 30), // Margens laterais e inferior aumentadas
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.75, // Altura máxima
-            ),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(28), // Mais arredondado
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 30,
-                  spreadRadius: 0,
-                  offset: const Offset(0, 20),
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                BoxShadow(
-                  color: AppColors.primaryGreen.withOpacity(0.05),
-                  blurRadius: 40,
-                  spreadRadius: -10,
-                  offset: const Offset(0, 25),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(28),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Handle bar
-                    Container(
-                      margin: const EdgeInsets.only(top: 14, bottom: 8),
-                      width: 45,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[350],
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
+              ),
+              const SizedBox(height: 20),
               
               // Título
               Padding(
@@ -341,15 +310,12 @@ class _ServicesScreenState extends State<ServicesScreen>
                   ],
                 ),
               ),
-                const SizedBox(height: 20),
-              ],
-            ),
+                              const SizedBox(height: 20),
+            ],
           ),
         ),
       ),
-    ),
-      )
-  );
+    );
   }
 
   Widget _buildMenuOption({
@@ -850,7 +816,10 @@ class _ServicesScreenState extends State<ServicesScreen>
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
         color: Colors.transparent,
         child: Container(
-          height: 65,
+          constraints: const BoxConstraints(
+            minHeight: 60,
+            maxHeight: 70,
+          ),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(24),
@@ -872,8 +841,8 @@ class _ServicesScreenState extends State<ServicesScreen>
           child: SafeArea(
             top: false,
             bottom: false,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
@@ -1042,40 +1011,43 @@ class _ServicesScreenState extends State<ServicesScreen>
           }
         },
         borderRadius: BorderRadius.circular(16),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 4),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: EdgeInsets.all(isSelected ? 8 : 6),
-                decoration: BoxDecoration(
-                  color: isSelected 
-                      ? AppColors.primaryGreen.withOpacity(0.1)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  icon,
-                  color: isSelected 
-                      ? AppColors.primaryGreen
-                      : Colors.grey[600],
-                  size: isSelected ? 24 : 22,
+              Flexible(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: EdgeInsets.all(isSelected ? 7 : 6),
+                  decoration: BoxDecoration(
+                    color: isSelected 
+                        ? AppColors.primaryGreen.withOpacity(0.1)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: isSelected 
+                        ? AppColors.primaryGreen
+                        : Colors.grey[600],
+                    size: 22,
+                  ),
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: isSelected 
-                      ? AppColors.primaryGreen
-                      : Colors.grey[600],
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  letterSpacing: 0.1,
+              const SizedBox(height: 2),
+              Flexible(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isSelected 
+                        ? AppColors.primaryGreen
+                        : Colors.grey[600],
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
