@@ -415,7 +415,7 @@ class _ServicesScreenState extends State<ServicesScreen>
                               letterSpacing: -0.5,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 40),
                           Row(
                             children: [
                               Icon(
@@ -622,25 +622,9 @@ class _ServicesScreenState extends State<ServicesScreen>
                     children: [
                       Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.orange.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Text(
-                              'NOVO',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.orange,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
                           const SizedBox(width: 12),
                           Text(
-                            'Serviços Especializados',
+                            'Outros serviços',
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -727,24 +711,6 @@ class _ServicesScreenState extends State<ServicesScreen>
                                                 ),
                                               ),
                                               const SizedBox(width: 8),
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(
-                                                  horizontal: 6,
-                                                  vertical: 2,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.blue.withOpacity(0.1),
-                                                  borderRadius: BorderRadius.circular(6),
-                                                ),
-                                                child: const Text(
-                                                  'Premium',
-                                                  style: TextStyle(
-                                                    fontSize: 9,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: Colors.blue,
-                                                  ),
-                                                ),
-                                              ),
                                             ],
                                           ),
                                           const SizedBox(height: 6),
