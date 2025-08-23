@@ -155,6 +155,216 @@ class _ServicesScreenState extends State<ServicesScreen>
     );
   }
 
+  void _showMoreOptions() {
+    HapticFeedback.mediumImpact();
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              
+              // Título
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Menu',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[900],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              
+              // Opções do Menu
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  children: [
+                    _buildMenuOption(
+                      icon: Icons.person_outline,
+                      title: 'Meu Perfil',
+                      subtitle: 'Gerencie suas informações',
+                      onTap: () {
+                        Navigator.pop(context);
+                        // TODO: Navegar para perfil
+                      },
+                    ),
+                    _buildMenuOption(
+                      icon: Icons.history,
+                      title: 'Histórico de Serviços',
+                      subtitle: 'Veja seus serviços anteriores',
+                      onTap: () {
+                        Navigator.pop(context);
+                        // TODO: Navegar para histórico
+                      },
+                    ),
+                    _buildMenuOption(
+                      icon: Icons.calendar_month,
+                      title: 'Agendamentos',
+                      subtitle: 'Gerencie seus agendamentos',
+                      onTap: () {
+                        Navigator.pop(context);
+                        // TODO: Navegar para agendamentos
+                      },
+                    ),
+                    _buildMenuOption(
+                      icon: Icons.star_outline,
+                      title: 'Favoritos',
+                      subtitle: 'Seus serviços favoritos',
+                      onTap: () {
+                        Navigator.pop(context);
+                        // TODO: Navegar para favoritos
+                      },
+                    ),
+                    _buildMenuOption(
+                      icon: Icons.payment,
+                      title: 'Formas de Pagamento',
+                      subtitle: 'Gerencie seus cartões',
+                      onTap: () {
+                        Navigator.pop(context);
+                        // TODO: Navegar para pagamentos
+                      },
+                    ),
+                    _buildMenuOption(
+                      icon: Icons.help_outline,
+                      title: 'Ajuda e Suporte',
+                      subtitle: 'Tire suas dúvidas',
+                      onTap: () {
+                        Navigator.pop(context);
+                        // TODO: Navegar para ajuda
+                      },
+                    ),
+                    _buildMenuOption(
+                      icon: Icons.settings_outlined,
+                      title: 'Configurações',
+                      subtitle: 'Preferências do app',
+                      onTap: () {
+                        Navigator.pop(context);
+                        // TODO: Navegar para configurações
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    const Divider(),
+                    _buildMenuOption(
+                      icon: Icons.logout,
+                      title: 'Sair',
+                      subtitle: 'Fazer logout da conta',
+                      isDestructive: true,
+                      onTap: () {
+                        Navigator.pop(context);
+                        // TODO: Implementar logout
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuOption({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+    bool isDestructive = false,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: isDestructive 
+                    ? Colors.red.withOpacity(0.1)
+                    : const Color(0xFF4CAF50).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: isDestructive 
+                    ? Colors.red
+                    : const Color(0xFF4CAF50),
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: isDestructive 
+                          ? Colors.red
+                          : const Color(0xFF1A1A1A),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              color: Colors.grey[400],
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -433,69 +643,6 @@ class _ServicesScreenState extends State<ServicesScreen>
                 ),
                 
                                   const SizedBox(height: 24),
-                  
-                  // Próximos Agendamentos
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Próximos Agendamentos',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey[900],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Container(
-                          height: 150,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.03),
-                                blurRadius: 10,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.event_available,
-                                  size: 48,
-                                  color: Colors.grey[400],
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'Nenhum agendamento',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Agende seu primeiro serviço',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[500],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 24),
                   
                   // Histórico de Serviços
                   Container(
@@ -830,9 +977,13 @@ class _ServicesScreenState extends State<ServicesScreen>
       child: InkWell(
         onTap: () {
           HapticFeedback.lightImpact();
-          setState(() {
-            _selectedNavIndex = index;
-          });
+          if (index == 2) { // Se for o botão "Mais"
+            _showMoreOptions();
+          } else {
+            setState(() {
+              _selectedNavIndex = index;
+            });
+          }
         },
         borderRadius: BorderRadius.circular(8),
         child: Container(
