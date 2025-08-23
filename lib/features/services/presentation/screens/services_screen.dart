@@ -446,10 +446,34 @@ class _ServicesScreenState extends State<ServicesScreen>
                               Consumer<AuthProvider>(
                                 builder: (context, authProvider, _) {
                                   String firstName = 'Cliente';
-                                  if (authProvider.userData != null && 
-                                      authProvider.userData!['name'] != null) {
-                                    firstName = authProvider.userData!['name'].toString().split(' ')[0];
+                                  
+                                  // Debug: Imprime os dados disponíveis
+                                  debugPrint('=== DEBUG NOME USUÁRIO ===');
+                                  debugPrint('userData: ${authProvider.userData}');
+                                  debugPrint('user: ${authProvider.user}');
+                                  debugPrint('displayName: ${authProvider.user?.displayName}');
+                                  
+                                  // Tenta pegar o nome do userData
+                                  if (authProvider.userData != null) {
+                                    final fullName = authProvider.userData!['fullName'];
+                                    debugPrint('fullName from userData: $fullName');
+                                    if (fullName != null && fullName.toString().isNotEmpty) {
+                                      firstName = fullName.toString().split(' ')[0];
+                                    }
                                   }
+                                  
+                                  // Se não encontrou no userData, tenta o displayName do Firebase
+                                  if (firstName == 'Cliente' && authProvider.user != null) {
+                                    final displayName = authProvider.user!.displayName;
+                                    debugPrint('displayName from Firebase: $displayName');
+                                    if (displayName != null && displayName.isNotEmpty) {
+                                      firstName = displayName.split(' ')[0];
+                                    }
+                                  }
+                                  
+                                  debugPrint('firstName final: $firstName');
+                                  debugPrint('========================');
+                                  
                                   return Text(
                                     'Olá, $firstName',
                                     style: TextStyle(
