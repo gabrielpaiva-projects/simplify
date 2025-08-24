@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:math' as math;
 import '../../../../core/constants/app_colors.dart';
 
 class CleaningScheduleScreen extends StatefulWidget {
@@ -15,34 +16,109 @@ class CleaningScheduleScreen extends StatefulWidget {
 }
 
 class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
-    with SingleTickerProviderStateMixin {
-  String _selectedResidenceType = 'apartamento';
-  int _roomCount = 1;
-  int _bathroomCount = 1;
-  bool _includeCleaningProducts = false;
+    with TickerProviderStateMixin {
+  // Animation Controllers
+  late AnimationController _headerController;
+  late AnimationController _cardController;
+  late AnimationController _footerController;
+  late AnimationController _priceController;
+  late AnimationController _pulseController;
+  late AnimationController _pageTransitionController;
   
-  late AnimationController _priceAnimationController;
+  // Animations
+  late Animation<double> _headerAnimation;
+  late Animation<double> _cardAnimation;
+  late Animation<double> _footerSlideAnimation;
   late Animation<double> _priceAnimation;
+  late Animation<double> _pulseAnimation;
+  late Animation<double> _pageTransitionAnimation;
   
-  double _currentPrice = 94.0;
-  double _targetPrice = 94.0;
+  // Staggered animations for cards
+  final List<AnimationController> _cardAnimationControllers = [];
+  final List<Animation<double>> _cardAnimations = [];
   
-  final Map<String, double> _basePrices = {
-    'studio': 94.0,
-    'apartamento': 94.0,
-    'casa': 105.0,
-  };
-
-  final Map<String, IconData> _residenceIcons = {
-    'studio': Icons.weekend,
-    'apartamento': Icons.apartment,
-    'casa': Icons.home,
-  };
+  // Page Controller
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
+  
+  // State
+  String _selectedResidence = 'apartment';
+  int _rooms = 2;
+  int _bathrooms = 1;
+  bool _includeProducts = false;
+  bool _includePets = false;
+  DateTime? _selectedDate;
+  String? _selectedTime;
+  
+  double _currentPrice = 0;
+  double _targetPrice = 149.0;
+  int _estimatedTimeInMinutes = 120; // Base time in minutes
+  
+  final ScrollController _scrollController = ScrollController();
+  
+  // Available dates (next 14 days)
+  late List<DateTime> _availableDates;
+  
+  // Time slots
+  final List<String> _morningSlots = ['08:00', '09:00', '10:00', '11:00'];
+  final List<String> _afternoonSlots = ['14:00', '15:00', '16:00', '17:00', '18:00'];
 
   @override
   void initState() {
     super.initState();
-    _priceAnimationController = AnimationController(
+    _initializeDates();
+    _initializeAnimations();
+    _calculatePrice();
+  }
+
+  void _initializeDates() {
+    final now = DateTime.now();
+    _availableDates = List.generate(14, (index) => now.add(Duration(days: index)));
+    _selectedDate = _availableDates[0];
+  }
+
+  void _initializeAnimations() {
+    // Header animation
+    _headerController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _headerAnimation = Tween<double>(
+      begin: -50,
+      end: 0,
+    ).animate(CurvedAnimation(
+      parent: _headerController,
+      curve: Curves.easeOutCubic,
+    ));
+    
+    // Main card animation
+    _cardController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    _cardAnimation = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(
+      parent: _cardController,
+      curve: Curves.easeOutBack,
+    ));
+    
+    // Footer animation
+    _footerController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+    _footerSlideAnimation = Tween<double>(
+      begin: 100,
+      end: 0,
+    ).animate(CurvedAnimation(
+      parent: _footerController,
+      curve: Curves.easeOutCubic,
+    ));
+    
+    // Price animation
+    _priceController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
@@ -50,671 +126,363 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       begin: _currentPrice,
       end: _targetPrice,
     ).animate(CurvedAnimation(
-      parent: _priceAnimationController,
+      parent: _priceController,
       curve: Curves.easeInOut,
     ));
-    _calculatePrice();
+    
+    // Pulse animation for CTA button
+    _pulseController = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat(reverse: true);
+    _pulseAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.05,
+    ).animate(CurvedAnimation(
+      parent: _pulseController,
+      curve: Curves.easeInOut,
+    ));
+    
+    // Page transition animation
+    _pageTransitionController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+    _pageTransitionAnimation = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(
+      parent: _pageTransitionController,
+      curve: Curves.easeInOut,
+    ));
+    
+    // Initialize staggered card animations
+    for (int i = 0; i < 6; i++) {
+      final controller = AnimationController(
+        duration: Duration(milliseconds: 400 + (i * 100)),
+        vsync: this,
+      );
+      _cardAnimationControllers.add(controller);
+      _cardAnimations.add(
+        Tween<double>(
+          begin: 0,
+          end: 1,
+        ).animate(CurvedAnimation(
+          parent: controller,
+          curve: Curves.easeOutCubic,
+        )),
+      );
+    }
+    
+    // Start animations
+    _startAnimations();
   }
 
-  @override
-  void dispose() {
-    _priceAnimationController.dispose();
-    super.dispose();
+  void _startAnimations() async {
+    await Future.delayed(const Duration(milliseconds: 100));
+    _headerController.forward();
+    await Future.delayed(const Duration(milliseconds: 200));
+    _cardController.forward();
+    
+    for (var controller in _cardAnimationControllers) {
+      controller.forward();
+      await Future.delayed(const Duration(milliseconds: 100));
+    }
+    
+    await Future.delayed(const Duration(milliseconds: 300));
+    _footerController.forward();
   }
 
   void _calculatePrice() {
-    double basePrice = _basePrices[_selectedResidenceType] ?? 94.0;
-    double roomsPrice = basePrice * (1 + ((_roomCount - 1) * 0.10));
-    double bathroomsPrice = roomsPrice * (1 + ((_bathroomCount - 1) * 0.15));
-    double finalPrice = _includeCleaningProducts 
-        ? bathroomsPrice * 1.20 
-        : bathroomsPrice;
+    double base = 0;
+    int timeInMinutes = 0;
+    
+    // Base price and time by residence type
+    switch (_selectedResidence) {
+      case 'studio':
+        base = 99;
+        timeInMinutes = 90; // 1h30min base
+        break;
+      case 'apartment':
+        base = 149;
+        timeInMinutes = 120; // 2h base
+        break;
+      case 'house':
+        base = 199;
+        timeInMinutes = 180; // 3h base
+        break;
+    }
+    
+    // Room multiplier (price and time)
+    base += (_rooms - 1) * 30;
+    timeInMinutes += (_rooms - 1) * 30; // +30min per extra room
+    
+    // Bathroom multiplier (price and time)
+    base += (_bathrooms - 1) * 25;
+    timeInMinutes += (_bathrooms - 1) * 20; // +20min per extra bathroom
+    
+    // Extras
+    if (_includeProducts) {
+      base += 40;
+      // Products don't add time
+    }
+    if (_includePets) {
+      base += 25;
+      timeInMinutes += 30; // +30min for pet cleaning
+    }
     
     setState(() {
       _currentPrice = _targetPrice;
-      _targetPrice = finalPrice;
+      _targetPrice = base;
+      _estimatedTimeInMinutes = timeInMinutes;
       _priceAnimation = Tween<double>(
         begin: _currentPrice,
         end: _targetPrice,
       ).animate(CurvedAnimation(
-        parent: _priceAnimationController,
+        parent: _priceController,
         curve: Curves.easeInOut,
       ));
-      _priceAnimationController.forward(from: 0);
+      _priceController.forward(from: 0);
     });
+  }
+
+  void _goToNextPage() {
+    if (_currentPage == 0) {
+      setState(() {
+        _currentPage = 1;
+      });
+      _pageController.animateToPage(
+        1,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+      );
+      _pageTransitionController.forward();
+    }
+  }
+
+  void _goToPreviousPage() {
+    if (_currentPage == 1) {
+      setState(() {
+        _currentPage = 0;
+      });
+      _pageController.animateToPage(
+        0,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+      );
+      _pageTransitionController.reverse();
+    }
+  }
+
+  @override
+  void dispose() {
+    _headerController.dispose();
+    _cardController.dispose();
+    _footerController.dispose();
+    _priceController.dispose();
+    _pulseController.dispose();
+    _pageTransitionController.dispose();
+    _pageController.dispose();
+    _scrollController.dispose();
+    for (var controller in _cardAnimationControllers) {
+      controller.dispose();
+    }
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8F9FA),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(
-              Icons.arrow_back_ios_new,
-              size: 16,
-              color: Color(0xFF2C3E50),
-            ),
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Agendamento',
-              style: TextStyle(
-                color: Color(0xFF2C3E50),
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            Text(
-              'Serviço de Limpeza',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 13,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          ],
-        ),
-      ),
-      body: Column(
+      backgroundColor: const Color(0xFFFAFBFD),
+      body: Stack(
         children: [
-          // Progress Indicator
+          // Background gradient
           Container(
-            color: Colors.white,
-            padding: const EdgeInsets.only(bottom: 20),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 3,
-                    color: AppColors.primaryGreen,
-                  ),
-                ),
-                Expanded(
-                  child: Container(
-                    height: 3,
-                    color: AppColors.primaryGreen.withOpacity(0.2),
-                  ),
-                ),
-                Expanded(
-                  child: Container(
-                    height: 3,
-                    color: AppColors.primaryGreen.withOpacity(0.2),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Residence Type Section
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.home_work,
-                              color: AppColors.primaryGreen,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Tipo de Residência',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF2C3E50),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            _buildResidenceOption('studio', 'Studio', 'R\$ 94'),
-                            const SizedBox(width: 10),
-                            _buildResidenceOption('apartamento', 'Apartamento', 'R\$ 94'),
-                            const SizedBox(width: 10),
-                            _buildResidenceOption('casa', 'Casa', 'R\$ 105'),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 16),
-                  
-                  // Rooms and Bathrooms Section
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.meeting_room,
-                              color: AppColors.primaryGreen,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Detalhes do Imóvel',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF2C3E50),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        
-                        // Rooms Counter
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.withOpacity(0.08),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Icon(
-                                Icons.bed,
-                                color: Colors.blue[700],
-                                size: 20,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Cômodos',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF2C3E50),
-                                    ),
-                                  ),
-                                  Text(
-                                    'Sem contar banheiros',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[600],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF8F9FA),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Row(
-                                children: [
-                                  IconButton(
-                                    onPressed: _roomCount > 1
-                                        ? () {
-                                            HapticFeedback.lightImpact();
-                                            setState(() {
-                                              _roomCount--;
-                                              _calculatePrice();
-                                            });
-                                          }
-                                        : null,
-                                    icon: Icon(
-                                      Icons.remove,
-                                      color: _roomCount > 1 
-                                          ? const Color(0xFF2C3E50)
-                                          : Colors.grey[400],
-                                      size: 18,
-                                    ),
-                                  ),
-                                  Container(
-                                    constraints: const BoxConstraints(minWidth: 30),
-                                    alignment: Alignment.center,
-                                    child: Text(
-                                      _roomCount.toString(),
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF2C3E50),
-                                      ),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    onPressed: () {
-                                      HapticFeedback.lightImpact();
-                                      setState(() {
-                                        _roomCount++;
-                                        _calculatePrice();
-                                      });
-                                    },
-                                    icon: Icon(
-                                      Icons.add,
-                                      color: AppColors.primaryGreen,
-                                      size: 18,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        
-                        const SizedBox(height: 16),
-                        const Divider(),
-                        const SizedBox(height: 16),
-                        
-                        // Bathrooms Counter
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: Colors.purple.withOpacity(0.08),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Icon(
-                                Icons.bathroom,
-                                color: Colors.purple[700],
-                                size: 20,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Banheiros',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF2C3E50),
-                                    ),
-                                  ),
-                                  Text(
-                                    'Completos e lavabos',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[600],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF8F9FA),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Row(
-                                children: [
-                                  IconButton(
-                                    onPressed: _bathroomCount > 1
-                                        ? () {
-                                            HapticFeedback.lightImpact();
-                                            setState(() {
-                                              _bathroomCount--;
-                                              _calculatePrice();
-                                            });
-                                          }
-                                        : null,
-                                    icon: Icon(
-                                      Icons.remove,
-                                      color: _bathroomCount > 1 
-                                          ? const Color(0xFF2C3E50)
-                                          : Colors.grey[400],
-                                      size: 18,
-                                    ),
-                                  ),
-                                  Container(
-                                    constraints: const BoxConstraints(minWidth: 30),
-                                    alignment: Alignment.center,
-                                    child: Text(
-                                      _bathroomCount.toString(),
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF2C3E50),
-                                      ),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    onPressed: () {
-                                      HapticFeedback.lightImpact();
-                                      setState(() {
-                                        _bathroomCount++;
-                                        _calculatePrice();
-                                      });
-                                    },
-                                    icon: Icon(
-                                      Icons.add,
-                                      color: AppColors.primaryGreen,
-                                      size: 18,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 16),
-                  
-                  // Additional Options
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.add_circle_outline,
-                              color: AppColors.primaryGreen,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Serviços Adicionais',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF2C3E50),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        
-                        // Cleaning Products Option
-                        GestureDetector(
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            setState(() {
-                              _includeCleaningProducts = !_includeCleaningProducts;
-                              _calculatePrice();
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: _includeCleaningProducts
-                                  ? AppColors.primaryGreen.withOpacity(0.05)
-                                  : const Color(0xFFF8F9FA),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: _includeCleaningProducts
-                                    ? AppColors.primaryGreen
-                                    : Colors.transparent,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: _includeCleaningProducts
-                                        ? AppColors.primaryGreen
-                                        : Colors.orange.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Icon(
-                                    Icons.cleaning_services,
-                                    color: _includeCleaningProducts
-                                        ? Colors.white
-                                        : Colors.orange[700],
-                                    size: 20,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          const Text(
-                                            'Incluir produtos de limpeza',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
-                                              color: Color(0xFF2C3E50),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 6,
-                                              vertical: 2,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: Colors.orange.withOpacity(0.1),
-                                              borderRadius: BorderRadius.circular(4),
-                                            ),
-                                            child: Text(
-                                              '+20%',
-                                              style: TextStyle(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w600,
-                                                color: Colors.orange[700],
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Produtos profissionais inclusos',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey[600],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  width: 24,
-                                  height: 24,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: _includeCleaningProducts
-                                        ? AppColors.primaryGreen
-                                        : Colors.transparent,
-                                    border: Border.all(
-                                      color: _includeCleaningProducts
-                                          ? AppColors.primaryGreen
-                                          : Colors.grey[400]!,
-                                      width: 2,
-                                    ),
-                                  ),
-                                  child: _includeCleaningProducts
-                                      ? const Icon(
-                                          Icons.check,
-                                          size: 14,
-                                          color: Colors.white,
-                                        )
-                                      : null,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        
-                        const SizedBox(height: 16),
-                        
-                        // What's Included Button
-                        TextButton.icon(
-                          onPressed: _showIncludedServices,
-                          icon: Icon(
-                            Icons.info_outline,
-                            size: 18,
-                            color: AppColors.primaryGreen,
-                          ),
-                          label: Text(
-                            'Ver o que está incluso no serviço',
-                            style: TextStyle(
-                              color: AppColors.primaryGreen,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white,
+                  const Color(0xFFF8FAFB),
                 ],
               ),
             ),
           ),
           
-          // Bottom Price and Continue
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, -5),
+          // Main content
+          SafeArea(
+            child: Column(
+              children: [
+                // Animated Header
+                AnimatedBuilder(
+                  animation: _headerAnimation,
+                  builder: (context, child) {
+                    return Transform.translate(
+                      offset: Offset(0, _headerAnimation.value),
+                      child: _buildHeader(),
+                    );
+                  },
                 ),
-              ],
-            ),
-            child: SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                
+                // Progress Bar
+                _buildProgressBar(),
+                
+                // Page View
+                Expanded(
+                  child: PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    onPageChanged: (index) {
+                      setState(() {
+                        _currentPage = index;
+                      });
+                    },
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Valor estimado',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          AnimatedBuilder(
-                            animation: _priceAnimation,
-                            builder: (context, child) {
-                              return Text(
-                                'R\$ ${_priceAnimation.value.toStringAsFixed(2)}',
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.primaryGreen,
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                      SizedBox(
-                        width: 140,
-                        height: 48,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            HapticFeedback.mediumImpact();
-                            _showConfirmation();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryGreen,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Continuar',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              SizedBox(width: 4),
-                              Icon(
-                                Icons.arrow_forward,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      // First Page - Service Configuration
+                      _buildServiceConfigurationPage(),
+                      // Second Page - Date and Time Selection
+                      _buildDateTimePage(),
                     ],
                   ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Animated Footer
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: AnimatedBuilder(
+              animation: _footerSlideAnimation,
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: Offset(0, _footerSlideAnimation.value),
+                  child: _buildModernFooter(),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Back button
+          GestureDetector(
+            onTap: () {
+              if (_currentPage == 1) {
+                _goToPreviousPage();
+              } else {
+                Navigator.pop(context);
+              }
+            },
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F7FA),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.arrow_back_ios_new,
+                size: 16,
+                color: Color(0xFF2D3436),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          
+          // Title
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _currentPage == 0 ? 'Configurar Serviço' : 'Agendar Horário',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF2D3436),
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                Text(
+                  _currentPage == 0 ? 'Personalize sua limpeza' : 'Escolha data e hora',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Help button
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.primaryGreen.withOpacity(0.1),
+                  AppColors.primaryGreen.withOpacity(0.05),
                 ],
+              ),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.help_outline,
+              size: 20,
+              color: AppColors.primaryGreen,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressBar() {
+    return Container(
+      height: 3,
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              decoration: BoxDecoration(
+                color: AppColors.primaryGreen,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              decoration: BoxDecoration(
+                color: _currentPage >= 1 
+                    ? AppColors.primaryGreen 
+                    : AppColors.primaryGreen.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
@@ -723,52 +491,214 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     );
   }
 
-  Widget _buildResidenceOption(String value, String label, String price) {
-    final isSelected = _selectedResidenceType == value;
-    final icon = _residenceIcons[value]!;
+  Widget _buildServiceConfigurationPage() {
+    return SingleChildScrollView(
+      controller: _scrollController,
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 100),
+      child: Column(
+        children: [
+          const SizedBox(height: 20),
+          
+          // Residence Type Section
+          _buildAnimatedCard(0, _buildResidenceSection()),
+          
+          // Room Details Section
+          _buildAnimatedCard(1, _buildRoomDetailsSection()),
+          
+          // Extra Services Section
+          _buildAnimatedCard(2, _buildExtrasSection()),
+          
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDateTimePage() {
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 100),
+      child: Column(
+        children: [
+          const SizedBox(height: 20),
+          
+          // Date Selection Section
+          AnimatedBuilder(
+            animation: _pageTransitionAnimation,
+            builder: (context, child) {
+              return Transform.scale(
+                scale: 0.8 + (0.2 * _pageTransitionAnimation.value),
+                child: Opacity(
+                  opacity: _pageTransitionAnimation.value,
+                  child: _buildDateSection(),
+                ),
+              );
+            },
+          ),
+          
+          // Time Selection Section
+          AnimatedBuilder(
+            animation: _pageTransitionAnimation,
+            builder: (context, child) {
+              return Transform.translate(
+                offset: Offset(0, 50 * (1 - _pageTransitionAnimation.value)),
+                child: Opacity(
+                  opacity: _pageTransitionAnimation.value,
+                  child: _buildTimeSection(),
+                ),
+              );
+            },
+          ),
+          
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnimatedCard(int index, Widget child) {
+    if (index >= _cardAnimations.length) return child;
+    
+    return AnimatedBuilder(
+      animation: _cardAnimations[index],
+      builder: (context, _) {
+        return Transform.scale(
+          scale: _cardAnimations[index].value,
+          child: Opacity(
+            opacity: _cardAnimations[index].value,
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildResidenceSection() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primaryGreen,
+                      AppColors.primaryGreen.withOpacity(0.8),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.home_outlined,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Tipo de Imóvel',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF2D3436),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          
+          // Residence options
+          Row(
+            children: [
+              _buildResidenceOption('studio', 'Studio', Icons.single_bed, 'R\$ 99'),
+              const SizedBox(width: 12),
+              _buildResidenceOption('apartment', 'Apto', Icons.apartment, 'R\$ 149'),
+              const SizedBox(width: 12),
+              _buildResidenceOption('house', 'Casa', Icons.house, 'R\$ 199'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResidenceOption(String value, String label, IconData icon, String price) {
+    final isSelected = _selectedResidence == value;
     
     return Expanded(
       child: GestureDetector(
         onTap: () {
           HapticFeedback.lightImpact();
           setState(() {
-            _selectedResidenceType = value;
+            _selectedResidence = value;
             _calculatePrice();
           });
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
-            color: isSelected 
-                ? AppColors.primaryGreen 
-                : const Color(0xFFF8F9FA),
-            borderRadius: BorderRadius.circular(10),
+            gradient: isSelected
+                ? LinearGradient(
+                    colors: [
+                      AppColors.primaryGreen,
+                      AppColors.primaryGreen.withOpacity(0.9),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : null,
+            color: isSelected ? null : const Color(0xFFF8FAFB),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected 
+                  ? AppColors.primaryGreen
+                  : const Color(0xFFE8ECEF),
+              width: 1.5,
+            ),
           ),
           child: Column(
             children: [
               Icon(
                 icon,
-                color: isSelected ? Colors.white : Colors.grey[600],
+                color: isSelected ? Colors.white : const Color(0xFF74788D),
                 size: 24,
               ),
               const SizedBox(height: 8),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: isSelected ? Colors.white : const Color(0xFF2C3E50),
+                  color: isSelected ? Colors.white : const Color(0xFF2D3436),
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 4),
               Text(
                 price,
                 style: TextStyle(
                   fontSize: 11,
                   color: isSelected 
-                      ? Colors.white.withOpacity(0.8)
-                      : Colors.grey[600],
+                      ? Colors.white.withOpacity(0.9)
+                      : const Color(0xFF74788D),
                 ),
               ),
             ],
@@ -778,88 +708,528 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     );
   }
 
-  void _showIncludedServices() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+  Widget _buildRoomDetailsSection() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.blue,
+                      Colors.blue.withOpacity(0.8),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.door_sliding_outlined,
+                  color: Colors.white,
+                  size: 18,
                 ),
               ),
+              const SizedBox(width: 12),
+              const Text(
+                'Detalhes do Imóvel',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF2D3436),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          
+          // Room counter
+          _buildCounterRow(
+            icon: Icons.weekend,
+            label: 'Cômodos',
+            value: _rooms,
+            color: Colors.indigo,
+            onDecrease: _rooms > 1 ? () {
+              HapticFeedback.lightImpact();
+              setState(() {
+                _rooms--;
+                _calculatePrice();
+              });
+            } : null,
+            onIncrease: () {
+              HapticFeedback.lightImpact();
+              setState(() {
+                _rooms++;
+                _calculatePrice();
+              });
+            },
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Bathroom counter
+          _buildCounterRow(
+            icon: Icons.bathtub,
+            label: 'Banheiros',
+            value: _bathrooms,
+            color: Colors.purple,
+            onDecrease: _bathrooms > 1 ? () {
+              HapticFeedback.lightImpact();
+              setState(() {
+                _bathrooms--;
+                _calculatePrice();
+              });
+            } : null,
+            onIncrease: () {
+              HapticFeedback.lightImpact();
+              setState(() {
+                _bathrooms++;
+                _calculatePrice();
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCounterRow({
+    required IconData icon,
+    required String label,
+    required int value,
+    required Color color,
+    VoidCallback? onDecrease,
+    required VoidCallback onIncrease,
+  }) {
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            icon,
+            color: color,
+            size: 20,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF2D3436),
             ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryGreen.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFB),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onDecrease,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(10),
+                    bottomLeft: Radius.circular(10),
                   ),
-                  child: Icon(
-                    Icons.check_circle,
-                    color: AppColors.primaryGreen,
-                    size: 24,
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    alignment: Alignment.center,
+                    child: Icon(
+                      Icons.remove,
+                      color: onDecrease != null 
+                          ? const Color(0xFF2D3436)
+                          : const Color(0xFFCED4DA),
+                      size: 18,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                const Text(
-                  'Serviços Inclusos',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF2C3E50),
+              ),
+              Container(
+                width: 40,
+                alignment: Alignment.center,
+                child: Text(
+                  value.toString(),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF2D3436),
                   ),
                 ),
-              ],
+              ),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onIncrease,
+                  borderRadius: const BorderRadius.only(
+                    topRight: Radius.circular(10),
+                    bottomRight: Radius.circular(10),
+                  ),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    alignment: Alignment.center,
+                    child: Icon(
+                      Icons.add,
+                      color: AppColors.primaryGreen,
+                      size: 18,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildExtrasSection() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.orange,
+                      Colors.orange.withOpacity(0.8),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.auto_awesome,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Serviços Extras',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF2D3436),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          
+          // Extra options
+          _buildExtraOption(
+            icon: Icons.cleaning_services,
+            label: 'Produtos inclusos',
+            description: 'Fornecemos todos os produtos de limpeza profissionais',
+            price: '+ R\$ 40',
+            isSelected: _includeProducts,
+            color: Colors.teal,
+            onTap: () {
+              HapticFeedback.lightImpact();
+              setState(() {
+                _includeProducts = !_includeProducts;
+                _calculatePrice();
+              });
+            },
+          ),
+          const SizedBox(height: 12),
+          _buildExtraOption(
+            icon: Icons.pets,
+            label: 'Tenho pets',
+            description: 'Cuidado especial com pelos e odores de animais',
+            price: '+ R\$ 25',
+            isSelected: _includePets,
+            color: Colors.pink,
+            onTap: () {
+              HapticFeedback.lightImpact();
+              setState(() {
+                _includePets = !_includePets;
+                _calculatePrice();
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExtraOption({
+    required IconData icon,
+    required String label,
+    required String price,
+    required bool isSelected,
+    required Color color,
+    required VoidCallback onTap,
+    String? description,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected 
+              ? color.withOpacity(0.05)
+              : const Color(0xFFF8FAFB),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected 
+                ? color.withOpacity(0.3)
+                : const Color(0xFFE8ECEF),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                color: color,
+                size: 18,
+              ),
             ),
-            const SizedBox(height: 24),
-            _buildIncludedItem(Icons.home, 'Limpeza completa de todos os cômodos'),
-            _buildIncludedItem(Icons.auto_fix_high, 'Organização e arrumação básica'),
-            _buildIncludedItem(Icons.sanitizer, 'Desinfecção de banheiros'),
-            _buildIncludedItem(Icons.window, 'Limpeza de vidros e espelhos'),
-            _buildIncludedItem(Icons.grass, 'Aspiração e limpeza de pisos'),
-            _buildIncludedItem(Icons.delete_outline, 'Retirada e organização do lixo'),
-            const SizedBox(height: 24),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF2D3436),
+                    ),
+                  ),
+                  if (description != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      description,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Text(
+              price,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+            const SizedBox(width: 12),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isSelected ? color : Colors.transparent,
+                border: Border.all(
+                  color: isSelected ? color : const Color(0xFFCED4DA),
+                  width: 2,
+                ),
+              ),
+              child: isSelected
+                  ? const Icon(
+                      Icons.check,
+                      size: 12,
+                      color: Colors.white,
+                    )
+                  : null,
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildIncludedItem(IconData icon, String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            color: AppColors.primaryGreen,
-            size: 20,
+  Widget _buildDateSection() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF2C3E50),
-                height: 1.4,
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.deepPurple,
+                      Colors.deepPurple.withOpacity(0.8),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.calendar_today,
+                  color: Colors.white,
+                  size: 16,
+                ),
               ),
+              const SizedBox(width: 12),
+              const Text(
+                'Escolha a Data',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF2D3436),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          
+          // Date grid
+          SizedBox(
+            height: 70,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _availableDates.length,
+              itemBuilder: (context, index) {
+                final date = _availableDates[index];
+                final isSelected = _selectedDate?.day == date.day;
+                final isToday = index == 0;
+                
+                return GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    setState(() {
+                      _selectedDate = date;
+                    });
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 56,
+                    margin: const EdgeInsets.only(right: 10),
+                    decoration: BoxDecoration(
+                      gradient: isSelected
+                          ? LinearGradient(
+                              colors: [
+                                AppColors.primaryGreen,
+                                AppColors.primaryGreen.withOpacity(0.8),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : null,
+                      color: isSelected ? null : const Color(0xFFF8FAFB),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected 
+                            ? AppColors.primaryGreen
+                            : const Color(0xFFE8ECEF),
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          isToday ? 'Hoje' : _getWeekday(date),
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            color: isSelected 
+                                ? Colors.white.withOpacity(0.8)
+                                : const Color(0xFF74788D),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          date.day.toString(),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: isSelected 
+                                ? Colors.white
+                                : const Color(0xFF2D3436),
+                          ),
+                        ),
+                        Text(
+                          _getMonth(date),
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: isSelected 
+                                ? Colors.white.withOpacity(0.8)
+                                : const Color(0xFF74788D),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ],
@@ -867,166 +1237,386 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     );
   }
 
-  void _showConfirmation() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+  Widget _buildTimeSection() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
               Container(
-                width: 60,
-                height: 60,
+                width: 32,
+                height: 32,
                 decoration: BoxDecoration(
-                  color: AppColors.primaryGreen.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.check,
-                  size: 32,
-                  color: AppColors.primaryGreen,
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Confirmação',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF2C3E50),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Revise os detalhes do seu pedido',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
-              ),
-              const SizedBox(height: 24),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8F9FA),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  children: [
-                    _buildSummaryRow(
-                      Icons.home,
-                      'Tipo de residência',
-                      _selectedResidenceType == 'studio' 
-                          ? 'Studio' 
-                          : _selectedResidenceType == 'apartamento'
-                              ? 'Apartamento'
-                              : 'Casa',
-                    ),
-                    const SizedBox(height: 12),
-                    _buildSummaryRow(
-                      Icons.bed,
-                      'Cômodos',
-                      '$_roomCount ${_roomCount > 1 ? "cômodos" : "cômodo"}',
-                    ),
-                    const SizedBox(height: 12),
-                    _buildSummaryRow(
-                      Icons.bathroom,
-                      'Banheiros',
-                      '$_bathroomCount ${_bathroomCount > 1 ? "banheiros" : "banheiro"}',
-                    ),
-                    if (_includeCleaningProducts) ...[
-                      const SizedBox(height: 12),
-                      _buildSummaryRow(
-                        Icons.cleaning_services,
-                        'Produtos de limpeza',
-                        'Inclusos',
-                      ),
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.cyan,
+                      Colors.cyan.withOpacity(0.8),
                     ],
-                  ],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.access_time,
+                  color: Colors.white,
+                  size: 18,
                 ),
               ),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryGreen.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppColors.primaryGreen.withOpacity(0.2),
-                  ),
+              const SizedBox(width: 12),
+              const Text(
+                'Escolha o Horário',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF2D3436),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          
+          // Morning slots
+          const Text(
+            'Manhã',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF74788D),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: _morningSlots.map((time) => _buildTimeSlot(time)).toList(),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Afternoon slots
+          const Text(
+            'Tarde',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF74788D),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: _afternoonSlots.map((time) => _buildTimeSlot(time)).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeSlot(String time) {
+    final isSelected = _selectedTime == time;
+    final isAvailable = !['11:00', '16:00'].contains(time);
+    
+    return GestureDetector(
+      onTap: isAvailable ? () {
+        HapticFeedback.lightImpact();
+        setState(() {
+          _selectedTime = time;
+        });
+      } : null,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          gradient: isSelected
+              ? LinearGradient(
+                  colors: [
+                    AppColors.primaryGreen,
+                    AppColors.primaryGreen.withOpacity(0.8),
+                  ],
+                )
+              : null,
+          color: isSelected 
+              ? null 
+              : isAvailable 
+                  ? const Color(0xFFF8FAFB)
+                  : const Color(0xFFF5F5F5),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected 
+                ? AppColors.primaryGreen
+                : isAvailable 
+                    ? const Color(0xFFE8ECEF)
+                    : const Color(0xFFE8ECEF),
+          ),
+        ),
+        child: Text(
+          time,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: isSelected 
+                ? Colors.white
+                : isAvailable 
+                    ? const Color(0xFF2D3436)
+                    : const Color(0xFFCED4DA),
+          ),
+        ),
+      ),
+    );
+  }
+
+
+
+  Widget _buildModernFooter() {
+    final canContinue = _currentPage == 0 || (_selectedDate != null && _selectedTime != null);
+    
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.white,
+            Colors.white.withOpacity(0.98),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, -10),
+          ),
+        ],
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(30),
+          topRight: Radius.circular(30),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Row(
+            children: [
+              // Price and Time section with animation
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      'Valor Total',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF2C3E50),
-                      ),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                AppColors.primaryGreen.withOpacity(0.1),
+                                AppColors.primaryGreen.withOpacity(0.05),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'TOTAL',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primaryGreen,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.blue.withOpacity(0.1),
+                                Colors.blue.withOpacity(0.05),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.access_time,
+                                size: 10,
+                                color: Colors.blue[700],
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                _formatEstimatedTime(),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.blue[700],
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (_includeProducts || _includePets) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              '${(_includeProducts ? 1 : 0) + (_includePets ? 1 : 0)} extra${((_includeProducts ? 1 : 0) + (_includePets ? 1 : 0)) > 1 ? 's' : ''}',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.orange,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
-                    Text(
-                      'R\$ ${_targetPrice.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primaryGreen,
-                      ),
+                    const SizedBox(height: 4),
+                    AnimatedBuilder(
+                      animation: _priceAnimation,
+                      builder: (context, child) {
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Text(
+                              'R\$',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.primaryGreen,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _priceAnimation.value.toStringAsFixed(0),
+                              style: TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.primaryGreen,
+                                letterSpacing: -1,
+                              ),
+                            ),
+                            Text(
+                              ',00',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.primaryGreen.withOpacity(0.7),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+              
+              // CTA Button with pulse animation
+              AnimatedBuilder(
+                animation: _pulseAnimation,
+                builder: (context, child) {
+                  return Transform.scale(
+                    scale: canContinue ? _pulseAnimation.value : 1.0,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        gradient: canContinue
+                            ? LinearGradient(
+                                colors: [
+                                  AppColors.primaryGreen,
+                                  AppColors.primaryGreen.withOpacity(0.8),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              )
+                            : null,
+                        color: canContinue ? null : const Color(0xFFE8ECEF),
+                        boxShadow: canContinue
+                            ? [
+                                BoxShadow(
+                                  color: AppColors.primaryGreen.withOpacity(0.3),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 10),
+                                ),
+                              ]
+                            : [],
                       ),
-                      child: Text(
-                        'Voltar',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontWeight: FontWeight.w600,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: canContinue ? () {
+                            HapticFeedback.mediumImpact();
+                            if (_currentPage == 0) {
+                              _goToNextPage();
+                            } else {
+                              _confirmSchedule();
+                            }
+                          } : null,
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+                            child: Row(
+                              children: [
+                                Text(
+                                  _currentPage == 0 ? 'Continuar' : 'Confirmar',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: canContinue 
+                                        ? Colors.white
+                                        : const Color(0xFF74788D),
+                                    letterSpacing: -0.5,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: canContinue 
+                                        ? Colors.white.withOpacity(0.2)
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Icon(
+                                    _currentPage == 0 ? Icons.arrow_forward : Icons.check,
+                                    size: 16,
+                                    color: canContinue 
+                                        ? Colors.white
+                                        : const Color(0xFF74788D),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        Navigator.pop(context);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryGreen,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Confirmar',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                  );
+                },
               ),
             ],
           ),
@@ -1035,33 +1625,173 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     );
   }
 
-  Widget _buildSummaryRow(IconData icon, String label, String value) {
-    return Row(
-      children: [
-        Icon(
-          icon,
-          size: 16,
-          color: Colors.grey[600],
+  String _getWeekday(DateTime date) {
+    const weekdays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    return weekdays[date.weekday % 7];
+  }
+
+  String _getMonth(DateTime date) {
+    const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    return months[date.month - 1];
+  }
+
+  String _formatEstimatedTime() {
+    final hours = _estimatedTimeInMinutes ~/ 60;
+    final minutes = _estimatedTimeInMinutes % 60;
+    
+    if (hours > 0 && minutes > 0) {
+      return '${hours}h${minutes}min';
+    } else if (hours > 0) {
+      return '${hours}h';
+    } else {
+      return '${minutes}min';
+    }
+  }
+
+  void _confirmSchedule() {
+    HapticFeedback.mediumImpact();
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => _buildSuccessDialog(),
+    );
+  }
+
+  Widget _buildSuccessDialog() {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.grey[600],
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Success animation
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: 1),
+              duration: const Duration(milliseconds: 600),
+              curve: Curves.elasticOut,
+              builder: (context, value, child) {
+                return Transform.scale(
+                  scale: value,
+                  child: Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.primaryGreen,
+                          AppColors.primaryGreen.withOpacity(0.8),
+                        ],
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.check,
+                      color: Colors.white,
+                      size: 36,
+                    ),
+                  ),
+                );
+              },
             ),
-          ),
+            
+            const SizedBox(height: 24),
+            
+            const Text(
+              'Agendamento Confirmado!',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF2D3436),
+              ),
+            ),
+            
+            const SizedBox(height: 12),
+            
+            Text(
+              'Serviço agendado para ${_selectedDate?.day}/${_selectedDate?.month} às $_selectedTime',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+                height: 1.5,
+              ),
+            ),
+            
+            const SizedBox(height: 8),
+            
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.primaryGreen.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                'Valor: R\$ ${_targetPrice.toStringAsFixed(2)}',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primaryGreen,
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 24),
+            
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.pop(context);
+                    },
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: Text(
+                      'Ver detalhes',
+                      style: TextStyle(
+                        color: AppColors.primaryGreen,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryGreen,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Concluir',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF2C3E50),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
