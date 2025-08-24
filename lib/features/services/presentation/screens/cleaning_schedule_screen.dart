@@ -23,6 +23,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   late AnimationController _footerController;
   late AnimationController _priceController;
   late AnimationController _pulseController;
+  late AnimationController _pageTransitionController;
   
   // Animations
   late Animation<double> _headerAnimation;
@@ -30,10 +31,15 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   late Animation<double> _footerSlideAnimation;
   late Animation<double> _priceAnimation;
   late Animation<double> _pulseAnimation;
+  late Animation<double> _pageTransitionAnimation;
   
   // Staggered animations for cards
   final List<AnimationController> _cardAnimationControllers = [];
   final List<Animation<double>> _cardAnimations = [];
+  
+  // Page Controller
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
   
   // State
   String _selectedResidence = 'apartment';
@@ -136,6 +142,19 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       curve: Curves.easeInOut,
     ));
     
+    // Page transition animation
+    _pageTransitionController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+    _pageTransitionAnimation = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(
+      parent: _pageTransitionController,
+      curve: Curves.easeInOut,
+    ));
+    
     // Initialize staggered card animations
     for (int i = 0; i < 6; i++) {
       final controller = AnimationController(
@@ -212,6 +231,34 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     });
   }
 
+  void _goToNextPage() {
+    if (_currentPage == 0) {
+      setState(() {
+        _currentPage = 1;
+      });
+      _pageController.animateToPage(
+        1,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+      );
+      _pageTransitionController.forward();
+    }
+  }
+
+  void _goToPreviousPage() {
+    if (_currentPage == 1) {
+      setState(() {
+        _currentPage = 0;
+      });
+      _pageController.animateToPage(
+        0,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+      );
+      _pageTransitionController.reverse();
+    }
+  }
+
   @override
   void dispose() {
     _headerController.dispose();
@@ -219,6 +266,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     _footerController.dispose();
     _priceController.dispose();
     _pulseController.dispose();
+    _pageTransitionController.dispose();
+    _pageController.dispose();
     _scrollController.dispose();
     for (var controller in _cardAnimationControllers) {
       controller.dispose();
@@ -261,34 +310,25 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                   },
                 ),
                 
-                // Scrollable content
+                // Progress Bar
+                _buildProgressBar(),
+                
+                // Page View
                 Expanded(
-                  child: SingleChildScrollView(
-                    controller: _scrollController,
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.only(bottom: 100),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 20),
-                        
-                        // Residence Type Section
-                        _buildAnimatedCard(0, _buildResidenceSection()),
-                        
-                        // Room Details Section
-                        _buildAnimatedCard(1, _buildRoomDetailsSection()),
-                        
-                        // Extra Services Section
-                        _buildAnimatedCard(2, _buildExtrasSection()),
-                        
-                        // Date Selection Section
-                        _buildAnimatedCard(3, _buildDateSection()),
-                        
-                        // Time Selection Section
-                        _buildAnimatedCard(4, _buildTimeSection()),
-                        
-                        const SizedBox(height: 20),
-                      ],
-                    ),
+                  child: PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    onPageChanged: (index) {
+                      setState(() {
+                        _currentPage = index;
+                      });
+                    },
+                    children: [
+                      // First Page - Service Configuration
+                      _buildServiceConfigurationPage(),
+                      // Second Page - Date and Time Selection
+                      _buildDateTimePage(),
+                    ],
                   ),
                 ),
               ],
@@ -332,7 +372,13 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
         children: [
           // Back button
           GestureDetector(
-            onTap: () => Navigator.pop(context),
+            onTap: () {
+              if (_currentPage == 1) {
+                _goToPreviousPage();
+              } else {
+                Navigator.pop(context);
+              }
+            },
             child: Container(
               width: 36,
               height: 36,
@@ -354,9 +400,9 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Agendar Limpeza',
-                  style: TextStyle(
+                Text(
+                  _currentPage == 0 ? 'Configurar Serviço' : 'Agendar Horário',
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF2D3436),
@@ -364,7 +410,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                   ),
                 ),
                 Text(
-                  'Personalize seu serviço',
+                  _currentPage == 0 ? 'Personalize sua limpeza' : 'Escolha data e hora',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey[600],
@@ -393,6 +439,118 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
               color: AppColors.primaryGreen,
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressBar() {
+    return Container(
+      height: 3,
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              decoration: BoxDecoration(
+                color: AppColors.primaryGreen,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              decoration: BoxDecoration(
+                color: _currentPage >= 1 
+                    ? AppColors.primaryGreen 
+                    : AppColors.primaryGreen.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildServiceConfigurationPage() {
+    return SingleChildScrollView(
+      controller: _scrollController,
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 100),
+      child: Column(
+        children: [
+          const SizedBox(height: 20),
+          
+          // Residence Type Section
+          _buildAnimatedCard(0, _buildResidenceSection()),
+          
+          // Room Details Section
+          _buildAnimatedCard(1, _buildRoomDetailsSection()),
+          
+          // Extra Services Section
+          _buildAnimatedCard(2, _buildExtrasSection()),
+          
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDateTimePage() {
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 100),
+      child: Column(
+        children: [
+          const SizedBox(height: 20),
+          
+          // Date Selection Section
+          AnimatedBuilder(
+            animation: _pageTransitionAnimation,
+            builder: (context, child) {
+              return Transform.scale(
+                scale: 0.8 + (0.2 * _pageTransitionAnimation.value),
+                child: Opacity(
+                  opacity: _pageTransitionAnimation.value,
+                  child: _buildDateSection(),
+                ),
+              );
+            },
+          ),
+          
+          // Time Selection Section
+          AnimatedBuilder(
+            animation: _pageTransitionAnimation,
+            builder: (context, child) {
+              return Transform.translate(
+                offset: Offset(0, 50 * (1 - _pageTransitionAnimation.value)),
+                child: Opacity(
+                  opacity: _pageTransitionAnimation.value,
+                  child: _buildTimeSection(),
+                ),
+              );
+            },
+          ),
+          
+          // Summary Card
+          AnimatedBuilder(
+            animation: _pageTransitionAnimation,
+            builder: (context, child) {
+              return Transform.translate(
+                offset: Offset(0, 100 * (1 - _pageTransitionAnimation.value)),
+                child: Opacity(
+                  opacity: _pageTransitionAnimation.value,
+                  child: _buildSummaryCard(),
+                ),
+              );
+            },
+          ),
+          
+          const SizedBox(height: 20),
         ],
       ),
     );
@@ -1202,8 +1360,88 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     );
   }
 
+  Widget _buildSummaryCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primaryGreen.withOpacity(0.05),
+            AppColors.primaryGreen.withOpacity(0.02),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.primaryGreen.withOpacity(0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.receipt_long,
+                color: AppColors.primaryGreen,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Resumo do Pedido',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF2D3436),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildSummaryRow(
+            'Tipo', 
+            _selectedResidence == 'studio' ? 'Studio' : 
+            _selectedResidence == 'apartment' ? 'Apartamento' : 'Casa'
+          ),
+          _buildSummaryRow('Cômodos', '$_rooms'),
+          _buildSummaryRow('Banheiros', '$_bathrooms'),
+          if (_includeProducts) _buildSummaryRow('Produtos', 'Inclusos'),
+          if (_includePets) _buildSummaryRow('Pet friendly', 'Sim'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey[600],
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF2D3436),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildModernFooter() {
-    final canSchedule = _selectedDate != null && _selectedTime != null;
+    final canContinue = _currentPage == 0 || (_selectedDate != null && _selectedTime != null);
     
     return Container(
       decoration: BoxDecoration(
@@ -1328,11 +1566,11 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                 animation: _pulseAnimation,
                 builder: (context, child) {
                   return Transform.scale(
-                    scale: canSchedule ? _pulseAnimation.value : 1.0,
+                    scale: canContinue ? _pulseAnimation.value : 1.0,
                     child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
-                        gradient: canSchedule
+                        gradient: canContinue
                             ? LinearGradient(
                                 colors: [
                                   AppColors.primaryGreen,
@@ -1342,8 +1580,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                                 end: Alignment.bottomRight,
                               )
                             : null,
-                        color: canSchedule ? null : const Color(0xFFE8ECEF),
-                        boxShadow: canSchedule
+                        color: canContinue ? null : const Color(0xFFE8ECEF),
+                        boxShadow: canContinue
                             ? [
                                 BoxShadow(
                                   color: AppColors.primaryGreen.withOpacity(0.3),
@@ -1356,18 +1594,25 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                       child: Material(
                         color: Colors.transparent,
                         child: InkWell(
-                          onTap: canSchedule ? _confirmSchedule : null,
+                          onTap: canContinue ? () {
+                            HapticFeedback.mediumImpact();
+                            if (_currentPage == 0) {
+                              _goToNextPage();
+                            } else {
+                              _confirmSchedule();
+                            }
+                          } : null,
                           borderRadius: BorderRadius.circular(16),
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
                             child: Row(
                               children: [
                                 Text(
-                                  'Agendar',
+                                  _currentPage == 0 ? 'Continuar' : 'Confirmar',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
-                                    color: canSchedule 
+                                    color: canContinue 
                                         ? Colors.white
                                         : const Color(0xFF74788D),
                                     letterSpacing: -0.5,
@@ -1377,15 +1622,15 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                                 Container(
                                   padding: const EdgeInsets.all(4),
                                   decoration: BoxDecoration(
-                                    color: canSchedule 
+                                    color: canContinue 
                                         ? Colors.white.withOpacity(0.2)
                                         : Colors.transparent,
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Icon(
-                                    Icons.arrow_forward,
+                                    _currentPage == 0 ? Icons.arrow_forward : Icons.check,
                                     size: 16,
-                                    color: canSchedule 
+                                    color: canContinue 
                                         ? Colors.white
                                         : const Color(0xFF74788D),
                                   ),
