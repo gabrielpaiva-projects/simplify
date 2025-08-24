@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:ui';
 import '../../../../core/constants/app_colors.dart';
 
 class CleaningScheduleScreen extends StatefulWidget {
@@ -23,6 +24,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   
   late AnimationController _priceAnimationController;
   late Animation<double> _priceAnimation;
+  late AnimationController _floatingController;
+  late Animation<double> _floatingAnimation;
   
   double _currentPrice = 94.0;
   double _targetPrice = 94.0;
@@ -33,25 +36,53 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     'casa': 105.0,
   };
 
-  final Map<String, IconData> _residenceIcons = {
-    'studio': Icons.weekend_outlined,
-    'apartamento': Icons.location_city_outlined,
-    'casa': Icons.home_outlined,
+  final Map<String, Map<String, dynamic>> _residenceData = {
+    'studio': {
+      'icon': Icons.single_bed,
+      'color': Color(0xFF6C63FF),
+      'gradient': [Color(0xFF6C63FF), Color(0xFF8B84FF)],
+      'image': '🏠',
+    },
+    'apartamento': {
+      'icon': Icons.apartment,
+      'color': Color(0xFF00BFA6),
+      'gradient': [Color(0xFF00BFA6), Color(0xFF00E5CC)],
+      'image': '🏢',
+    },
+    'casa': {
+      'icon': Icons.home,
+      'color': Color(0xFFFF6B6B),
+      'gradient': [Color(0xFFFF6B6B), Color(0xFFFF8E8E)],
+      'image': '🏡',
+    },
   };
 
   @override
   void initState() {
     super.initState();
     _priceAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
+    _floatingController = AnimationController(
+      duration: const Duration(seconds: 3),
+      vsync: this,
+    )..repeat(reverse: true);
+    
+    _floatingAnimation = Tween<double>(
+      begin: -10,
+      end: 10,
+    ).animate(CurvedAnimation(
+      parent: _floatingController,
+      curve: Curves.easeInOut,
+    ));
+    
     _priceAnimation = Tween<double>(
       begin: _currentPrice,
       end: _targetPrice,
     ).animate(CurvedAnimation(
       parent: _priceAnimationController,
-      curve: Curves.easeOutExpo,
+      curve: Curves.elasticOut,
     ));
     _calculatePrice();
   }
@@ -59,6 +90,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   @override
   void dispose() {
     _priceAnimationController.dispose();
+    _floatingController.dispose();
     super.dispose();
   }
 
@@ -78,7 +110,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
         end: _targetPrice,
       ).animate(CurvedAnimation(
         parent: _priceAnimationController,
-        curve: Curves.easeOutExpo,
+        curve: Curves.elasticOut,
       ));
       _priceAnimationController.forward(from: 0);
     });
@@ -87,222 +119,424 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       body: Stack(
         children: [
-          CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              // Modern Sliver App Bar
-              SliverAppBar(
-                expandedHeight: 120,
-                floating: true,
-                pinned: true,
-                elevation: 0,
-                backgroundColor: Colors.white,
-                leading: Padding(
-                  padding: const EdgeInsets.only(left: 8),
-                  child: IconButton(
-                    icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.04),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        size: 20,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    onPressed: () => Navigator.pop(context),
-                  ),
+          // Gradient Background
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.primaryGreen.withOpacity(0.1),
+                  Colors.white,
+                  Color(0xFFF0F9FF),
+                ],
+              ),
+            ),
+          ),
+          
+          // Decorative Circles
+          Positioned(
+            top: -100,
+            right: -100,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppColors.primaryGreen.withOpacity(0.15),
+                    AppColors.primaryGreen.withOpacity(0.0),
+                  ],
                 ),
-                flexibleSpace: FlexibleSpaceBar(
-                  titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
-                  title: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              ),
+            ),
+          ),
+          
+          Positioned(
+            bottom: -150,
+            left: -100,
+            child: Container(
+              width: 400,
+              height: 400,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    Colors.blue.withOpacity(0.1),
+                    Colors.blue.withOpacity(0.0),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          
+          // Main Content
+          SafeArea(
+            child: Column(
+              children: [
+                // Custom Header
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
                     children: [
-                      Text(
-                        'Limpeza Residencial',
-                        style: TextStyle(
-                          color: Colors.black87,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.5,
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          width: 45,
+                          height: 45,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.9),
+                            borderRadius: BorderRadius.circular(15),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.arrow_back_ios_new,
+                            size: 18,
+                          ),
                         ),
                       ),
-                      Text(
-                        'Personalize seu serviço',
-                        style: TextStyle(
-                          color: Colors.black45,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Agendar Limpeza',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            Text(
+                              'Personalize seu serviço',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
                         ),
+                      ),
+                      AnimatedBuilder(
+                        animation: _floatingAnimation,
+                        builder: (context, child) {
+                          return Transform.translate(
+                            offset: Offset(0, _floatingAnimation.value),
+                            child: Container(
+                              width: 50,
+                              height: 50,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    AppColors.primaryGreen,
+                                    AppColors.primaryGreen.withOpacity(0.7),
+                                  ],
+                                ),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.primaryGreen.withOpacity(0.3),
+                                    blurRadius: 15,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.cleaning_services,
+                                color: Colors.white,
+                                size: 24,
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
                 ),
-              ),
-              
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Residence Type Section
-                      const Text(
-                        'Tipo de imóvel',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black54,
-                          letterSpacing: 0.5,
+                
+                // Scrollable Content
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Residence Type Cards
+                        const Text(
+                          '🏠 Tipo de Residência',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(12),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          height: 140,
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            children: [
+                              _buildResidenceCard('studio', 'Studio'),
+                              const SizedBox(width: 12),
+                              _buildResidenceCard('apartamento', 'Apartamento'),
+                              const SizedBox(width: 12),
+                              _buildResidenceCard('casa', 'Casa'),
+                            ],
+                          ),
                         ),
-                        child: Row(
-                          children: [
-                            _buildResidenceTab('studio', 'Studio'),
-                            _buildResidenceTab('apartamento', 'Apartamento'),
-                            _buildResidenceTab('casa', 'Casa'),
-                          ],
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 32),
-                      
-                      // Rooms Section
-                      const Text(
-                        'Detalhes do imóvel',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black54,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      
-                      _buildModernCounter(
-                        label: 'Cômodos',
-                        hint: 'Sem incluir banheiros',
-                        value: _roomCount,
-                        onChanged: (value) {
-                          setState(() {
-                            _roomCount = value;
-                            _calculatePrice();
-                          });
-                        },
-                      ),
-                      
-                      const SizedBox(height: 12),
-                      
-                      _buildModernCounter(
-                        label: 'Banheiros',
-                        hint: 'Completos e lavabos',
-                        value: _bathroomCount,
-                        onChanged: (value) {
-                          setState(() {
-                            _bathroomCount = value;
-                            _calculatePrice();
-                          });
-                        },
-                      ),
-                      
-                      const SizedBox(height: 32),
-                      
-                      // Additional Options
-                      const Text(
-                        'Adicional',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black54,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      
-                      _buildModernSwitch(
-                        title: 'Produtos de limpeza',
-                        subtitle: 'Incluir produtos profissionais',
-                        value: _includeCleaningProducts,
-                        onChanged: (value) {
-                          setState(() {
-                            _includeCleaningProducts = value;
-                            _calculatePrice();
-                          });
-                        },
-                      ),
-                      
-                      const SizedBox(height: 32),
-                      
-                      // Info Card
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryGreen.withOpacity(0.04),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(10),
+                        
+                        const SizedBox(height: 32),
+                        
+                        // Room Counter with Glassmorphism
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Container(
+                              padding: const EdgeInsets.all(20),
                               decoration: BoxDecoration(
-                                color: AppColors.primaryGreen.withOpacity(0.1),
-                                shape: BoxShape.circle,
+                                color: Colors.white.withOpacity(0.7),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.2),
+                                ),
                               ),
-                              child: Icon(
-                                Icons.check_circle_outline,
-                                color: AppColors.primaryGreen,
-                                size: 20,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
                               child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
-                                    'Serviço completo incluído',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black87,
-                                    ),
+                                  _buildGlassCounter(
+                                    emoji: '🛏️',
+                                    title: 'Cômodos',
+                                    subtitle: 'Não incluir banheiros',
+                                    value: _roomCount,
+                                    color: Colors.blue,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _roomCount = value;
+                                        _calculatePrice();
+                                      });
+                                    },
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'Limpeza de todos os ambientes, organização e desinfecção',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.black54,
-                                      height: 1.4,
-                                    ),
+                                  const SizedBox(height: 16),
+                                  Container(
+                                    height: 1,
+                                    color: Colors.grey.withOpacity(0.2),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  _buildGlassCounter(
+                                    emoji: '🚿',
+                                    title: 'Banheiros',
+                                    subtitle: 'Completos e lavabos',
+                                    value: _bathroomCount,
+                                    color: Colors.purple,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _bathroomCount = value;
+                                        _calculatePrice();
+                                      });
+                                    },
                                   ),
                                 ],
                               ),
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ],
+                        
+                        const SizedBox(height: 24),
+                        
+                        // Cleaning Products Card
+                        GestureDetector(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            setState(() {
+                              _includeCleaningProducts = !_includeCleaningProducts;
+                              _calculatePrice();
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              gradient: _includeCleaningProducts
+                                  ? LinearGradient(
+                                      colors: [
+                                        AppColors.primaryGreen,
+                                        AppColors.primaryGreen.withOpacity(0.8),
+                                      ],
+                                    )
+                                  : null,
+                              color: _includeCleaningProducts ? null : Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: _includeCleaningProducts
+                                      ? AppColors.primaryGreen.withOpacity(0.3)
+                                      : Colors.black.withOpacity(0.08),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 10),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 60,
+                                  height: 60,
+                                  decoration: BoxDecoration(
+                                    color: _includeCleaningProducts
+                                        ? Colors.white.withOpacity(0.2)
+                                        : AppColors.primaryGreen.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '🧹',
+                                      style: TextStyle(fontSize: 28),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Text(
+                                            'Produtos de Limpeza',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: _includeCleaningProducts
+                                                  ? Colors.white
+                                                  : Colors.black87,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 3,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.orange.withOpacity(0.2),
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: Text(
+                                              '+20%',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.bold,
+                                                color: _includeCleaningProducts
+                                                    ? Colors.white
+                                                    : Colors.orange,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Incluímos todos os produtos necessários',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: _includeCleaningProducts
+                                              ? Colors.white.withOpacity(0.9)
+                                              : Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 300),
+                                  width: 30,
+                                  height: 30,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: _includeCleaningProducts
+                                        ? Colors.white
+                                        : Colors.transparent,
+                                    border: Border.all(
+                                      color: _includeCleaningProducts
+                                          ? Colors.white
+                                          : Colors.grey[400]!,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: _includeCleaningProducts
+                                      ? Icon(
+                                          Icons.check,
+                                          size: 18,
+                                          color: AppColors.primaryGreen,
+                                        )
+                                      : null,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 24),
+                        
+                        // What's Included Section
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Color(0xFFE3F2FD),
+                                Color(0xFFF3E5F5),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Text(
+                                    '✨',
+                                    style: TextStyle(fontSize: 24),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    'O que está incluso',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              _buildIncludedItem('Limpeza completa de todos os cômodos'),
+                              _buildIncludedItem('Organização e arrumação'),
+                              _buildIncludedItem('Desinfecção de banheiros'),
+                              _buildIncludedItem('Limpeza de vidros e espelhos'),
+                              _buildIncludedItem('Aspiração e limpeza de pisos'),
+                              _buildIncludedItem('Retirada do lixo'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           
-          // Modern Bottom Bar
+          // Floating Bottom Bar
           Positioned(
             bottom: 0,
             left: 0,
@@ -311,11 +545,14 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Colors.white,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(30),
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
+                    color: Colors.black.withOpacity(0.1),
                     blurRadius: 20,
-                    offset: const Offset(0, -2),
+                    offset: const Offset(0, -5),
                   ),
                 ],
               ),
@@ -328,45 +565,29 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Total estimado',
+                            'Total',
                             style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.black45,
-                              letterSpacing: 0.5,
+                              fontSize: 12,
+                              color: Colors.grey[600],
                             ),
                           ),
-                          const SizedBox(height: 4),
                           AnimatedBuilder(
                             animation: _priceAnimation,
                             builder: (context, child) {
-                              return RichText(
-                                text: TextSpan(
-                                  children: [
-                                    TextSpan(
-                                      text: 'R\$ ',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.black54,
-                                      ),
+                              return Text(
+                                'R\$ ${_priceAnimation.value.toStringAsFixed(2)}',
+                                style: TextStyle(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                  foreground: Paint()
+                                    ..shader = LinearGradient(
+                                      colors: [
+                                        AppColors.primaryGreen,
+                                        AppColors.primaryGreen.withOpacity(0.7),
+                                      ],
+                                    ).createShader(
+                                      const Rect.fromLTWH(0, 0, 200, 70),
                                     ),
-                                    TextSpan(
-                                      text: _priceAnimation.value.toStringAsFixed(0),
-                                      style: TextStyle(
-                                        fontSize: 28,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.black87,
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: ',${(_priceAnimation.value % 1 * 100).toStringAsFixed(0).padLeft(2, '0')}',
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.black54,
-                                      ),
-                                    ),
-                                  ],
                                 ),
                               );
                             },
@@ -376,19 +597,26 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                     ),
                     GestureDetector(
                       onTap: () {
-                        HapticFeedback.lightImpact();
-                        _showSuccessModal();
+                        HapticFeedback.mediumImpact();
+                        _showConfirmationModal();
                       },
                       child: Container(
-                        height: 56,
-                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 18,
+                        ),
                         decoration: BoxDecoration(
-                          color: AppColors.primaryGreen,
-                          borderRadius: BorderRadius.circular(28),
+                          gradient: LinearGradient(
+                            colors: [
+                              AppColors.primaryGreen,
+                              AppColors.primaryGreen.withOpacity(0.8),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(25),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.primaryGreen.withOpacity(0.3),
-                              blurRadius: 16,
+                              color: AppColors.primaryGreen.withOpacity(0.4),
+                              blurRadius: 15,
                               offset: const Offset(0, 8),
                             ),
                           ],
@@ -396,19 +624,18 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                         child: Row(
                           children: [
                             const Text(
-                              'Agendar',
+                              'Continuar',
                               style: TextStyle(
                                 fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                                fontWeight: FontWeight.bold,
                                 color: Colors.white,
-                                letterSpacing: 0.5,
                               ),
                             ),
                             const SizedBox(width: 8),
                             const Icon(
                               Icons.arrow_forward,
                               color: Colors.white,
-                              size: 18,
+                              size: 20,
                             ),
                           ],
                         ),
@@ -424,395 +651,409 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     );
   }
 
-  Widget _buildResidenceTab(String value, String label) {
+  Widget _buildResidenceCard(String value, String label) {
     final isSelected = _selectedResidenceType == value;
-    final icon = _residenceIcons[value]!;
+    final data = _residenceData[value]!;
     
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          setState(() {
-            _selectedResidenceType = value;
-            _calculatePrice();
-          });
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                : [],
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        setState(() {
+          _selectedResidenceType = value;
+          _calculatePrice();
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        width: 120,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: isSelected
+              ? LinearGradient(colors: data['gradient'] as List<Color>)
+              : null,
+          color: isSelected ? null : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected
+                ? Colors.transparent
+                : Colors.grey.withOpacity(0.2),
+            width: 2,
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                color: isSelected ? AppColors.primaryGreen : Colors.black38,
-                size: 18,
+          boxShadow: [
+            BoxShadow(
+              color: isSelected
+                  ? (data['color'] as Color).withOpacity(0.3)
+                  : Colors.black.withOpacity(0.05),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              data['image'] as String,
+              style: const TextStyle(fontSize: 36),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: isSelected ? Colors.white : Colors.black87,
               ),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  color: isSelected ? Colors.black87 : Colors.black54,
-                ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              value == 'casa' ? 'R\$ 105' : 'R\$ 94',
+              style: TextStyle(
+                fontSize: 12,
+                color: isSelected
+                    ? Colors.white.withOpacity(0.9)
+                    : Colors.grey[600],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildModernCounter({
-    required String label,
-    required String hint,
+  Widget _buildGlassCounter({
+    required String emoji,
+    required String title,
+    required String subtitle,
     required int value,
+    required Color color,
     required Function(int) onChanged,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-                Text(
-                  hint,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.black45,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Row(
+    return Row(
+      children: [
+        Text(
+          emoji,
+          style: const TextStyle(fontSize: 32),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              GestureDetector(
-                onTap: value > 1
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: Row(
+            children: [
+              IconButton(
+                onPressed: value > 1
                     ? () {
                         HapticFeedback.selectionClick();
                         onChanged(value - 1);
                       }
                     : null,
-                child: Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: value > 1 ? Colors.white : Colors.grey[100],
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.remove,
-                    color: value > 1 ? Colors.black54 : Colors.black26,
-                    size: 18,
-                  ),
+                icon: Icon(
+                  Icons.remove,
+                  color: value > 1 ? color : Colors.grey[400],
                 ),
               ),
               Container(
-                width: 48,
+                width: 40,
                 alignment: Alignment.center,
                 child: Text(
                   value.toString(),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: color,
                   ),
                 ),
               ),
-              GestureDetector(
-                onTap: () {
+              IconButton(
+                onPressed: () {
                   HapticFeedback.selectionClick();
                   onChanged(value + 1);
                 },
-                child: Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryGreen,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.add,
-                    color: Colors.white,
-                    size: 18,
-                  ),
+                icon: Icon(
+                  Icons.add,
+                  color: color,
                 ),
               ),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIncludedItem(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            margin: const EdgeInsets.only(top: 2),
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              color: Colors.green.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.check,
+              size: 12,
+              color: Colors.green,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[700],
+                height: 1.4,
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildModernSwitch({
-    required String title,
-    required String subtitle,
-    required bool value,
-    required Function(bool) onChanged,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onChanged(!value);
-      },
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: value ? AppColors.primaryGreen.withOpacity(0.04) : Colors.grey[50],
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: value ? AppColors.primaryGreen.withOpacity(0.2) : Colors.transparent,
-          ),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text(
-                          '+20%',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.orange,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.black45,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Switch.adaptive(
-              value: value,
-              onChanged: onChanged,
-              activeColor: AppColors.primaryGreen,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showSuccessModal() {
+  void _showConfirmationModal() {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (context) => Container(
         margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(30),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: AppColors.primaryGreen.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.check,
-                color: AppColors.primaryGreen,
-                size: 32,
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Tudo certo!',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Agora escolha o melhor dia e horário',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.black54,
-              ),
-            ),
-            const SizedBox(height: 24),
-            
-            // Summary
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                children: [
-                  _buildSummaryItem('Tipo', _selectedResidenceType == 'studio' 
-                      ? 'Studio' 
-                      : _selectedResidenceType == 'apartamento'
-                          ? 'Apartamento'
-                          : 'Casa'),
-                  const SizedBox(height: 12),
-                  _buildSummaryItem('Cômodos', '$_roomCount'),
-                  const SizedBox(height: 12),
-                  _buildSummaryItem('Banheiros', '$_bathroomCount'),
-                  if (_includeCleaningProducts) ...[
-                    const SizedBox(height: 12),
-                    _buildSummaryItem('Produtos', 'Inclusos'),
-                  ],
-                  const SizedBox(height: 16),
-                  Divider(color: Colors.grey[200]),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Total',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      Text(
-                        'R\$ ${_targetPrice.toStringAsFixed(2)}',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primaryGreen,
-                        ),
-                      ),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primaryGreen,
+                      AppColors.primaryGreen.withOpacity(0.7),
                     ],
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primaryGreen.withOpacity(0.3),
+                      blurRadius: 20,
+                      spreadRadius: 5,
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.check_rounded,
+                  color: Colors.white,
+                  size: 40,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                '🎉 Perfeito!',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Seu pedido foi configurado',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Color(0xFFF5F5F5),
+                      Color(0xFFFAFAFA),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  children: [
+                    _buildSummaryRow('🏠', 'Tipo', _selectedResidenceType == 'studio' 
+                        ? 'Studio' 
+                        : _selectedResidenceType == 'apartamento'
+                            ? 'Apartamento'
+                            : 'Casa'),
+                    const SizedBox(height: 12),
+                    _buildSummaryRow('🛏️', 'Cômodos', '$_roomCount'),
+                    const SizedBox(height: 12),
+                    _buildSummaryRow('🚿', 'Banheiros', '$_bathroomCount'),
+                    if (_includeCleaningProducts) ...[
+                      const SizedBox(height: 12),
+                      _buildSummaryRow('🧹', 'Produtos', 'Inclusos'),
+                    ],
+                    const SizedBox(height: 16),
+                    Container(
+                      height: 1,
+                      color: Colors.grey.withOpacity(0.2),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Total',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          'R\$ ${_targetPrice.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            foreground: Paint()
+                              ..shader = LinearGradient(
+                                colors: [
+                                  AppColors.primaryGreen,
+                                  AppColors.primaryGreen.withOpacity(0.7),
+                                ],
+                              ).createShader(
+                                const Rect.fromLTWH(0, 0, 200, 70),
+                              ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: Text(
+                        'Voltar',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.primaryGreen,
+                            AppColors.primaryGreen.withOpacity(0.8),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primaryGreen.withOpacity(0.3),
+                            blurRadius: 10,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.pop(context);
+                          },
+                          borderRadius: BorderRadius.circular(15),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            alignment: Alignment.center,
+                            child: const Text(
+                              'Confirmar',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
-            ),
-            
-            const SizedBox(height: 24),
-            
-            Row(
-              children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text(
-                      'Voltar',
-                      style: TextStyle(
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      Navigator.pop(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryGreen,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: const Text(
-                      'Continuar',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildSummaryItem(String label, String value) {
+  Widget _buildSummaryRow(String emoji, String label, String value) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
+        Text(
+          emoji,
+          style: const TextStyle(fontSize: 20),
+        ),
+        const SizedBox(width: 12),
         Text(
           label,
           style: TextStyle(
-            fontSize: 13,
-            color: Colors.black54,
+            fontSize: 14,
+            color: Colors.grey[600],
           ),
         ),
+        const Spacer(),
         Text(
           value,
           style: const TextStyle(
-            fontSize: 13,
+            fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Colors.black87,
           ),
         ),
       ],
