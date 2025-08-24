@@ -52,6 +52,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   
   double _currentPrice = 0;
   double _targetPrice = 149.0;
+  int _estimatedTimeInMinutes = 120; // Base time in minutes
   
   final ScrollController _scrollController = ScrollController();
   
@@ -194,32 +195,46 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
 
   void _calculatePrice() {
     double base = 0;
+    int timeInMinutes = 0;
     
+    // Base price and time by residence type
     switch (_selectedResidence) {
       case 'studio':
         base = 99;
+        timeInMinutes = 90; // 1h30min base
         break;
       case 'apartment':
         base = 149;
+        timeInMinutes = 120; // 2h base
         break;
       case 'house':
         base = 199;
+        timeInMinutes = 180; // 3h base
         break;
     }
     
-    // Room multiplier
+    // Room multiplier (price and time)
     base += (_rooms - 1) * 30;
+    timeInMinutes += (_rooms - 1) * 30; // +30min per extra room
     
-    // Bathroom multiplier
+    // Bathroom multiplier (price and time)
     base += (_bathrooms - 1) * 25;
+    timeInMinutes += (_bathrooms - 1) * 20; // +20min per extra bathroom
     
     // Extras
-    if (_includeProducts) base += 40;
-    if (_includePets) base += 25;
+    if (_includeProducts) {
+      base += 40;
+      // Products don't add time
+    }
+    if (_includePets) {
+      base += 25;
+      timeInMinutes += 30; // +30min for pet cleaning
+    }
     
     setState(() {
       _currentPrice = _targetPrice;
       _targetPrice = base;
+      _estimatedTimeInMinutes = timeInMinutes;
       _priceAnimation = Tween<double>(
         begin: _currentPrice,
         end: _targetPrice,
@@ -1397,7 +1412,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Row(
             children: [
-              // Price section with animation
+              // Price and Time section with animation
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1427,7 +1442,39 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                           ),
                         ),
                         const SizedBox(width: 8),
-                        if (_includeProducts || _includePets)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.blue.withOpacity(0.1),
+                                Colors.blue.withOpacity(0.05),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.access_time,
+                                size: 10,
+                                color: Colors.blue[700],
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                _formatEstimatedTime(),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.blue[700],
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (_includeProducts || _includePets) ...[
+                          const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
@@ -1443,6 +1490,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                               ),
                             ),
                           ),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 4),
@@ -1585,6 +1633,19 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   String _getMonth(DateTime date) {
     const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
     return months[date.month - 1];
+  }
+
+  String _formatEstimatedTime() {
+    final hours = _estimatedTimeInMinutes ~/ 60;
+    final minutes = _estimatedTimeInMinutes % 60;
+    
+    if (hours > 0 && minutes > 0) {
+      return '${hours}h${minutes}min';
+    } else if (hours > 0) {
+      return '${hours}h';
+    } else {
+      return '${minutes}min';
+    }
   }
 
   void _confirmSchedule() {
