@@ -965,6 +965,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           _buildExtraOption(
             icon: Icons.cleaning_services,
             label: 'Produtos inclusos',
+            description: 'Fornecemos todos os produtos de limpeza profissionais',
             price: '+ R\$ 40',
             isSelected: _includeProducts,
             color: Colors.teal,
@@ -980,6 +981,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           _buildExtraOption(
             icon: Icons.pets,
             label: 'Tenho pets',
+            description: 'Cuidado especial com pelos e odores de animais',
             price: '+ R\$ 25',
             isSelected: _includePets,
             color: Colors.pink,
@@ -1003,6 +1005,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     required bool isSelected,
     required Color color,
     required VoidCallback onTap,
+    String? description,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -1037,13 +1040,28 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF2D3436),
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF2D3436),
+                    ),
+                  ),
+                  if (description != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      description,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
             Text(
