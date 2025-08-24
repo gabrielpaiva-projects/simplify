@@ -29,6 +29,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   // Animações
   late AnimationController _priceAnimationController;
   late Animation<double> _priceAnimation;
+  late AnimationController _scaleController;
   
   double _currentPrice = 94.0;
   double _targetPrice = 94.0;
@@ -40,12 +41,23 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     'casa': 105.0,
   };
 
+  final Map<String, IconData> _residenceIcons = {
+    'studio': Icons.single_bed_rounded,
+    'apartamento': Icons.apartment_rounded,
+    'casa': Icons.house_rounded,
+  };
+
   @override
   void initState() {
     super.initState();
     
     _priceAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    
+    _scaleController = AnimationController(
+      duration: const Duration(milliseconds: 200),
       vsync: this,
     );
     
@@ -54,7 +66,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       end: _targetPrice,
     ).animate(CurvedAnimation(
       parent: _priceAnimationController,
-      curve: Curves.easeOutQuart,
+      curve: Curves.easeOutCubic,
     ));
     
     _calculatePrice();
@@ -63,6 +75,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   @override
   void dispose() {
     _priceAnimationController.dispose();
+    _scaleController.dispose();
     super.dispose();
   }
 
@@ -82,7 +95,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
         end: _targetPrice,
       ).animate(CurvedAnimation(
         parent: _priceAnimationController,
-        curve: Curves.easeOutQuart,
+        curve: Curves.easeOutCubic,
       ));
       _priceAnimationController.forward(from: 0);
     });
@@ -92,87 +105,209 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 24),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (context, scrollController) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            children: [
+              Container(
+                width: 50,
+                height: 5,
+                margin: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
                   color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(3),
                 ),
               ),
-            ),
-            const Text(
-              'O que está incluso',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF1A1A1A),
-              ),
-            ),
-            const SizedBox(height: 24),
-            _buildIncludedItem('Limpeza completa da cozinha'),
-            _buildIncludedItem('Sala de estar e jantar'),
-            _buildIncludedItem('Todos os quartos'),
-            _buildIncludedItem('Banheiros desinfetados'),
-            _buildIncludedItem('Áreas externas e varandas'),
-            _buildIncludedItem('Recolhimento do lixo'),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryGreen,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                AppColors.primaryGreen,
+                                AppColors.primaryGreen.withOpacity(0.8),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Icon(
+                            Icons.star_rounded,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Serviços Inclusos',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF1A1A1A),
+                              ),
+                            ),
+                            Text(
+                              'Tudo que está no pacote',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 28),
+                    _buildIncludedCard(
+                      Icons.kitchen_rounded,
+                      'Cozinha Completa',
+                      'Limpeza de bancadas, pia, fogão, geladeira e microondas',
+                      Colors.orange,
+                    ),
+                    _buildIncludedCard(
+                      Icons.weekend_rounded,
+                      'Salas',
+                      'Aspiração e limpeza de móveis, vidros e organização',
+                      Colors.blue,
+                    ),
+                    _buildIncludedCard(
+                      Icons.bed_rounded,
+                      'Quartos',
+                      'Troca de roupa de cama, limpeza e organização completa',
+                      Colors.purple,
+                    ),
+                    _buildIncludedCard(
+                      Icons.bathtub_rounded,
+                      'Banheiros',
+                      'Desinfecção, limpeza de louças, box e espelhos',
+                      Colors.teal,
+                    ),
+                    _buildIncludedCard(
+                      Icons.deck_rounded,
+                      'Áreas Externas',
+                      'Varandas, sacadas e áreas de circulação',
+                      Colors.green,
+                    ),
+                    _buildIncludedCard(
+                      Icons.delete_sweep_rounded,
+                      'Lixo',
+                      'Recolhimento e organização para coleta',
+                      Colors.red,
+                    ),
+                    const SizedBox(height: 24),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryGreen.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppColors.primaryGreen.withOpacity(0.2),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.eco_rounded,
+                            color: AppColors.primaryGreen,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Utilizamos produtos ecológicos sempre que possível',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[700],
+                                height: 1.3,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 100),
+                  ],
                 ),
-                child: const Text(
-                  'Entendi',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
               ),
-            ),
-            const SizedBox(height: 16),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildIncludedItem(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+  Widget _buildIncludedCard(IconData icon, String title, String description, Color color) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.grey[200]!,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: Row(
         children: [
-          Icon(
-            Icons.check_circle,
-            color: AppColors.primaryGreen,
-            size: 20,
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              icon,
+              color: color,
+              size: 22,
+            ),
           ),
-          const SizedBox(width: 12),
-          Text(
-            text,
-            style: TextStyle(
-              fontSize: 15,
-              color: Colors.grey[700],
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1A1A1A),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                    height: 1.3,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -183,81 +318,147 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFAFAFA),
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Color(0xFF1A1A1A),
+        elevation: 0.5,
+        leading: Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.grey[50],
+            borderRadius: BorderRadius.circular(12),
           ),
-          onPressed: () => Navigator.pop(context),
+          child: IconButton(
+            icon: const Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: Color(0xFF1A1A1A),
+            ),
+            onPressed: () => Navigator.pop(context),
+          ),
         ),
-        title: Text(
-          widget.serviceTitle,
-          style: const TextStyle(
-            color: Color(0xFF1A1A1A),
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.serviceTitle,
+              style: const TextStyle(
+                color: Color(0xFF1A1A1A),
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Text(
+              'Configure seu serviço',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
         ),
         centerTitle: false,
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Tipo de Residência
-              const Text(
-                'Tipo de residência',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF1A1A1A),
+        actions: [
+          Container(
+            margin: const EdgeInsets.only(right: 12),
+            child: IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.help_outline_rounded,
+                  size: 20,
+                  color: AppColors.primaryGreen,
                 ),
               ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  _buildResidenceOption('studio', 'Studio', 'R\$ 94'),
-                  const SizedBox(width: 8),
-                  _buildResidenceOption('apartamento', 'Apartamento', 'R\$ 94'),
-                  const SizedBox(width: 8),
-                  _buildResidenceOption('casa', 'Casa', 'R\$ 105'),
+              onPressed: () {},
+            ),
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header decorativo
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
                 ],
               ),
-              
-              const SizedBox(height: 32),
-              
-              // Cômodos
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      _buildStepIndicator(1, 'Configurar', true),
+                      _buildStepLine(true),
+                      _buildStepIndicator(2, 'Agendar', false),
+                      _buildStepLine(false),
+                      _buildStepIndicator(3, 'Confirmar', false),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Tipo de Residência
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.home_work_rounded,
+                        color: AppColors.primaryGreen,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
                       const Text(
-                        'Cômodos',
+                        'Tipo de Residência',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF1A1A1A),
                         ),
                       ),
-                      Text(
-                        'Sem contar banheiros',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey[600],
-                        ),
-                      ),
                     ],
                   ),
-                  _buildCounter(
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      _buildResidenceOption('studio', 'Studio', 'R\$ 94'),
+                      const SizedBox(width: 10),
+                      _buildResidenceOption('apartamento', 'Apartamento', 'R\$ 94'),
+                      const SizedBox(width: 10),
+                      _buildResidenceOption('casa', 'Casa', 'R\$ 105'),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 32),
+                  
+                  // Cards de contadores
+                  _buildCounterCard(
+                    icon: Icons.door_back_door_rounded,
+                    title: 'Cômodos',
+                    subtitle: 'Quartos, salas e outros (sem banheiros)',
                     value: _roomCount,
+                    percentage: '+10%',
+                    color: Colors.blue,
                     onChanged: (value) {
                       setState(() {
                         _roomCount = value;
@@ -265,25 +466,16 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                       });
                     },
                   ),
-                ],
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Banheiros
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Banheiros',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1A1A1A),
-                    ),
-                  ),
-                  _buildCounter(
+                  
+                  const SizedBox(height: 16),
+                  
+                  _buildCounterCard(
+                    icon: Icons.bathroom_rounded,
+                    title: 'Banheiros',
+                    subtitle: 'Lavabos e banheiros completos',
                     value: _bathroomCount,
+                    percentage: '+15%',
+                    color: Colors.purple,
                     onChanged: (value) {
                       setState(() {
                         _bathroomCount = value;
@@ -291,168 +483,256 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                       });
                     },
                   ),
-                ],
-              ),
-              
-              const SizedBox(height: 32),
-              
-              // Produtos de Limpeza
-              GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  setState(() {
-                    _includeCleaningProducts = !_includeCleaningProducts;
-                    _calculatePrice();
-                  });
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: _includeCleaningProducts 
-                        ? AppColors.primaryGreen.withOpacity(0.05)
-                        : Colors.grey[50],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: _includeCleaningProducts 
-                          ? AppColors.primaryGreen
-                          : Colors.grey[300]!,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 24,
-                        height: 24,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: _includeCleaningProducts
-                              ? AppColors.primaryGreen
-                              : Colors.transparent,
-                          border: Border.all(
-                            color: _includeCleaningProducts
-                                ? AppColors.primaryGreen
-                                : Colors.grey[400]!,
-                            width: 2,
-                          ),
-                        ),
-                        child: _includeCleaningProducts
-                            ? const Icon(
-                                Icons.check,
-                                size: 14,
-                                color: Colors.white,
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Produtos de Limpeza
+                  GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      setState(() {
+                        _includeCleaningProducts = !_includeCleaningProducts;
+                        _calculatePrice();
+                      });
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        gradient: _includeCleaningProducts
+                            ? LinearGradient(
+                                colors: [
+                                  AppColors.primaryGreen.withOpacity(0.05),
+                                  AppColors.primaryGreen.withOpacity(0.02),
+                                ],
                               )
                             : null,
+                        color: _includeCleaningProducts ? null : Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: _includeCleaningProducts 
+                              ? AppColors.primaryGreen
+                              : Colors.grey[300]!,
+                          width: _includeCleaningProducts ? 1.5 : 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _includeCleaningProducts
+                                ? AppColors.primaryGreen.withOpacity(0.1)
+                                : Colors.grey.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Incluir produtos de limpeza',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                                color: Color(0xFF1A1A1A),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: _includeCleaningProducts
+                                  ? AppColors.primaryGreen
+                                  : Colors.grey[100],
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.cleaning_services_rounded,
+                              color: _includeCleaningProducts 
+                                  ? Colors.white
+                                  : Colors.grey[400],
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Text(
+                                      'Incluir produtos de limpeza',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF1A1A1A),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.orange.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: const Text(
+                                        '+20%',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.orange,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Profissional traz todos os produtos necessários',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            width: 24,
+                            height: 24,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: _includeCleaningProducts
+                                  ? AppColors.primaryGreen
+                                  : Colors.white,
+                              border: Border.all(
+                                color: _includeCleaningProducts
+                                    ? AppColors.primaryGreen
+                                    : Colors.grey[400]!,
+                                width: 2,
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Adiciona 20% ao valor total',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
+                            child: _includeCleaningProducts
+                                ? const Icon(
+                                    Icons.check,
+                                    size: 14,
+                                    color: Colors.white,
+                                  )
+                                : null,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 20),
+                  
+                  // Botão O que está incluso
+                  GestureDetector(
+                    onTap: _showIncludedServices,
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryGreen.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: AppColors.primaryGreen.withOpacity(0.2),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-              
-              const SizedBox(height: 16),
-              
-              // Botão O que está incluso
-              TextButton(
-                onPressed: _showIncludedServices,
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'O que está incluso',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppColors.primaryGreen,
-                        fontWeight: FontWeight.w500,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.info_outline_rounded,
+                            color: AppColors.primaryGreen,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            'Ver todos os serviços inclusos',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primaryGreen,
+                            ),
+                          ),
+                          const Spacer(),
+                          Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            color: AppColors.primaryGreen,
+                            size: 14,
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.info_outline,
-                      size: 18,
-                      color: AppColors.primaryGreen,
-                    ),
-                  ],
-                ),
+                  ),
+                  
+                  const SizedBox(height: 100),
+                ],
               ),
-              
-              const SizedBox(height: 100),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
-          border: Border(
-            top: BorderSide(
-              color: Colors.grey[200]!,
-              width: 1,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
             ),
-          ),
+          ],
         ),
         child: SafeArea(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // Preço
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Total',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
-                    ),
+              // Resumo do valor
+              Container(
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.primaryGreen.withOpacity(0.1),
                   ),
-                  const SizedBox(height: 4),
-                  AnimatedBuilder(
-                    animation: _priceAnimation,
-                    builder: (context, child) {
-                      return Text(
-                        'R\$ ${_priceAnimation.value.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF1A1A1A),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.receipt_long_rounded,
+                          color: AppColors.primaryGreen,
+                          size: 20,
                         ),
-                      );
-                    },
-                  ),
-                ],
+                        const SizedBox(width: 8),
+                        Text(
+                          'Valor do serviço',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                    AnimatedBuilder(
+                      animation: _priceAnimation,
+                      builder: (context, child) {
+                        return Text(
+                          'R\$ ${_priceAnimation.value.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primaryGreen,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
               // Botão
               SizedBox(
-                height: 48,
-                width: 140,
+                width: double.infinity,
+                height: 52,
                 child: ElevatedButton(
                   onPressed: () {
                     HapticFeedback.mediumImpact();
@@ -461,17 +741,29 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryGreen,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    elevation: 0,
+                    elevation: 2,
+                    shadowColor: AppColors.primaryGreen.withOpacity(0.3),
                   ),
-                  child: const Text(
-                    'Continuar',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Continuar para agendamento',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(
+                        Icons.arrow_forward_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -482,8 +774,52 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     );
   }
 
+  Widget _buildStepIndicator(int step, String label, bool isActive) {
+    return Column(
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: isActive ? AppColors.primaryGreen : Colors.grey[200],
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              step.toString(),
+              style: TextStyle(
+                color: isActive ? Colors.white : Colors.grey[600],
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: isActive ? AppColors.primaryGreen : Colors.grey[500],
+            fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStepLine(bool isActive) {
+    return Container(
+      width: 40,
+      height: 2,
+      margin: const EdgeInsets.only(bottom: 16, left: 4, right: 4),
+      color: isActive ? AppColors.primaryGreen.withOpacity(0.3) : Colors.grey[200],
+    );
+  }
+
   Widget _buildResidenceOption(String value, String label, String price) {
     final isSelected = _selectedResidenceType == value;
+    final icon = _residenceIcons[value]!;
     
     return Expanded(
       child: GestureDetector(
@@ -494,22 +830,43 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             _calculatePrice();
           });
         },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
             color: isSelected ? AppColors.primaryGreen : Colors.white,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: isSelected ? AppColors.primaryGreen : Colors.grey[300]!,
+              width: isSelected ? 1.5 : 1,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: isSelected 
+                    ? AppColors.primaryGreen.withOpacity(0.2)
+                    : Colors.grey.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
           child: Column(
             children: [
+              AnimatedScale(
+                scale: isSelected ? 1.1 : 1.0,
+                duration: const Duration(milliseconds: 200),
+                child: Icon(
+                  icon,
+                  color: isSelected ? Colors.white : Colors.grey[400],
+                  size: 28,
+                ),
+              ),
+              const SizedBox(height: 8),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
                   color: isSelected ? Colors.white : Colors.grey[700],
                 ),
               ),
@@ -517,7 +874,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
               Text(
                 price,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 11,
                   color: isSelected ? Colors.white70 : Colors.grey[500],
                 ),
               ),
@@ -528,51 +885,142 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     );
   }
 
-  Widget _buildCounter({
+  Widget _buildCounterCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
     required int value,
+    required String percentage,
+    required Color color,
     required Function(int) onChanged,
   }) {
     return Container(
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.grey[200]!,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          IconButton(
-            onPressed: value > 1
-                ? () {
-                    HapticFeedback.lightImpact();
-                    onChanged(value - 1);
-                  }
-                : null,
-            icon: Icon(
-              Icons.remove,
-              color: value > 1 ? Colors.grey[700] : Colors.grey[300],
-              size: 20,
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              icon,
+              color: color,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1A1A1A),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        percentage,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.orange,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
             ),
           ),
           Container(
-            width: 40,
-            alignment: Alignment.center,
-            child: Text(
-              value.toString(),
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF1A1A1A),
-              ),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(10),
             ),
-          ),
-          IconButton(
-            onPressed: () {
-              HapticFeedback.lightImpact();
-              onChanged(value + 1);
-            },
-            icon: Icon(
-              Icons.add,
-              color: AppColors.primaryGreen,
-              size: 20,
+            child: Row(
+              children: [
+                IconButton(
+                  onPressed: value > 1
+                      ? () {
+                          HapticFeedback.lightImpact();
+                          onChanged(value - 1);
+                        }
+                      : null,
+                  constraints: const BoxConstraints(
+                    minWidth: 36,
+                    minHeight: 36,
+                  ),
+                  icon: Icon(
+                    Icons.remove,
+                    color: value > 1 ? Colors.grey[700] : Colors.grey[300],
+                    size: 18,
+                  ),
+                ),
+                Container(
+                  width: 32,
+                  alignment: Alignment.center,
+                  child: Text(
+                    value.toString(),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1A1A1A),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    onChanged(value + 1);
+                  },
+                  constraints: const BoxConstraints(
+                    minWidth: 36,
+                    minHeight: 36,
+                  ),
+                  icon: Icon(
+                    Icons.add,
+                    color: AppColors.primaryGreen,
+                    size: 18,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -585,84 +1033,133 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
+      isScrollControlled: true,
       builder: (context) => Container(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 60,
-              height: 60,
+              width: 80,
+              height: 80,
               decoration: BoxDecoration(
-                color: AppColors.primaryGreen.withOpacity(0.1),
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primaryGreen,
+                    AppColors.primaryGreen.withOpacity(0.8),
+                  ],
+                ),
                 shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryGreen.withOpacity(0.3),
+                    blurRadius: 20,
+                    spreadRadius: 2,
+                  ),
+                ],
               ),
-              child: Icon(
-                Icons.check,
-                color: AppColors.primaryGreen,
-                size: 30,
+              child: const Icon(
+                Icons.check_rounded,
+                color: Colors.white,
+                size: 40,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             const Text(
-              'Pedido Confirmado',
+              'Pedido Confirmado!',
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 24,
                 fontWeight: FontWeight.w700,
                 color: Color(0xFF1A1A1A),
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Serviço agendado com sucesso',
+              'Seu serviço foi agendado com sucesso',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 15,
                 color: Colors.grey[600],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 28),
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Colors.grey[200]!,
+                ),
               ),
               child: Column(
                 children: [
                   _buildSummaryRow(
-                    'Residência',
+                    Icons.home_rounded,
+                    'Tipo',
                     _selectedResidenceType == 'studio' 
                         ? 'Studio' 
                         : _selectedResidenceType == 'apartamento'
                             ? 'Apartamento'
                             : 'Casa',
                   ),
-                  const SizedBox(height: 12),
+                  const Divider(height: 24),
                   _buildSummaryRow(
+                    Icons.door_back_door_rounded,
                     'Cômodos',
-                    '$_roomCount',
+                    '$_roomCount ${_roomCount > 1 ? 'cômodos' : 'cômodo'}',
                   ),
-                  const SizedBox(height: 12),
+                  const Divider(height: 24),
                   _buildSummaryRow(
+                    Icons.bathroom_rounded,
                     'Banheiros',
-                    '$_bathroomCount',
+                    '$_bathroomCount ${_bathroomCount > 1 ? 'banheiros' : 'banheiro'}',
                   ),
                   if (_includeCleaningProducts) ...[
-                    const SizedBox(height: 12),
+                    const Divider(height: 24),
                     _buildSummaryRow(
+                      Icons.cleaning_services_rounded,
                       'Produtos',
                       'Inclusos',
                     ),
                   ],
-                  const SizedBox(height: 12),
-                  const Divider(),
-                  const SizedBox(height: 12),
-                  _buildSummaryRow(
-                    'Total',
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primaryGreen.withOpacity(0.05),
+                    AppColors.primaryGreen.withOpacity(0.02),
+                ],
+                ),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: AppColors.primaryGreen.withOpacity(0.2),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Valor Total',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF1A1A1A),
+                    ),
+                  ),
+                  Text(
                     'R\$ ${_targetPrice.toStringAsFixed(2)}',
-                    isBold: true,
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primaryGreen,
+                    ),
                   ),
                 ],
               ),
@@ -670,7 +1167,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
-              height: 48,
+              height: 52,
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.pop(context);
@@ -679,14 +1176,14 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryGreen,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                   elevation: 0,
                 ),
                 child: const Text(
                   'Fechar',
                   style: TextStyle(
-                    fontSize: 15,
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
                   ),
@@ -699,10 +1196,15 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     );
   }
 
-  Widget _buildSummaryRow(String label, String value, {bool isBold = false}) {
+  Widget _buildSummaryRow(IconData icon, String label, String value) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
+        Icon(
+          icon,
+          color: AppColors.primaryGreen,
+          size: 20,
+        ),
+        const SizedBox(width: 12),
         Text(
           label,
           style: TextStyle(
@@ -710,12 +1212,13 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             color: Colors.grey[600],
           ),
         ),
+        const Spacer(),
         Text(
           value,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 14,
-            fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
-            color: isBold ? AppColors.primaryGreen : const Color(0xFF1A1A1A),
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1A1A1A),
           ),
         ),
       ],
