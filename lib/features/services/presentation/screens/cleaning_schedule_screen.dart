@@ -536,20 +536,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             },
           ),
           
-          // Summary Card
-          AnimatedBuilder(
-            animation: _pageTransitionAnimation,
-            builder: (context, child) {
-              return Transform.translate(
-                offset: Offset(0, 100 * (1 - _pageTransitionAnimation.value)),
-                child: Opacity(
-                  opacity: _pageTransitionAnimation.value,
-                  child: _buildSummaryCard(),
-                ),
-              );
-            },
-          ),
-          
           const SizedBox(height: 20),
         ],
       ),
@@ -1378,85 +1364,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     );
   }
 
-  Widget _buildSummaryCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.primaryGreen.withOpacity(0.05),
-            AppColors.primaryGreen.withOpacity(0.02),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppColors.primaryGreen.withOpacity(0.2),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.receipt_long,
-                color: AppColors.primaryGreen,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'Resumo do Pedido',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF2D3436),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildSummaryRow(
-            'Tipo', 
-            _selectedResidence == 'studio' ? 'Studio' : 
-            _selectedResidence == 'apartment' ? 'Apartamento' : 'Casa'
-          ),
-          _buildSummaryRow('Cômodos', '$_rooms'),
-          _buildSummaryRow('Banheiros', '$_bathrooms'),
-          if (_includeProducts) _buildSummaryRow('Produtos', 'Inclusos'),
-          if (_includePets) _buildSummaryRow('Pet friendly', 'Sim'),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildSummaryRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.grey[600],
-            ),
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF2D3436),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildModernFooter() {
     final canContinue = _currentPage == 0 || (_selectedDate != null && _selectedTime != null);
