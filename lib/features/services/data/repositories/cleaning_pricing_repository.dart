@@ -10,7 +10,7 @@ class CleaningPricingRepository {
   }) : _firestore = firestore ?? FirebaseFirestore.instance;
   
   // Collection reference
-  static const String _collectionName = 'app-confia';
+  static const String _collectionName = 'app-config';
   
   // Cache the pricing data to avoid unnecessary reads (one cache per cleaning type)
   final Map<CleaningType, CleaningPricingModel> _cachedPricing = {};
