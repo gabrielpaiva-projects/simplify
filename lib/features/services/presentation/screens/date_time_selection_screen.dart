@@ -302,7 +302,7 @@ class _DateTimeSelectionScreenState extends State<DateTimeSelectionScreen>
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primaryGreen.withOpacity(0.1),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -334,12 +334,12 @@ class _DateTimeSelectionScreenState extends State<DateTimeSelectionScreen>
           icon: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primaryGreen.withOpacity(0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
               Icons.chevron_left,
-              color: AppColors.primary,
+              color: AppColors.primaryGreen,
             ),
           ),
         ),
@@ -359,12 +359,12 @@ class _DateTimeSelectionScreenState extends State<DateTimeSelectionScreen>
           icon: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primaryGreen.withOpacity(0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
               Icons.chevron_right,
-              color: AppColors.primary,
+              color: AppColors.primaryGreen,
             ),
           ),
         ),
@@ -436,16 +436,16 @@ class _DateTimeSelectionScreenState extends State<DateTimeSelectionScreen>
                   duration: const Duration(milliseconds: 200),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? AppColors.primary
+                        ? AppColors.primaryGreen
                         : isToday
-                            ? AppColors.primary.withOpacity(0.1)
+                            ? AppColors.primaryGreen.withOpacity(0.1)
                             : isAvailable
                                 ? Colors.grey[50]
                                 : Colors.transparent,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isToday && !isSelected
-                          ? AppColors.primary
+                          ? AppColors.primaryGreen
                           : Colors.transparent,
                       width: 2,
                     ),
@@ -463,7 +463,7 @@ class _DateTimeSelectionScreenState extends State<DateTimeSelectionScreen>
                             : !isAvailable
                                 ? Colors.grey[400]
                                 : isToday
-                                    ? AppColors.primary
+                                    ? AppColors.primaryGreen
                                     : Colors.grey[800],
                       ),
                     ),
@@ -520,14 +520,14 @@ class _DateTimeSelectionScreenState extends State<DateTimeSelectionScreen>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primaryGreen.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 children: [
                   Icon(
                     Icons.schedule,
-                    color: AppColors.primary,
+                    color: AppColors.primaryGreen,
                     size: 20,
                   ),
                   const SizedBox(width: 8),
@@ -536,7 +536,7 @@ class _DateTimeSelectionScreenState extends State<DateTimeSelectionScreen>
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
+                      color: AppColors.primaryGreen,
                     ),
                   ),
                 ],
@@ -619,8 +619,8 @@ class _DateTimeSelectionScreenState extends State<DateTimeSelectionScreen>
           gradient: isSelected
               ? LinearGradient(
                   colors: [
-                    AppColors.primary,
-                    AppColors.primary.withOpacity(0.8),
+                    AppColors.primaryGreen,
+                    AppColors.primaryGreen.withOpacity(0.8),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -634,7 +634,7 @@ class _DateTimeSelectionScreenState extends State<DateTimeSelectionScreen>
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
-                ? AppColors.primary
+                ? AppColors.primaryGreen
                 : isAvailable
                     ? Colors.grey[300]!
                     : Colors.grey[300]!,
@@ -683,17 +683,17 @@ class _DateTimeSelectionScreenState extends State<DateTimeSelectionScreen>
                 margin: const EdgeInsets.only(bottom: 16),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primaryGreen.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: AppColors.primary.withOpacity(0.3),
+                    color: AppColors.primaryGreen.withOpacity(0.3),
                   ),
                 ),
                 child: Row(
                   children: [
                     Icon(
                       Icons.check_circle,
-                      color: AppColors.primary,
+                      color: AppColors.primaryGreen,
                       size: 20,
                     ),
                     const SizedBox(width: 8),
@@ -703,7 +703,7 @@ class _DateTimeSelectionScreenState extends State<DateTimeSelectionScreen>
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.primary,
+                          color: AppColors.primaryGreen,
                         ),
                       ),
                     ),
@@ -717,7 +717,7 @@ class _DateTimeSelectionScreenState extends State<DateTimeSelectionScreen>
                 Navigator.pop(context);
               } : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: AppColors.primaryGreen,
                 foregroundColor: Colors.white,
                 disabledBackgroundColor: Colors.grey[300],
                 minimumSize: const Size(double.infinity, 56),
@@ -725,7 +725,7 @@ class _DateTimeSelectionScreenState extends State<DateTimeSelectionScreen>
                   borderRadius: BorderRadius.circular(16),
                 ),
                 elevation: canContinue ? 4 : 0,
-                shadowColor: AppColors.primary.withOpacity(0.3),
+                shadowColor: AppColors.primaryGreen.withOpacity(0.3),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,

@@ -284,7 +284,7 @@ class _PaymentScreenState extends State<PaymentScreen>
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primaryGreen.withOpacity(0.1),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -298,12 +298,12 @@ class _PaymentScreenState extends State<PaymentScreen>
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.primaryGreen.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     Icons.receipt_long_outlined,
-                    color: AppColors.primary,
+                    color: AppColors.primaryGreen,
                     size: 24,
                   ),
                 ),
@@ -355,7 +355,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
+                    color: AppColors.primaryGreen,
                   ),
                 ),
               ],
@@ -455,16 +455,16 @@ class _PaymentScreenState extends State<PaymentScreen>
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.white,
+          color: isSelected ? AppColors.primaryGreen.withOpacity(0.1) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? AppColors.primary : Colors.grey[300]!,
+            color: isSelected ? AppColors.primaryGreen : Colors.grey[300]!,
             width: isSelected ? 2 : 1,
           ),
           boxShadow: [
             if (isSelected)
               BoxShadow(
-                color: AppColors.primary.withOpacity(0.2),
+                color: AppColors.primaryGreen.withOpacity(0.2),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -475,7 +475,7 @@ class _PaymentScreenState extends State<PaymentScreen>
             Icon(
               icon,
               size: 32,
-              color: isSelected ? AppColors.primary : Colors.grey[600],
+              color: isSelected ? AppColors.primaryGreen : Colors.grey[600],
             ),
             const SizedBox(height: 8),
             Text(
@@ -483,7 +483,7 @@ class _PaymentScreenState extends State<PaymentScreen>
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: isSelected ? AppColors.primary : Colors.grey[800],
+                color: isSelected ? AppColors.primaryGreen : Colors.grey[800],
               ),
             ),
             const SizedBox(height: 4),
@@ -534,8 +534,8 @@ class _PaymentScreenState extends State<PaymentScreen>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.primary,
-            AppColors.primary.withOpacity(0.7),
+            AppColors.primaryGreen,
+            AppColors.primaryGreen.withOpacity(0.7),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -543,7 +543,7 @@ class _PaymentScreenState extends State<PaymentScreen>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
+            color: AppColors.primaryGreen.withOpacity(0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -643,13 +643,13 @@ class _PaymentScreenState extends State<PaymentScreen>
       decoration: InputDecoration(
         labelText: 'Número do Cartão',
         hintText: '0000 0000 0000 0000',
-        prefixIcon: Icon(Icons.credit_card, color: AppColors.primary),
+        prefixIcon: Icon(Icons.credit_card, color: AppColors.primaryGreen),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.primary, width: 2),
+          borderSide: BorderSide(color: AppColors.primaryGreen, width: 2),
         ),
       ),
       validator: (value) {
@@ -676,13 +676,13 @@ class _PaymentScreenState extends State<PaymentScreen>
       decoration: InputDecoration(
         labelText: 'Nome do Titular',
         hintText: 'Como está no cartão',
-        prefixIcon: Icon(Icons.person_outline, color: AppColors.primary),
+        prefixIcon: Icon(Icons.person_outline, color: AppColors.primaryGreen),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.primary, width: 2),
+          borderSide: BorderSide(color: AppColors.primaryGreen, width: 2),
         ),
       ),
       validator: (value) {
@@ -711,13 +711,13 @@ class _PaymentScreenState extends State<PaymentScreen>
       decoration: InputDecoration(
         labelText: 'Validade',
         hintText: 'MM/AA',
-        prefixIcon: Icon(Icons.calendar_month, color: AppColors.primary),
+        prefixIcon: Icon(Icons.calendar_month, color: AppColors.primaryGreen),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.primary, width: 2),
+          borderSide: BorderSide(color: AppColors.primaryGreen, width: 2),
         ),
       ),
       validator: (value) {
@@ -749,13 +749,13 @@ class _PaymentScreenState extends State<PaymentScreen>
       decoration: InputDecoration(
         labelText: 'CVV',
         hintText: '123',
-        prefixIcon: Icon(Icons.lock_outline, color: AppColors.primary),
+        prefixIcon: Icon(Icons.lock_outline, color: AppColors.primaryGreen),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.primary, width: 2),
+          borderSide: BorderSide(color: AppColors.primaryGreen, width: 2),
         ),
       ),
       validator: (value) {
@@ -784,7 +784,7 @@ class _PaymentScreenState extends State<PaymentScreen>
         style: TextStyle(fontSize: 12, color: Colors.grey[600]),
       ),
       controlAffinity: ListTileControlAffinity.leading,
-      activeColor: AppColors.primary,
+      activeColor: AppColors.primaryGreen,
       contentPadding: EdgeInsets.zero,
     );
   }
@@ -804,7 +804,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withOpacity(0.1 * _pixAnimation.value),
+                      color: AppColors.primaryGreen.withOpacity(0.1 * _pixAnimation.value),
                       blurRadius: 20,
                       spreadRadius: 5,
                     ),
@@ -815,7 +815,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                     Icon(
                       Icons.qr_code_2,
                       size: 200,
-                      color: AppColors.primary,
+                      color: AppColors.primaryGreen,
                     ),
                     const SizedBox(height: 20),
                     Text(
@@ -851,7 +851,7 @@ class _PaymentScreenState extends State<PaymentScreen>
               children: [
                 Row(
                   children: [
-                    Icon(Icons.key, size: 20, color: AppColors.primary),
+                    Icon(Icons.key, size: 20, color: AppColors.primaryGreen),
                     const SizedBox(width: 8),
                     const Text(
                       'Chave PIX',
@@ -899,7 +899,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                         },
                         icon: Icon(
                           _pixCopied ? Icons.check : Icons.copy,
-                          color: _pixCopied ? Colors.green : AppColors.primary,
+                          color: _pixCopied ? Colors.green : AppColors.primaryGreen,
                         ),
                       ),
                     ],
@@ -993,14 +993,14 @@ class _PaymentScreenState extends State<PaymentScreen>
         child: ElevatedButton(
           onPressed: _isProcessing ? null : _processPayment,
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
+            backgroundColor: AppColors.primaryGreen,
             foregroundColor: Colors.white,
             minimumSize: const Size(double.infinity, 56),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
             elevation: 4,
-            shadowColor: AppColors.primary.withOpacity(0.3),
+            shadowColor: AppColors.primaryGreen.withOpacity(0.3),
           ),
           child: _isProcessing
               ? const SizedBox(
