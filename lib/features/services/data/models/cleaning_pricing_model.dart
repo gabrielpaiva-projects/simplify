@@ -1,3 +1,5 @@
+import '../enums/cleaning_type.dart';
+
 class CleaningPricingModel {
   // Base prices for each property type (in double)
   final double apartmentPrice;
@@ -20,6 +22,9 @@ class CleaningPricingModel {
   // Extra time for pets (in minutes)
   final int petsExtraTime;
   
+  // Cleaning type (standard or heavy)
+  final CleaningType cleaningType;
+  
   CleaningPricingModel({
     required this.apartmentPrice,
     required this.housePrice,
@@ -32,10 +37,11 @@ class CleaningPricingModel {
     required this.bathroomPriceMultiplier,
     required this.roomPriceMultiplier,
     required this.petsExtraTime,
+    this.cleaningType = CleaningType.standard,
   });
   
   // Factory constructor to create from Firestore document
-  factory CleaningPricingModel.fromMap(Map<String, dynamic> map) {
+  factory CleaningPricingModel.fromMap(Map<String, dynamic> map, {CleaningType? type}) {
     // Get base_prices map
     final basePrices = map['base_prices'] as Map<String, dynamic>? ?? {};
     
@@ -69,6 +75,9 @@ class CleaningPricingModel {
       
       // Pets extra time
       petsExtraTime: (map['pets_extra_time'] ?? 0).toInt(),
+      
+      // Cleaning type
+      cleaningType: type ?? CleaningType.standard,
     );
   }
   

@@ -5,13 +5,16 @@ import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../providers/cleaning_pricing_provider.dart';
 import '../../data/models/cleaning_pricing_model.dart';
+import '../../data/enums/cleaning_type.dart';
 
 class CleaningScheduleScreen extends StatefulWidget {
   final String serviceTitle;
+  final CleaningType cleaningType;
   
   const CleaningScheduleScreen({
     Key? key,
     required this.serviceTitle,
+    this.cleaningType = CleaningType.standard,
   }) : super(key: key);
 
   @override
@@ -75,8 +78,10 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     _initializeDates();
     _initializeAnimations();
     
-    // Initialize pricing provider
-    _pricingProvider = CleaningPricingProvider();
+    // Initialize pricing provider with the correct cleaning type
+    _pricingProvider = CleaningPricingProvider(
+      initialType: widget.cleaningType,
+    );
     _pricingProvider.addListener(_onPricingDataChanged);
     
     // Load pricing data and calculate initial price
@@ -92,7 +97,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   }
   
   Future<void> _loadPricingData() async {
-    await _pricingProvider.loadPricingData();
+    await _pricingProvider.loadPricingData(type: widget.cleaningType);
     if (_pricingProvider.hasData) {
       _calculatePrice();
     }
@@ -432,21 +437,49 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  _currentPage == 0 ? 'Configurar Serviço' : 'Agendar Horário',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF2D3436),
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                Text(
-                  _currentPage == 0 ? 'Personalize sua limpeza' : 'Escolha data e hora',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _currentPage == 0 ? 'Configurar Serviço' : 'Agendar Horário',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF2D3436),
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Text(
+                          _currentPage == 0 ? 'Personalize sua limpeza' : 'Escolha data e hora',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        if (widget.cleaningType == CleaningType.heavy) ...[  
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'PESADA',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.orange[700],
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -643,14 +676,63 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           const SizedBox(height: 20),
           
           // Residence options
-          Row(
-            children: [
-              _buildResidenceOption('studio', 'Studio', Icons.single_bed, 'R\$ 99'),
-              const SizedBox(width: 12),
-              _buildResidenceOption('apartment', 'Apto', Icons.apartment, 'R\$ 149'),
-              const SizedBox(width: 12),
-              _buildResidenceOption('house', 'Casa', Icons.house, 'R\$ 199'),
-            ],
+          Consumer<CleaningPricingProvider>(
+            builder: (context, provider, child) {
+              if (provider.isLoading) {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
+              
+              if (provider.error != null) {
+                return Center(
+                  child: Column(
+                    children: [
+                      Text(
+                        'Erro ao carregar preços',
+                        style: TextStyle(color: Colors.red[600]),
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: () => provider.reloadPricingData(),
+                        child: const Text('Tentar novamente'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+              
+              if (!provider.hasData) {
+                return const Center(
+                  child: Text('Nenhum dado de preço disponível'),
+                );
+              }
+              
+              return Row(
+                children: [
+                  _buildResidenceOption(
+                    'studio', 
+                    'Studio', 
+                    Icons.single_bed, 
+                    'R\$ ${provider.getBasePriceForResidence('studio').toStringAsFixed(0)}'
+                  ),
+                  const SizedBox(width: 12),
+                  _buildResidenceOption(
+                    'apartment', 
+                    'Apto', 
+                    Icons.apartment, 
+                    'R\$ ${provider.getBasePriceForResidence('apartment').toStringAsFixed(0)}'
+                  ),
+                  const SizedBox(width: 12),
+                  _buildResidenceOption(
+                    'house', 
+                    'Casa', 
+                    Icons.house, 
+                    'R\$ ${provider.getBasePriceForResidence('house').toStringAsFixed(0)}'
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -980,35 +1062,47 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           const SizedBox(height: 20),
           
           // Extra options
-          _buildExtraOption(
-            icon: Icons.cleaning_services,
-            label: 'Produtos inclusos',
-            description: 'Fornecemos todos os produtos de limpeza profissionais',
-            price: '+ R\$ 40',
-            isSelected: _includeProducts,
-            color: Colors.teal,
-            onTap: () {
-              HapticFeedback.lightImpact();
-              setState(() {
-                _includeProducts = !_includeProducts;
-                _calculatePrice();
-              });
-            },
-          ),
-          const SizedBox(height: 12),
-          _buildExtraOption(
-            icon: Icons.pets,
-            label: 'Tenho pets',
-            description: 'Cuidado especial com pelos e odores de animais',
-            price: '+ R\$ 25',
-            isSelected: _includePets,
-            color: Colors.pink,
-            onTap: () {
-              HapticFeedback.lightImpact();
-              setState(() {
-                _includePets = !_includePets;
-                _calculatePrice();
-              });
+          Consumer<CleaningPricingProvider>(
+            builder: (context, provider, child) {
+              if (!provider.hasData) {
+                return const SizedBox.shrink();
+              }
+              
+              return Column(
+                children: [
+                  _buildExtraOption(
+                    icon: Icons.cleaning_services,
+                    label: 'Produtos inclusos',
+                    description: 'Fornecemos todos os produtos de limpeza profissionais',
+                    price: '+ R\$ ${provider.getProductsPrice().toStringAsFixed(0)}',
+                    isSelected: _includeProducts,
+                    color: Colors.teal,
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      setState(() {
+                        _includeProducts = !_includeProducts;
+                        _calculatePrice();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _buildExtraOption(
+                    icon: Icons.pets,
+                    label: 'Tenho pets',
+                    description: 'Cuidado especial com pelos e odores de animais',
+                    price: '+ R\$ ${provider.getPetsPrice().toStringAsFixed(0)}',
+                    isSelected: _includePets,
+                    color: Colors.pink,
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      setState(() {
+                        _includePets = !_includePets;
+                        _calculatePrice();
+                      });
+                    },
+                  ),
+                ],
+              );
             },
           ),
         ],

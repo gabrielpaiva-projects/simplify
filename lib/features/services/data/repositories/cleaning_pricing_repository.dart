@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/cleaning_pricing_model.dart';
+import '../enums/cleaning_type.dart';
 
 class CleaningPricingRepository {
   final FirebaseFirestore _firestore;
@@ -8,34 +9,33 @@ class CleaningPricingRepository {
     FirebaseFirestore? firestore,
   }) : _firestore = firestore ?? FirebaseFirestore.instance;
   
-  // Collection and document references
+  // Collection reference
   static const String _collectionName = 'app-confia';
-  static const String _documentName = 'cleaning_pricing';
   
-  // Cache the pricing data to avoid unnecessary reads
-  CleaningPricingModel? _cachedPricing;
-  DateTime? _lastFetchTime;
+  // Cache the pricing data to avoid unnecessary reads (one cache per cleaning type)
+  final Map<CleaningType, CleaningPricingModel> _cachedPricing = {};
+  final Map<CleaningType, DateTime> _lastFetchTime = {};
   static const Duration _cacheValidDuration = Duration(minutes: 30);
   
-  // Get cleaning pricing data from Firestore
-  Future<CleaningPricingModel> getCleaningPricing() async {
+  // Get cleaning pricing data from Firestore based on cleaning type
+  Future<CleaningPricingModel> getCleaningPricing({CleaningType type = CleaningType.standard}) async {
     try {
-      // Check if we have valid cached data
-      if (_cachedPricing != null && _lastFetchTime != null) {
+      // Check if we have valid cached data for this type
+      if (_cachedPricing.containsKey(type) && _lastFetchTime.containsKey(type)) {
         final now = DateTime.now();
-        if (now.difference(_lastFetchTime!) < _cacheValidDuration) {
-          return _cachedPricing!;
+        if (now.difference(_lastFetchTime[type]!) < _cacheValidDuration) {
+          return _cachedPricing[type]!;
         }
       }
       
-      // Fetch from Firestore
+      // Fetch from Firestore using the document name from the enum
       final docSnapshot = await _firestore
           .collection(_collectionName)
-          .doc(_documentName)
+          .doc(type.documentName)
           .get();
       
       if (!docSnapshot.exists) {
-        throw Exception('Pricing document not found in Firestore');
+        throw Exception('Pricing document ${type.documentName} not found in Firestore');
       }
       
       final data = docSnapshot.data();
@@ -44,41 +44,46 @@ class CleaningPricingRepository {
       }
       
       // Parse and cache the data
-      _cachedPricing = CleaningPricingModel.fromMap(data);
-      _lastFetchTime = DateTime.now();
+      _cachedPricing[type] = CleaningPricingModel.fromMap(data, type: type);
+      _lastFetchTime[type] = DateTime.now();
       
-      return _cachedPricing!;
+      return _cachedPricing[type]!;
     } catch (e) {
       // Log error and rethrow
-      print('Error fetching cleaning pricing: $e');
+      print('Error fetching cleaning pricing for ${type.displayName}: $e');
       rethrow;
     }
   }
   
-  // Stream for real-time updates (optional)
-  Stream<CleaningPricingModel> watchCleaningPricing() {
+  // Stream for real-time updates based on cleaning type
+  Stream<CleaningPricingModel> watchCleaningPricing({CleaningType type = CleaningType.standard}) {
     return _firestore
         .collection(_collectionName)
-        .doc(_documentName)
+        .doc(type.documentName)
         .snapshots()
         .map((snapshot) {
           if (!snapshot.exists || snapshot.data() == null) {
-            throw Exception('Pricing document not found or empty');
+            throw Exception('Pricing document ${type.documentName} not found or empty');
           }
           
-          final pricing = CleaningPricingModel.fromMap(snapshot.data()!);
+          final pricing = CleaningPricingModel.fromMap(snapshot.data()!, type: type);
           
           // Update cache when we get new data
-          _cachedPricing = pricing;
-          _lastFetchTime = DateTime.now();
+          _cachedPricing[type] = pricing;
+          _lastFetchTime[type] = DateTime.now();
           
           return pricing;
         });
   }
   
-  // Clear cache (useful for testing or forcing refresh)
-  void clearCache() {
-    _cachedPricing = null;
-    _lastFetchTime = null;
+  // Clear cache for a specific type or all types
+  void clearCache({CleaningType? type}) {
+    if (type != null) {
+      _cachedPricing.remove(type);
+      _lastFetchTime.remove(type);
+    } else {
+      _cachedPricing.clear();
+      _lastFetchTime.clear();
+    }
   }
 }
