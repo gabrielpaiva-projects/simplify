@@ -6,6 +6,8 @@ import '../../../../core/constants/app_colors.dart';
 import '../providers/cleaning_pricing_provider.dart';
 import '../../data/models/cleaning_pricing_model.dart';
 import '../../data/enums/cleaning_type.dart';
+import 'date_time_selection_screen.dart';
+import 'payment_screen.dart';
 
 class CleaningScheduleScreen extends StatefulWidget {
   final String serviceTitle;
@@ -1762,10 +1764,35 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   void _confirmSchedule() {
     HapticFeedback.mediumImpact();
     
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => _buildSuccessDialog(),
+    // Navigate to payment screen
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PaymentScreen(
+          totalAmount: _targetPrice,
+          serviceDetails: {
+            'service': widget.serviceTitle,
+            'date': _selectedDate != null 
+                ? '${_selectedDate!.day} de ${_getMonth(_selectedDate!)}'
+                : '',
+            'time': _selectedTime ?? '',
+            'duration': _formatEstimatedTime(),
+            'rooms': '$_rooms quartos',
+            'bathrooms': '$_bathrooms banheiros',
+            'includeProducts': _includeProducts,
+            'includePets': _includePets,
+          },
+          onPaymentConfirmed: (method, paymentData) {
+            // After payment confirmation, show success dialog
+            Navigator.pop(context); // Close payment screen
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => _buildSuccessDialog(),
+            );
+          },
+        ),
+      ),
     );
   }
 
