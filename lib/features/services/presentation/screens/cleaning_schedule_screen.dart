@@ -51,7 +51,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   
   // State
   String _selectedResidence = 'apartment';
-  int _rooms = 1; // Will be updated from Firestore min_rooms
+  int _rooms = 2; // Default for apartment (will be updated from Firestore if needed)
   int _bathrooms = 1; // Will be updated from Firestore min_bathrooms
   bool _includeProducts = false;
   bool _includePets = false;
@@ -84,7 +84,14 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
         // Set initial values from Firestore configuration
         if (_configProvider.hasConfig) {
           setState(() {
-            _rooms = _configProvider.getMinRooms();
+            // For apartment/house, start with 2 rooms (included in base price)
+            // For studio, start with 1 room
+            if (_selectedResidence == 'studio') {
+              _rooms = _configProvider.getMinRooms();
+            } else {
+              // Apartment or house should start with at least 2 rooms
+              _rooms = _configProvider.getMinRooms() >= 2 ? _configProvider.getMinRooms() : 2;
+            }
             _bathrooms = _configProvider.getMinBathrooms();
           });
         }
@@ -760,14 +767,21 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           setState(() {
             _selectedResidence = value;
             
-            // Adjust rooms and bathrooms based on residence type and limits
+            // Adjust rooms based on residence type
             if (_configProvider.hasConfig) {
-              // For studio, typically start with minimum rooms
               if (value == 'studio') {
-                _rooms = _configProvider.getMinRooms();
-                _bathrooms = _configProvider.getMinBathrooms();
+                // Studio starts with 1 room (minimum)
+                if (_rooms > 1) {
+                  _rooms = 1; // Reset to studio default
+                }
+              } else {
+                // Apartment/House should have at least 2 rooms
+                if (_rooms < 2) {
+                  _rooms = 2; // Set to apartment/house minimum
+                }
               }
-              // Ensure current values are within limits
+              
+              // Ensure values are within configured limits
               _rooms = _rooms.clamp(_configProvider.getMinRooms(), _configProvider.getMaxRooms());
               _bathrooms = _bathrooms.clamp(_configProvider.getMinBathrooms(), _configProvider.getMaxBathrooms());
             }
@@ -896,7 +910,12 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                 );
               }
               
-              final minRooms = configProvider.getMinRooms();
+              // Determine the actual minimum based on residence type
+              // Studio: minimum 1 room
+              // Apartment/House: minimum 2 rooms (included in base price)
+              final actualMinRooms = _selectedResidence == 'studio' ? 
+                  configProvider.getMinRooms() : 
+                  (configProvider.getMinRooms() >= 2 ? configProvider.getMinRooms() : 2);
               final maxRooms = configProvider.getMaxRooms();
               
               return _buildCounterRow(
@@ -904,7 +923,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                 label: 'Cômodos',
                 value: _rooms,
                 color: Colors.indigo,
-                onDecrease: _rooms > minRooms ? () {
+                onDecrease: _rooms > actualMinRooms ? () {
                   HapticFeedback.lightImpact();
                   setState(() {
                     _rooms--;
