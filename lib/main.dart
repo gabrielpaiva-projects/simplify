@@ -8,6 +8,7 @@ import 'core/config/app_config.dart';
 import 'core/di/injection_container.dart' as di;
 import 'features/splash/presentation/screens/splash_screen.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
+import 'features/services/presentation/providers/cleaning_config_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,6 +37,10 @@ class MyApp extends StatelessWidget {
         // Auth Provider
         ChangeNotifierProvider(
           create: (_) => di.sl<AuthProvider>(),
+        ),
+        // Cleaning Config Provider
+        ChangeNotifierProvider(
+          create: (_) => di.sl<CleaningConfigProvider>(),
         ),
       ],
       child: MaterialApp(

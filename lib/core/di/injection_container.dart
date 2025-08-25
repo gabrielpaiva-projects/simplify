@@ -11,6 +11,9 @@ import '../../features/auth/data/services/cep_service.dart';
 import '../../features/auth/data/services/firebase_auth_service.dart';
 import '../../features/auth/data/repositories/auth_repository.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
+import '../../features/services/data/repositories/cleaning_config_repository.dart';
+import '../../features/services/data/services/cleaning_config_service.dart';
+import '../../features/services/presentation/providers/cleaning_config_provider.dart';
 
 final sl = GetIt.instance;
 
@@ -48,6 +51,9 @@ void _initCore() {
 void _initFeatures() {
   // Auth feature
   _initAuth();
+  
+  // Services feature
+  _initServices();
 }
 
 void _initAuth() {
@@ -71,6 +77,27 @@ void _initAuth() {
   sl.registerFactory<AuthProvider>(
     () => AuthProvider(
       authRepository: sl(),
+    ),
+  );
+}
+
+void _initServices() {
+  // Repositories
+  sl.registerLazySingleton<CleaningConfigRepository>(
+    () => CleaningConfigRepository(),
+  );
+  
+  // Services
+  sl.registerLazySingleton<CleaningConfigService>(
+    () => CleaningConfigService(
+      repository: sl(),
+    ),
+  );
+  
+  // Providers
+  sl.registerFactory<CleaningConfigProvider>(
+    () => CleaningConfigProvider(
+      configService: sl(),
     ),
   );
 }

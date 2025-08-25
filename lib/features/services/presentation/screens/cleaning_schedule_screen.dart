@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
+import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../providers/cleaning_config_provider.dart';
+import '../widgets/config_loading_widget.dart';
+import '../widgets/config_error_widget.dart';
+import '../widgets/detailed_pricing_summary.dart';
 
 class CleaningScheduleScreen extends StatefulWidget {
   final String serviceTitle;
@@ -17,6 +22,9 @@ class CleaningScheduleScreen extends StatefulWidget {
 
 class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     with TickerProviderStateMixin {
+  // Providers
+  late CleaningConfigProvider _configProvider;
+  
   // Animation Controllers
   late AnimationController _headerController;
   late AnimationController _cardController;
@@ -43,16 +51,16 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   
   // State
   String _selectedResidence = 'apartment';
-  int _rooms = 2;
-  int _bathrooms = 1;
+  int _rooms = 2; // Default for apartment (will be updated from Firestore if needed)
+  int _bathrooms = 1; // Will be updated from Firestore min_bathrooms
   bool _includeProducts = false;
   bool _includePets = false;
   DateTime? _selectedDate;
   String? _selectedTime;
   
   double _currentPrice = 0;
-  double _targetPrice = 149.0;
-  int _estimatedTimeInMinutes = 120; // Base time in minutes
+  double _targetPrice = 0; // Will be set from Firestore configuration
+  int _estimatedTimeInMinutes = 0; // Will be set from Firestore configuration
   
   final ScrollController _scrollController = ScrollController();
   
@@ -68,7 +76,28 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     super.initState();
     _initializeDates();
     _initializeAnimations();
-    _calculatePrice();
+    
+    // Load configuration and calculate initial price
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _configProvider = context.read<CleaningConfigProvider>();
+      _configProvider.loadConfiguration().then((_) {
+        // Set initial values from Firestore configuration
+        if (_configProvider.hasConfig) {
+          setState(() {
+            // For apartment/house, start with 2 rooms (included in base price)
+            // For studio, start with 1 room
+            if (_selectedResidence == 'studio') {
+              _rooms = _configProvider.getMinRooms();
+            } else {
+              // Apartment or house should start with at least 2 rooms
+              _rooms = _configProvider.getMinRooms() >= 2 ? _configProvider.getMinRooms() : 2;
+            }
+            _bathrooms = _configProvider.getMinBathrooms();
+          });
+        }
+        _calculatePrice();
+      });
+    });
   }
 
   void _initializeDates() {
@@ -194,56 +223,50 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   }
 
   void _calculatePrice() {
-    double base = 0;
-    int timeInMinutes = 0;
+    if (!mounted) return;
     
-    // Base price and time by residence type
-    switch (_selectedResidence) {
-      case 'studio':
-        base = 99;
-        timeInMinutes = 90; // 1h30min base
-        break;
-      case 'apartment':
-        base = 149;
-        timeInMinutes = 120; // 2h base
-        break;
-      case 'house':
-        base = 199;
-        timeInMinutes = 180; // 3h base
-        break;
+    final provider = context.read<CleaningConfigProvider>();
+    
+    // Only calculate if configuration is loaded
+    if (!provider.hasConfig) {
+      print('Configuration not loaded yet');
+      return;
     }
     
-    // Room multiplier (price and time)
-    base += (_rooms - 1) * 30;
-    timeInMinutes += (_rooms - 1) * 30; // +30min per extra room
-    
-    // Bathroom multiplier (price and time)
-    base += (_bathrooms - 1) * 25;
-    timeInMinutes += (_bathrooms - 1) * 20; // +20min per extra bathroom
-    
-    // Extras
-    if (_includeProducts) {
-      base += 40;
-      // Products don't add time
+    try {
+      // Calculate price using configuration from Firestore
+      double base = provider.calculatePrice(
+        residenceType: _selectedResidence,
+        rooms: _rooms,
+        bathrooms: _bathrooms,
+        includeProducts: _includeProducts,
+        includePets: _includePets,
+      );
+      
+      // Calculate estimated time using configuration from Firestore
+      int timeInMinutes = provider.calculateEstimatedTime(
+        residenceType: _selectedResidence,
+        rooms: _rooms,
+        bathrooms: _bathrooms,
+        includePets: _includePets,
+      );
+      
+      setState(() {
+        _currentPrice = _targetPrice;
+        _targetPrice = base;
+        _estimatedTimeInMinutes = timeInMinutes;
+        _priceAnimation = Tween<double>(
+          begin: _currentPrice,
+          end: _targetPrice,
+        ).animate(CurvedAnimation(
+          parent: _priceController,
+          curve: Curves.easeInOut,
+        ));
+        _priceController.forward(from: 0);
+      });
+    } catch (e) {
+      print('Error calculating price: $e');
     }
-    if (_includePets) {
-      base += 25;
-      timeInMinutes += 30; // +30min for pet cleaning
-    }
-    
-    setState(() {
-      _currentPrice = _targetPrice;
-      _targetPrice = base;
-      _estimatedTimeInMinutes = timeInMinutes;
-      _priceAnimation = Tween<double>(
-        begin: _currentPrice,
-        end: _targetPrice,
-      ).animate(CurvedAnimation(
-        parent: _priceController,
-        curve: Curves.easeInOut,
-      ));
-      _priceController.forward(from: 0);
-    });
   }
 
   void _goToNextPage() {
@@ -294,7 +317,31 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFAFBFD),
-      body: Stack(
+      body: Consumer<CleaningConfigProvider>(
+        builder: (context, configProvider, child) {
+          // Show loading state
+          if (configProvider.isLoading) {
+            return const Center(
+              child: ConfigLoadingWidget(
+                message: 'Carregando configuração de preços...',
+              ),
+            );
+          }
+          
+          // Show error state
+          if (configProvider.error != null && !configProvider.hasConfig) {
+            return Center(
+              child: ConfigErrorWidget(
+                error: configProvider.error,
+                onRetry: () {
+                  configProvider.loadConfiguration(forceRefresh: true);
+                },
+              ),
+            );
+          }
+          
+          // Show main content
+          return Stack(
         children: [
           // Background gradient
           Container(
@@ -366,6 +413,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             ),
           ),
         ],
+      );
+        },
       ),
     );
   }
@@ -434,6 +483,34 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
               ],
             ),
           ),
+          
+          // Refresh button (for testing)
+          GestureDetector(
+            onTap: () {
+              final provider = context.read<CleaningConfigProvider>();
+              provider.refreshConfiguration();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Atualizando configuração...'),
+                  duration: Duration(seconds: 1),
+                ),
+              );
+            },
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F7FA),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.refresh,
+                size: 18,
+                color: Color(0xFF2D3436),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
           
           // Help button
           Container(
@@ -508,6 +585,15 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           
           // Extra Services Section
           _buildAnimatedCard(2, _buildExtrasSection()),
+          
+          // Detailed Pricing Summary (showing all Firestore data)
+          DetailedPricingSummary(
+            residenceType: _selectedResidence,
+            rooms: _rooms,
+            bathrooms: _bathrooms,
+            includeProducts: _includeProducts,
+            includePets: _includePets,
+          ),
           
           const SizedBox(height: 20),
         ],
@@ -626,14 +712,45 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           const SizedBox(height: 20),
           
           // Residence options
-          Row(
-            children: [
-              _buildResidenceOption('studio', 'Studio', Icons.single_bed, 'R\$ 99'),
-              const SizedBox(width: 12),
-              _buildResidenceOption('apartment', 'Apto', Icons.apartment, 'R\$ 149'),
-              const SizedBox(width: 12),
-              _buildResidenceOption('house', 'Casa', Icons.house, 'R\$ 199'),
-            ],
+          Consumer<CleaningConfigProvider>(
+            builder: (context, configProvider, child) {
+              if (!configProvider.hasConfig) {
+                return Row(
+                  children: [
+                    _buildResidenceOption('studio', 'Studio', Icons.single_bed, '...'),
+                    const SizedBox(width: 12),
+                    _buildResidenceOption('apartment', 'Apto', Icons.apartment, '...'),
+                    const SizedBox(width: 12),
+                    _buildResidenceOption('house', 'Casa', Icons.house, '...'),
+                  ],
+                );
+              }
+              
+              return Row(
+                children: [
+                  _buildResidenceOption(
+                    'studio', 
+                    'Studio', 
+                    Icons.single_bed, 
+                    'R\$ ${configProvider.getBasePrice('studio').toStringAsFixed(0)}'
+                  ),
+                  const SizedBox(width: 12),
+                  _buildResidenceOption(
+                    'apartment', 
+                    'Apto', 
+                    Icons.apartment, 
+                    'R\$ ${configProvider.getBasePrice('apartment').toStringAsFixed(0)}'
+                  ),
+                  const SizedBox(width: 12),
+                  _buildResidenceOption(
+                    'house', 
+                    'Casa', 
+                    Icons.house, 
+                    'R\$ ${configProvider.getBasePrice('house').toStringAsFixed(0)}'
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -649,6 +766,26 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           HapticFeedback.lightImpact();
           setState(() {
             _selectedResidence = value;
+            
+            // Adjust rooms based on residence type
+            if (_configProvider.hasConfig) {
+              if (value == 'studio') {
+                // Studio starts with 1 room (minimum)
+                if (_rooms > 1) {
+                  _rooms = 1; // Reset to studio default
+                }
+              } else {
+                // Apartment/House should have at least 2 rooms
+                if (_rooms < 2) {
+                  _rooms = 2; // Set to apartment/house minimum
+                }
+              }
+              
+              // Ensure values are within configured limits
+              _rooms = _rooms.clamp(_configProvider.getMinRooms(), _configProvider.getMaxRooms());
+              _bathrooms = _bathrooms.clamp(_configProvider.getMinBathrooms(), _configProvider.getMaxBathrooms());
+            }
+            
             _calculatePrice();
           });
         },
@@ -760,48 +897,89 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           const SizedBox(height: 20),
           
           // Room counter
-          _buildCounterRow(
-            icon: Icons.weekend,
-            label: 'Cômodos',
-            value: _rooms,
-            color: Colors.indigo,
-            onDecrease: _rooms > 1 ? () {
-              HapticFeedback.lightImpact();
-              setState(() {
-                _rooms--;
-                _calculatePrice();
-              });
-            } : null,
-            onIncrease: () {
-              HapticFeedback.lightImpact();
-              setState(() {
-                _rooms++;
-                _calculatePrice();
-              });
+          Consumer<CleaningConfigProvider>(
+            builder: (context, configProvider, child) {
+              if (!configProvider.hasConfig) {
+                return _buildCounterRow(
+                  icon: Icons.weekend,
+                  label: 'Cômodos',
+                  value: _rooms,
+                  color: Colors.indigo,
+                  onDecrease: null,
+                  onIncrease: null,
+                );
+              }
+              
+              // Determine the actual minimum based on residence type
+              // Studio: minimum 1 room
+              // Apartment/House: minimum 2 rooms (included in base price)
+              final actualMinRooms = _selectedResidence == 'studio' ? 
+                  configProvider.getMinRooms() : 
+                  (configProvider.getMinRooms() >= 2 ? configProvider.getMinRooms() : 2);
+              final maxRooms = configProvider.getMaxRooms();
+              
+              return _buildCounterRow(
+                icon: Icons.weekend,
+                label: 'Cômodos',
+                value: _rooms,
+                color: Colors.indigo,
+                onDecrease: _rooms > actualMinRooms ? () {
+                  HapticFeedback.lightImpact();
+                  setState(() {
+                    _rooms--;
+                    _calculatePrice();
+                  });
+                } : null,
+                onIncrease: _rooms < maxRooms ? () {
+                  HapticFeedback.lightImpact();
+                  setState(() {
+                    _rooms++;
+                    _calculatePrice();
+                  });
+                } : null,
+              );
             },
           ),
           
           const SizedBox(height: 16),
           
           // Bathroom counter
-          _buildCounterRow(
-            icon: Icons.bathtub,
-            label: 'Banheiros',
-            value: _bathrooms,
-            color: Colors.purple,
-            onDecrease: _bathrooms > 1 ? () {
-              HapticFeedback.lightImpact();
-              setState(() {
-                _bathrooms--;
-                _calculatePrice();
-              });
-            } : null,
-            onIncrease: () {
-              HapticFeedback.lightImpact();
-              setState(() {
-                _bathrooms++;
-                _calculatePrice();
-              });
+          Consumer<CleaningConfigProvider>(
+            builder: (context, configProvider, child) {
+              if (!configProvider.hasConfig) {
+                return _buildCounterRow(
+                  icon: Icons.bathtub,
+                  label: 'Banheiros',
+                  value: _bathrooms,
+                  color: Colors.purple,
+                  onDecrease: null,
+                  onIncrease: null,
+                );
+              }
+              
+              final minBathrooms = configProvider.getMinBathrooms();
+              final maxBathrooms = configProvider.getMaxBathrooms();
+              
+              return _buildCounterRow(
+                icon: Icons.bathtub,
+                label: 'Banheiros',
+                value: _bathrooms,
+                color: Colors.purple,
+                onDecrease: _bathrooms > minBathrooms ? () {
+                  HapticFeedback.lightImpact();
+                  setState(() {
+                    _bathrooms--;
+                    _calculatePrice();
+                  });
+                } : null,
+                onIncrease: _bathrooms < maxBathrooms ? () {
+                  HapticFeedback.lightImpact();
+                  setState(() {
+                    _bathrooms++;
+                    _calculatePrice();
+                  });
+                } : null,
+              );
             },
           ),
         ],
@@ -815,7 +993,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     required int value,
     required Color color,
     VoidCallback? onDecrease,
-    required VoidCallback onIncrease,
+    VoidCallback? onIncrease,
   }) {
     return Row(
       children: [
@@ -898,7 +1076,9 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                     alignment: Alignment.center,
                     child: Icon(
                       Icons.add,
-                      color: AppColors.primaryGreen,
+                      color: onIncrease != null 
+                          ? AppColors.primaryGreen
+                          : const Color(0xFFCED4DA),
                       size: 18,
                     ),
                   ),
