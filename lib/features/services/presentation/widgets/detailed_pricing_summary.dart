@@ -32,35 +32,33 @@ class DetailedPricingSummary extends StatelessWidget {
         final basePrice = config.getBasePrice(residenceType);
         final baseTime = config.getBaseTime(residenceType);
         
-        // Calculate base total (base price + extras)
-        double baseTotal = basePrice;
+        // Calculate base for percentage (base price + fixed extras)
         final productsCost = includeProducts ? config.getProductsIncludedPrice() : 0;
         final petsCost = includePets ? config.getPetsExtraPrice() : 0;
-        baseTotal += productsCost + petsCost;
+        final baseForPercentage = basePrice + productsCost + petsCost;
         
-        // Calculate extra rooms percentage
-        final baseRooms = residenceType == 'studio' ? 1 : 2;
-        final extraRooms = rooms > baseRooms ? rooms - baseRooms : 0;
-        final roomPricePercentage = config.getRoomPriceMultiplier(); // This is a percentage
+        // Determine included rooms based on residence type
+        final includedRooms = residenceType == 'studio' ? 1 : 2;
+        final extraRooms = rooms > includedRooms ? rooms - includedRooms : 0;
+        
+        // Calculate room costs (percentage of base, not accumulated)
+        final roomPricePercentage = config.getRoomPriceMultiplier();
         final roomTimeMultiplier = config.getRoomTimeMultiplier();
-        final extraRoomsCost = extraRooms > 0 ? baseTotal * (roomPricePercentage / 100) * extraRooms : 0;
+        final extraRoomsCost = extraRooms > 0 ? baseForPercentage * (roomPricePercentage / 100) * extraRooms : 0;
         final extraRoomsTime = (extraRooms * roomTimeMultiplier).toInt();
         
-        // Update total after rooms
-        double totalAfterRooms = baseTotal + extraRoomsCost;
-        
-        // Calculate extra bathrooms percentage
+        // Calculate bathroom costs (percentage of base, not accumulated)
         final extraBathrooms = bathrooms > 1 ? bathrooms - 1 : 0;
-        final bathroomPricePercentage = config.getBathroomPriceMultiplier(); // This is a percentage
+        final bathroomPricePercentage = config.getBathroomPriceMultiplier();
         final bathroomTimeMultiplier = config.getBathroomTimeMultiplier();
-        final extraBathroomsCost = extraBathrooms > 0 ? totalAfterRooms * (bathroomPricePercentage / 100) * extraBathrooms : 0;
+        final extraBathroomsCost = extraBathrooms > 0 ? baseForPercentage * (bathroomPricePercentage / 100) * extraBathrooms : 0;
         final extraBathroomsTime = (extraBathrooms * bathroomTimeMultiplier).toInt();
         
         // Extra time for pets
         final petsExtraTime = includePets ? config.getPetsExtraTime().toInt() : 0;
         
         // Final totals
-        final totalPrice = totalAfterRooms + extraBathroomsCost;
+        final totalPrice = baseForPercentage + extraRoomsCost + extraBathroomsCost;
         final totalTime = baseTime + extraRoomsTime + extraBathroomsTime + petsExtraTime;
         
         return Container(
@@ -113,9 +111,9 @@ class DetailedPricingSummary extends StatelessWidget {
                 const SizedBox(height: 16),
                 _buildSectionTitle('🏠 Cômodos Extras'),
                 _buildDetailRow(
-                  '$extraRooms cômodo(s) extra(s)',
+                  '$extraRooms cômodo(s) extra(s) (além dos $includedRooms inclusos)',
                   'R\$ ${extraRoomsCost.toStringAsFixed(2)}',
-                  subtitle: '${roomPricePercentage.toStringAsFixed(0)}% sobre R\$ ${baseTotal.toStringAsFixed(2)} × $extraRooms (multipliers.room_price)',
+                  subtitle: '$extraRooms × ${roomPricePercentage.toStringAsFixed(0)}% de R\$ ${baseForPercentage.toStringAsFixed(2)} (multipliers.room_price)',
                 ),
                 _buildDetailRow(
                   'Tempo adicional por cômodos',
@@ -128,9 +126,9 @@ class DetailedPricingSummary extends StatelessWidget {
                 const SizedBox(height: 16),
                 _buildSectionTitle('🚿 Banheiros Extras'),
                 _buildDetailRow(
-                  '$extraBathrooms banheiro(s) extra(s)',
+                  '$extraBathrooms banheiro(s) extra(s) (além do 1 incluso)',
                   'R\$ ${extraBathroomsCost.toStringAsFixed(2)}',
-                  subtitle: '${bathroomPricePercentage.toStringAsFixed(0)}% sobre R\$ ${totalAfterRooms.toStringAsFixed(2)} × $extraBathrooms (multipliers.bathroom_price)',
+                  subtitle: '$extraBathrooms × ${bathroomPricePercentage.toStringAsFixed(0)}% de R\$ ${baseForPercentage.toStringAsFixed(2)} (multipliers.bathroom_price)',
                 ),
                 _buildDetailRow(
                   'Tempo adicional por banheiros',

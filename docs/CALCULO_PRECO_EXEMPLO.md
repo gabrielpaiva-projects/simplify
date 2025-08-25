@@ -34,17 +34,18 @@
 
 2. **Adicionar serviços extras**:
    - Produtos inclusos: + R$ 40,00
-   - **Subtotal**: R$ 189,00
+   - **Base para cálculo de porcentagem**: R$ 189,00
 
 3. **Aplicar porcentagem por cômodo extra**:
    - 1 cômodo extra × 30% de R$ 189,00
    - 1 × (189 × 0.30) = R$ 56,70
-   - **Novo subtotal**: R$ 189,00 + R$ 56,70 = R$ 245,70
 
 4. **Aplicar porcentagem por banheiro extra**:
-   - 1 banheiro extra × 25% de R$ 245,70
-   - 1 × (245,70 × 0.25) = R$ 61,43
-   - **Total final**: R$ 245,70 + R$ 61,43 = **R$ 307,13**
+   - 1 banheiro extra × 25% de R$ 189,00 (usa a mesma base!)
+   - 1 × (189 × 0.25) = R$ 47,25
+
+5. **Total final**: 
+   - R$ 189,00 + R$ 56,70 + R$ 47,25 = **R$ 292,95**
 
 ## Exemplo 2: Casa com 4 cômodos e 3 banheiros + pets
 
@@ -61,23 +62,30 @@
 
 2. **Adicionar serviços extras**:
    - Pets: + R$ 25,00
-   - **Subtotal**: R$ 205,00
+   - **Base para cálculo de porcentagem**: R$ 205,00
 
 3. **Aplicar porcentagem por cômodos extras**:
    - 2 cômodos extras × 30% de R$ 205,00
    - 2 × (205 × 0.30) = R$ 123,00
-   - **Novo subtotal**: R$ 205,00 + R$ 123,00 = R$ 328,00
 
 4. **Aplicar porcentagem por banheiros extras**:
-   - 2 banheiros extras × 25% de R$ 328,00
-   - 2 × (328 × 0.25) = R$ 164,00
-   - **Total final**: R$ 328,00 + R$ 164,00 = **R$ 492,00**
+   - 2 banheiros extras × 25% de R$ 205,00 (usa a mesma base!)
+   - 2 × (205 × 0.25) = R$ 102,50
+
+5. **Total final**:
+   - R$ 205,00 + R$ 123,00 + R$ 102,50 = **R$ 430,50**
 
 ## Importante:
 
-⚠️ **A ordem importa!**
-- Primeiro adiciona os serviços extras (valores fixos)
-- Depois aplica a porcentagem dos cômodos sobre o total
-- Por último aplica a porcentagem dos banheiros sobre o novo total
+⚠️ **Porcentagens são calculadas sobre o valor BASE, não acumuladas!**
+- Base = Preço do imóvel + Serviços extras (valores fixos)
+- Porcentagem dos cômodos: aplicada sobre a BASE
+- Porcentagem dos banheiros: aplicada sobre a BASE (não sobre o total com cômodos)
 
-Isso significa que quanto mais serviços extras, maior será o impacto das porcentagens!
+## Cômodos Inclusos no Preço Base:
+- **Studio**: 1 cômodo incluso
+- **Apartamento**: 2 cômodos inclusos
+- **Casa**: 2 cômodos inclusos
+
+## Banheiros Inclusos no Preço Base:
+- **Todos os tipos**: 1 banheiro incluso

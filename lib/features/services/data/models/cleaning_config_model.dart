@@ -186,34 +186,50 @@ class CleaningConfigModel {
   }) {
     // Start with base price
     double basePrice = getBasePrice(residenceType);
-    double totalPrice = basePrice;
     
-    // Add extra services first (fixed values)
+    // Calculate the base for percentage calculations (base price + fixed extras)
+    double baseForPercentage = basePrice;
+    
+    // Add extra services (fixed values)
     if (includeProducts) {
-      totalPrice += getProductsIncludedPrice();
+      baseForPercentage += getProductsIncludedPrice();
     }
     
     if (includePets) {
-      totalPrice += getPetsExtraPrice();
+      baseForPercentage += getPetsExtraPrice();
     }
     
-    // Now apply percentage increases for extra rooms and bathrooms
-    // room_price and bathroom_price are percentages to be applied to the total
+    // Now calculate percentage increases based on the base value (not accumulated)
+    double totalPrice = baseForPercentage;
     
-    // Calculate extra rooms percentage (first 2 rooms are included in base price for apartment/house)
-    int baseRooms = residenceType == 'studio' ? 1 : 2;
-    if (rooms > baseRooms) {
-      int extraRooms = rooms - baseRooms;
-      double roomPercentage = getRoomPriceMultiplier(); // This is a percentage (e.g., 30 = 30%)
-      double roomIncrease = totalPrice * (roomPercentage / 100) * extraRooms;
+    // Determine how many rooms are included in base price
+    // Studio: 1 room included
+    // Apartment/House: 2 rooms included
+    int includedRooms = residenceType == 'studio' ? 1 : 2;
+    
+    // Calculate extra rooms
+    int extraRooms = 0;
+    if (rooms > includedRooms) {
+      extraRooms = rooms - includedRooms;
+    }
+    
+    // Apply room percentage (based on base value, not accumulated)
+    if (extraRooms > 0) {
+      double roomPercentage = getRoomPriceMultiplier(); // e.g., 30 = 30%
+      double roomIncrease = baseForPercentage * (roomPercentage / 100) * extraRooms;
       totalPrice += roomIncrease;
     }
     
-    // Calculate extra bathrooms percentage (first bathroom is included in base price)
+    // Calculate extra bathrooms (first bathroom is always included)
+    int extraBathrooms = 0;
     if (bathrooms > 1) {
-      int extraBathrooms = bathrooms - 1;
-      double bathroomPercentage = getBathroomPriceMultiplier(); // This is a percentage (e.g., 25 = 25%)
-      double bathroomIncrease = totalPrice * (bathroomPercentage / 100) * extraBathrooms;
+      extraBathrooms = bathrooms - 1;
+    }
+    
+    // Apply bathroom percentage (based on base value, not accumulated)
+    if (extraBathrooms > 0) {
+      double bathroomPercentage = getBathroomPriceMultiplier(); // e.g., 25 = 25%
+      double bathroomIncrease = baseForPercentage * (bathroomPercentage / 100) * extraBathrooms;
       totalPrice += bathroomIncrease;
     }
     
