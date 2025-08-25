@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import 'cleaning_schedule_screen.dart';
+import 'date_time_selection_screen.dart';
+import 'faq_screen.dart';
 import '../../data/enums/cleaning_type.dart';
 
 class ServicesScreen extends StatefulWidget {
@@ -111,7 +113,7 @@ class _ServicesScreenState extends State<ServicesScreen>
         cleaningType = CleaningType.heavy;
       }
       
-      // Navega para a tela de agendamento de limpeza
+      // Primeiro navega para a tela de configuração do serviço
       Navigator.push(
         context,
         PageRouteBuilder(
@@ -535,27 +537,66 @@ class _ServicesScreenState extends State<ServicesScreen>
                             ],
                           ),
                         ),
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 10,
-                                offset: const Offset(0, 2),
+                        Row(
+                          children: [
+                            // Botão de FAQ/Dúvidas
+                            Container(
+                              width: 48,
+                              height: 48,
+                              margin: const EdgeInsets.only(right: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                          child: IconButton(
-                            onPressed: () {},
-                            icon: const Icon(
-                              Icons.notifications_outlined,
-                              color: Color(0xFF1A1A1A),
+                              child: IconButton(
+                                onPressed: () {
+                                  HapticFeedback.lightImpact();
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const FAQScreen(),
+                                    ),
+                                  );
+                                },
+                                icon: Icon(
+                                  Icons.help_outline,
+                                  color: AppColors.primaryGreen,
+                                  size: 24,
+                                ),
+                                padding: EdgeInsets.zero,
+                              ),
                             ),
-                          ),
+                            // Menu existente
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: IconButton(
+                                onPressed: () => _showMoreOptions(),
+                                icon: const Icon(
+                                  Icons.menu,
+                                  color: Color(0xFF1A1A1A),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
