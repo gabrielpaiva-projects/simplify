@@ -58,8 +58,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   String? _selectedTime;
   
   double _currentPrice = 0;
-  double _targetPrice = 149.0;
-  int _estimatedTimeInMinutes = 120; // Base time in minutes
+  double _targetPrice = 0; // Will be set from Firestore configuration
+  int _estimatedTimeInMinutes = 0; // Will be set from Firestore configuration
   
   final ScrollController _scrollController = ScrollController();
   
@@ -660,14 +660,45 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           const SizedBox(height: 20),
           
           // Residence options
-          Row(
-            children: [
-              _buildResidenceOption('studio', 'Studio', Icons.single_bed, 'R\$ 99'),
-              const SizedBox(width: 12),
-              _buildResidenceOption('apartment', 'Apto', Icons.apartment, 'R\$ 149'),
-              const SizedBox(width: 12),
-              _buildResidenceOption('house', 'Casa', Icons.house, 'R\$ 199'),
-            ],
+          Consumer<CleaningConfigProvider>(
+            builder: (context, configProvider, child) {
+              if (!configProvider.hasConfig) {
+                return Row(
+                  children: [
+                    _buildResidenceOption('studio', 'Studio', Icons.single_bed, '...'),
+                    const SizedBox(width: 12),
+                    _buildResidenceOption('apartment', 'Apto', Icons.apartment, '...'),
+                    const SizedBox(width: 12),
+                    _buildResidenceOption('house', 'Casa', Icons.house, '...'),
+                  ],
+                );
+              }
+              
+              return Row(
+                children: [
+                  _buildResidenceOption(
+                    'studio', 
+                    'Studio', 
+                    Icons.single_bed, 
+                    'R\$ ${configProvider.getBasePrice('studio').toStringAsFixed(0)}'
+                  ),
+                  const SizedBox(width: 12),
+                  _buildResidenceOption(
+                    'apartment', 
+                    'Apto', 
+                    Icons.apartment, 
+                    'R\$ ${configProvider.getBasePrice('apartment').toStringAsFixed(0)}'
+                  ),
+                  const SizedBox(width: 12),
+                  _buildResidenceOption(
+                    'house', 
+                    'Casa', 
+                    Icons.house, 
+                    'R\$ ${configProvider.getBasePrice('house').toStringAsFixed(0)}'
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),
