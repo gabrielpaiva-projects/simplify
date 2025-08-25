@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
+import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../providers/cleaning_config_provider.dart';
 
 class CleaningScheduleScreen extends StatefulWidget {
   final String serviceTitle;
@@ -17,6 +19,9 @@ class CleaningScheduleScreen extends StatefulWidget {
 
 class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     with TickerProviderStateMixin {
+  // Providers
+  late CleaningConfigProvider _configProvider;
+  
   // Animation Controllers
   late AnimationController _headerController;
   late AnimationController _cardController;
@@ -68,7 +73,14 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     super.initState();
     _initializeDates();
     _initializeAnimations();
-    _calculatePrice();
+    
+    // Load configuration and calculate initial price
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _configProvider = context.read<CleaningConfigProvider>();
+      _configProvider.loadConfiguration().then((_) {
+        _calculatePrice();
+      });
+    });
   }
 
   void _initializeDates() {
@@ -194,42 +206,26 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   }
 
   void _calculatePrice() {
-    double base = 0;
-    int timeInMinutes = 0;
+    if (!mounted) return;
     
-    // Base price and time by residence type
-    switch (_selectedResidence) {
-      case 'studio':
-        base = 99;
-        timeInMinutes = 90; // 1h30min base
-        break;
-      case 'apartment':
-        base = 149;
-        timeInMinutes = 120; // 2h base
-        break;
-      case 'house':
-        base = 199;
-        timeInMinutes = 180; // 3h base
-        break;
-    }
+    final provider = context.read<CleaningConfigProvider>();
     
-    // Room multiplier (price and time)
-    base += (_rooms - 1) * 30;
-    timeInMinutes += (_rooms - 1) * 30; // +30min per extra room
+    // Calculate price using configuration from Firestore
+    double base = provider.calculatePrice(
+      residenceType: _selectedResidence,
+      rooms: _rooms,
+      bathrooms: _bathrooms,
+      includeProducts: _includeProducts,
+      includePets: _includePets,
+    );
     
-    // Bathroom multiplier (price and time)
-    base += (_bathrooms - 1) * 25;
-    timeInMinutes += (_bathrooms - 1) * 20; // +20min per extra bathroom
-    
-    // Extras
-    if (_includeProducts) {
-      base += 40;
-      // Products don't add time
-    }
-    if (_includePets) {
-      base += 25;
-      timeInMinutes += 30; // +30min for pet cleaning
-    }
+    // Calculate estimated time using configuration from Firestore
+    int timeInMinutes = provider.calculateEstimatedTime(
+      residenceType: _selectedResidence,
+      rooms: _rooms,
+      bathrooms: _bathrooms,
+      includePets: _includePets,
+    );
     
     setState(() {
       _currentPrice = _targetPrice;
@@ -760,48 +756,56 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           const SizedBox(height: 20),
           
           // Room counter
-          _buildCounterRow(
-            icon: Icons.weekend,
-            label: 'Cômodos',
-            value: _rooms,
-            color: Colors.indigo,
-            onDecrease: _rooms > 1 ? () {
-              HapticFeedback.lightImpact();
-              setState(() {
-                _rooms--;
-                _calculatePrice();
-              });
-            } : null,
-            onIncrease: () {
-              HapticFeedback.lightImpact();
-              setState(() {
-                _rooms++;
-                _calculatePrice();
-              });
+          Consumer<CleaningConfigProvider>(
+            builder: (context, configProvider, child) {
+              return _buildCounterRow(
+                icon: Icons.weekend,
+                label: 'Cômodos',
+                value: _rooms,
+                color: Colors.indigo,
+                onDecrease: _rooms > configProvider.getMinRooms() ? () {
+                  HapticFeedback.lightImpact();
+                  setState(() {
+                    _rooms--;
+                    _calculatePrice();
+                  });
+                } : null,
+                onIncrease: _rooms < configProvider.getMaxRooms() ? () {
+                  HapticFeedback.lightImpact();
+                  setState(() {
+                    _rooms++;
+                    _calculatePrice();
+                  });
+                } : null,
+              );
             },
           ),
           
           const SizedBox(height: 16),
           
           // Bathroom counter
-          _buildCounterRow(
-            icon: Icons.bathtub,
-            label: 'Banheiros',
-            value: _bathrooms,
-            color: Colors.purple,
-            onDecrease: _bathrooms > 1 ? () {
-              HapticFeedback.lightImpact();
-              setState(() {
-                _bathrooms--;
-                _calculatePrice();
-              });
-            } : null,
-            onIncrease: () {
-              HapticFeedback.lightImpact();
-              setState(() {
-                _bathrooms++;
-                _calculatePrice();
-              });
+          Consumer<CleaningConfigProvider>(
+            builder: (context, configProvider, child) {
+              return _buildCounterRow(
+                icon: Icons.bathtub,
+                label: 'Banheiros',
+                value: _bathrooms,
+                color: Colors.purple,
+                onDecrease: _bathrooms > configProvider.getMinBathrooms() ? () {
+                  HapticFeedback.lightImpact();
+                  setState(() {
+                    _bathrooms--;
+                    _calculatePrice();
+                  });
+                } : null,
+                onIncrease: _bathrooms < configProvider.getMaxBathrooms() ? () {
+                  HapticFeedback.lightImpact();
+                  setState(() {
+                    _bathrooms++;
+                    _calculatePrice();
+                  });
+                } : null,
+              );
             },
           ),
         ],
