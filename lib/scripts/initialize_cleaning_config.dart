@@ -36,10 +36,10 @@ void main() async {
       'max_bathrroms': 5,  // Note: typo exists in Firestore
     },
     'multipliers': {
-      'room_price': 30,
-      'room_time': 20,
-      'bathroom_price': 25,
-      'bathroom_time': 20,
+      'room_price': 30,  // 30% sobre o valor total por cômodo extra
+      'room_time': 20,   // 20 minutos por cômodo extra
+      'bathroom_price': 25,  // 25% sobre o valor total por banheiro extra
+      'bathroom_time': 20,   // 20 minutos por banheiro extra
     },
     'pets_extra_time': 30,  // This is outside multipliers in Firestore
   };

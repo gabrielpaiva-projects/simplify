@@ -184,29 +184,40 @@ class CleaningConfigModel {
     bool includeProducts = false,
     bool includePets = false,
   }) {
-    double price = getBasePrice(residenceType);
+    // Start with base price
+    double basePrice = getBasePrice(residenceType);
+    double totalPrice = basePrice;
     
-    // Add extra rooms cost (first 2 rooms are included in base price for apartment/house)
-    int baseRooms = residenceType == 'studio' ? 1 : 2;
-    if (rooms > baseRooms) {
-      price += (rooms - baseRooms) * getRoomPriceMultiplier();
-    }
-    
-    // Add extra bathrooms cost (first bathroom is included in base price)
-    if (bathrooms > 1) {
-      price += (bathrooms - 1) * getBathroomPriceMultiplier();
-    }
-    
-    // Add extra services
+    // Add extra services first (fixed values)
     if (includeProducts) {
-      price += getProductsIncludedPrice();
+      totalPrice += getProductsIncludedPrice();
     }
     
     if (includePets) {
-      price += getPetsExtraPrice();
+      totalPrice += getPetsExtraPrice();
     }
     
-    return price;
+    // Now apply percentage increases for extra rooms and bathrooms
+    // room_price and bathroom_price are percentages to be applied to the total
+    
+    // Calculate extra rooms percentage (first 2 rooms are included in base price for apartment/house)
+    int baseRooms = residenceType == 'studio' ? 1 : 2;
+    if (rooms > baseRooms) {
+      int extraRooms = rooms - baseRooms;
+      double roomPercentage = getRoomPriceMultiplier(); // This is a percentage (e.g., 30 = 30%)
+      double roomIncrease = totalPrice * (roomPercentage / 100) * extraRooms;
+      totalPrice += roomIncrease;
+    }
+    
+    // Calculate extra bathrooms percentage (first bathroom is included in base price)
+    if (bathrooms > 1) {
+      int extraBathrooms = bathrooms - 1;
+      double bathroomPercentage = getBathroomPriceMultiplier(); // This is a percentage (e.g., 25 = 25%)
+      double bathroomIncrease = totalPrice * (bathroomPercentage / 100) * extraBathrooms;
+      totalPrice += bathroomIncrease;
+    }
+    
+    return totalPrice;
   }
 
   // Calculate estimated time based on configuration
