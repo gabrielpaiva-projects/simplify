@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
+import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../providers/cleaning_pricing_provider.dart';
+import '../../data/models/cleaning_pricing_model.dart';
 
 class CleaningScheduleScreen extends StatefulWidget {
   final String serviceTitle;
@@ -17,6 +20,9 @@ class CleaningScheduleScreen extends StatefulWidget {
 
 class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     with TickerProviderStateMixin {
+  // Pricing Provider
+  late CleaningPricingProvider _pricingProvider;
+  
   // Animation Controllers
   late AnimationController _headerController;
   late AnimationController _cardController;
@@ -68,7 +74,28 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     super.initState();
     _initializeDates();
     _initializeAnimations();
-    _calculatePrice();
+    
+    // Initialize pricing provider
+    _pricingProvider = CleaningPricingProvider();
+    _pricingProvider.addListener(_onPricingDataChanged);
+    
+    // Load pricing data and calculate initial price
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadPricingData();
+    });
+  }
+  
+  void _onPricingDataChanged() {
+    if (_pricingProvider.hasData) {
+      _calculatePrice();
+    }
+  }
+  
+  Future<void> _loadPricingData() async {
+    await _pricingProvider.loadPricingData();
+    if (_pricingProvider.hasData) {
+      _calculatePrice();
+    }
   }
 
   void _initializeDates() {
@@ -194,42 +221,27 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   }
 
   void _calculatePrice() {
-    double base = 0;
-    int timeInMinutes = 0;
-    
-    // Base price and time by residence type
-    switch (_selectedResidence) {
-      case 'studio':
-        base = 99;
-        timeInMinutes = 90; // 1h30min base
-        break;
-      case 'apartment':
-        base = 149;
-        timeInMinutes = 120; // 2h base
-        break;
-      case 'house':
-        base = 199;
-        timeInMinutes = 180; // 3h base
-        break;
+    if (!_pricingProvider.hasData) {
+      // If pricing data is not loaded yet, skip calculation
+      return;
     }
     
-    // Room multiplier (price and time)
-    base += (_rooms - 1) * 30;
-    timeInMinutes += (_rooms - 1) * 30; // +30min per extra room
+    // Calculate price using the provider
+    double base = _pricingProvider.calculatePrice(
+      residenceType: _selectedResidence,
+      rooms: _rooms,
+      bathrooms: _bathrooms,
+      includeProducts: _includeProducts,
+      includePets: _includePets,
+    );
     
-    // Bathroom multiplier (price and time)
-    base += (_bathrooms - 1) * 25;
-    timeInMinutes += (_bathrooms - 1) * 20; // +20min per extra bathroom
-    
-    // Extras
-    if (_includeProducts) {
-      base += 40;
-      // Products don't add time
-    }
-    if (_includePets) {
-      base += 25;
-      timeInMinutes += 30; // +30min for pet cleaning
-    }
+    // Calculate time using the provider
+    int timeInMinutes = _pricingProvider.calculateTime(
+      residenceType: _selectedResidence,
+      rooms: _rooms,
+      bathrooms: _bathrooms,
+      includePets: _includePets,
+    );
     
     setState(() {
       _currentPrice = _targetPrice;
@@ -276,6 +288,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
 
   @override
   void dispose() {
+    _pricingProvider.removeListener(_onPricingDataChanged);
+    _pricingProvider.dispose();
     _headerController.dispose();
     _cardController.dispose();
     _footerController.dispose();
@@ -292,7 +306,9 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return ChangeNotifierProvider.value(
+      value: _pricingProvider,
+      child: Scaffold(
       backgroundColor: const Color(0xFFFAFBFD),
       body: Stack(
         children: [
@@ -366,6 +382,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             ),
           ),
         ],
+      ),
       ),
     );
   }
