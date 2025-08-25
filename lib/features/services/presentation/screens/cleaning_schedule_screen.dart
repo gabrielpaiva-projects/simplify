@@ -50,8 +50,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   
   // State
   String _selectedResidence = 'apartment';
-  int _rooms = 2;
-  int _bathrooms = 1;
+  int _rooms = 1; // Will be updated from Firestore min_rooms
+  int _bathrooms = 1; // Will be updated from Firestore min_bathrooms
   bool _includeProducts = false;
   bool _includePets = false;
   DateTime? _selectedDate;
@@ -80,6 +80,13 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _configProvider = context.read<CleaningConfigProvider>();
       _configProvider.loadConfiguration().then((_) {
+        // Set initial values from Firestore configuration
+        if (_configProvider.hasConfig) {
+          setState(() {
+            _rooms = _configProvider.getMinRooms();
+            _bathrooms = _configProvider.getMinBathrooms();
+          });
+        }
         _calculatePrice();
       });
     });
@@ -714,6 +721,19 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           HapticFeedback.lightImpact();
           setState(() {
             _selectedResidence = value;
+            
+            // Adjust rooms and bathrooms based on residence type and limits
+            if (_configProvider.hasConfig) {
+              // For studio, typically start with minimum rooms
+              if (value == 'studio') {
+                _rooms = _configProvider.getMinRooms();
+                _bathrooms = _configProvider.getMinBathrooms();
+              }
+              // Ensure current values are within limits
+              _rooms = _rooms.clamp(_configProvider.getMinRooms(), _configProvider.getMaxRooms());
+              _bathrooms = _bathrooms.clamp(_configProvider.getMinBathrooms(), _configProvider.getMaxBathrooms());
+            }
+            
             _calculatePrice();
           });
         },
