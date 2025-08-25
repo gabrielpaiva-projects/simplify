@@ -494,8 +494,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppColors.primaryGreenGreen.withOpacity(0.1),
-                  AppColors.primaryGreenGreen.withOpacity(0.05),
+                  AppColors.primaryGreen.withOpacity(0.1),
+                  AppColors.primaryGreen.withOpacity(0.05),
                 ],
               ),
               borderRadius: BorderRadius.circular(10),
@@ -503,7 +503,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             child: Icon(
               Icons.help_outline,
               size: 20,
-              color: AppColors.primaryGreenGreen,
+              color: AppColors.primaryGreen,
             ),
           ),
         ],
@@ -521,7 +521,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               decoration: BoxDecoration(
-                color: AppColors.primaryGreenGreen,
+                color: AppColors.primaryGreen,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -532,8 +532,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
               duration: const Duration(milliseconds: 300),
               decoration: BoxDecoration(
                 color: _currentPage >= 1 
-                    ? AppColors.primaryGreenGreen 
-                    : AppColors.primaryGreenGreen.withOpacity(0.2),
+                    ? AppColors.primaryGreen 
+                    : AppColors.primaryGreen.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -765,8 +765,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.primaryGreenGreen,
-                      AppColors.primaryGreenGreen.withOpacity(0.8),
+                      AppColors.primaryGreen,
+                      AppColors.primaryGreen.withOpacity(0.8),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(8),
@@ -873,8 +873,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             gradient: isSelected
                 ? LinearGradient(
                     colors: [
-                      AppColors.primaryGreenGreen,
-                      AppColors.primaryGreenGreen.withOpacity(0.9),
+                      AppColors.primaryGreen,
+                      AppColors.primaryGreen.withOpacity(0.9),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -884,7 +884,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected 
-                  ? AppColors.primaryGreenGreen
+                  ? AppColors.primaryGreen
                   : const Color(0xFFE8ECEF),
               width: 1.5,
             ),
@@ -1112,7 +1112,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                     alignment: Alignment.center,
                     child: Icon(
                       Icons.add,
-                      color: AppColors.primaryGreenGreen,
+                      color: AppColors.primaryGreen,
                       size: 18,
                     ),
                   ),
@@ -1403,8 +1403,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                       gradient: isSelected
                           ? LinearGradient(
                               colors: [
-                                AppColors.primaryGreenGreen,
-                                AppColors.primaryGreenGreen.withOpacity(0.8),
+                                AppColors.primaryGreen,
+                                AppColors.primaryGreen.withOpacity(0.8),
                               ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
@@ -1414,7 +1414,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isSelected 
-                            ? AppColors.primaryGreenGreen
+                            ? AppColors.primaryGreen
                             : const Color(0xFFE8ECEF),
                       ),
                     ),
@@ -1570,8 +1570,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           gradient: isSelected
               ? LinearGradient(
                   colors: [
-                    AppColors.primaryGreenGreen,
-                    AppColors.primaryGreenGreen.withOpacity(0.8),
+                    AppColors.primaryGreen,
+                    AppColors.primaryGreen.withOpacity(0.8),
                   ],
                 )
               : null,
@@ -1583,7 +1583,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isSelected 
-                ? AppColors.primaryGreenGreen
+                ? AppColors.primaryGreen
                 : isAvailable 
                     ? const Color(0xFFE8ECEF)
                     : const Color(0xFFE8ECEF),
@@ -1651,8 +1651,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                AppColors.primaryGreenGreen.withOpacity(0.1),
-                                AppColors.primaryGreenGreen.withOpacity(0.05),
+                                AppColors.primaryGreen.withOpacity(0.1),
+                                AppColors.primaryGreen.withOpacity(0.05),
                               ],
                             ),
                             borderRadius: BorderRadius.circular(6),
@@ -1662,7 +1662,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.primaryGreenGreen,
+                              color: AppColors.primaryGreen,
                               letterSpacing: 1,
                             ),
                           ),
@@ -1732,7 +1732,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w500,
-                                color: AppColors.primaryGreenGreen,
+                                color: AppColors.primaryGreen,
                               ),
                             ),
                             const SizedBox(width: 4),
@@ -1741,7 +1741,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                               style: TextStyle(
                                 fontSize: 32,
                                 fontWeight: FontWeight.w800,
-                                color: AppColors.primaryGreenGreen,
+                                color: AppColors.primaryGreen,
                                 letterSpacing: -1,
                               ),
                             ),
@@ -1750,7 +1750,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w500,
-                                color: AppColors.primaryGreenGreen.withOpacity(0.7),
+                                color: AppColors.primaryGreen.withOpacity(0.7),
                               ),
                             ),
                           ],
@@ -1773,8 +1773,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                         gradient: canContinue
                             ? LinearGradient(
                                 colors: [
-                                  AppColors.primaryGreenGreen,
-                                  AppColors.primaryGreenGreen.withOpacity(0.8),
+                                  AppColors.primaryGreen,
+                                  AppColors.primaryGreen.withOpacity(0.8),
                                 ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
@@ -1784,7 +1784,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                         boxShadow: canContinue
                             ? [
                                 BoxShadow(
-                                  color: AppColors.primaryGreenGreen.withOpacity(0.3),
+                                  color: AppColors.primaryGreen.withOpacity(0.3),
                                   blurRadius: 20,
                                   offset: const Offset(0, 10),
                                 ),
@@ -1935,8 +1935,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          AppColors.primaryGreenGreen,
-                          AppColors.primaryGreenGreen.withOpacity(0.8),
+                          AppColors.primaryGreen,
+                          AppColors.primaryGreen.withOpacity(0.8),
                         ],
                       ),
                       shape: BoxShape.circle,
@@ -1979,7 +1979,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.primaryGreenGreen.withOpacity(0.1),
+                color: AppColors.primaryGreen.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -1987,7 +1987,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.primaryGreenGreen,
+                  color: AppColors.primaryGreen,
                 ),
               ),
             ),
@@ -2008,7 +2008,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                     child: Text(
                       'Ver detalhes',
                       style: TextStyle(
-                        color: AppColors.primaryGreenGreen,
+                        color: AppColors.primaryGreen,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -2022,7 +2022,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                       Navigator.pop(context);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryGreenGreen,
+                      backgroundColor: AppColors.primaryGreen,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
