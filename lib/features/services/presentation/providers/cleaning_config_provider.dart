@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../../data/models/cleaning_config_model.dart';
 import '../../data/services/cleaning_config_service.dart';
 
 class CleaningConfigProvider extends ChangeNotifier {
   final CleaningConfigService _configService;
+  StreamSubscription<CleaningConfigModel>? _configSubscription;
   
   CleaningConfigModel? _config;
   bool _isLoading = false;
@@ -20,6 +22,8 @@ class CleaningConfigProvider extends ChangeNotifier {
   }) : _configService = configService ?? CleaningConfigService() {
     // Initialize configuration on provider creation
     loadConfiguration();
+    // Listen to real-time updates from Firestore
+    listenToConfigUpdates();
   }
 
   /// Load configuration from Firestore
@@ -156,8 +160,10 @@ class CleaningConfigProvider extends ChangeNotifier {
 
   /// Listen to real-time configuration updates
   void listenToConfigUpdates() {
-    _configService.getConfigStream().listen(
+    _configSubscription?.cancel();
+    _configSubscription = _configService.getConfigStream().listen(
       (newConfig) {
+        print('Config updated from Firestore: studio price = ${newConfig.basePrices['studio']}');
         _config = newConfig;
         _error = null;
         notifyListeners();
@@ -171,6 +177,7 @@ class CleaningConfigProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _configSubscription?.cancel();
     _configService.clearCache();
     super.dispose();
   }

@@ -9,17 +9,13 @@ class CleaningConfigRepository {
   // Cache for configuration
   CleaningConfigModel? _cachedConfig;
   DateTime? _lastFetchTime;
-  static const Duration _cacheValidDuration = Duration(hours: 1);
+  // Cache disabled to ensure real-time updates
+  // static const Duration _cacheValidDuration = Duration(minutes: 1);
 
   /// Fetch cleaning configuration from Firestore
   Future<CleaningConfigModel> getCleaningConfig({bool forceRefresh = false}) async {
-    // Check if we have a valid cached configuration
-    if (!forceRefresh && 
-        _cachedConfig != null && 
-        _lastFetchTime != null &&
-        DateTime.now().difference(_lastFetchTime!) < _cacheValidDuration) {
-      return _cachedConfig!;
-    }
+    // REMOVED CACHE - Always fetch fresh data from Firestore
+    // This ensures changes are reflected immediately
 
     try {
       final docSnapshot = await _firestore
