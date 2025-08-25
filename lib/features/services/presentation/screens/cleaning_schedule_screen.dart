@@ -819,7 +819,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     required int value,
     required Color color,
     VoidCallback? onDecrease,
-    required VoidCallback onIncrease,
+    VoidCallback? onIncrease,
   }) {
     return Row(
       children: [
@@ -902,7 +902,9 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                     alignment: Alignment.center,
                     child: Icon(
                       Icons.add,
-                      color: AppColors.primaryGreen,
+                      color: onIncrease != null 
+                          ? AppColors.primaryGreen
+                          : const Color(0xFFCED4DA),
                       size: 18,
                     ),
                   ),
