@@ -6,6 +6,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../providers/cleaning_config_provider.dart';
 import '../widgets/config_loading_widget.dart';
 import '../widgets/config_error_widget.dart';
+import '../widgets/detailed_pricing_summary.dart';
 
 class CleaningScheduleScreen extends StatefulWidget {
   final String serviceTitle;
@@ -577,6 +578,15 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           
           // Extra Services Section
           _buildAnimatedCard(2, _buildExtrasSection()),
+          
+          // Detailed Pricing Summary (showing all Firestore data)
+          DetailedPricingSummary(
+            residenceType: _selectedResidence,
+            rooms: _rooms,
+            bathrooms: _bathrooms,
+            includeProducts: _includeProducts,
+            includePets: _includePets,
+          ),
           
           const SizedBox(height: 20),
         ],
