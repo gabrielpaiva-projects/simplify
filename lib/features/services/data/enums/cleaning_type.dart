@@ -1,7 +1,7 @@
 // Enum for cleaning service types
 enum CleaningType {
-  standard('cleaning_pricing'), // Limpeza padrão
-  heavy('limpeza_pesada');      // Limpeza pesada
+  standard('limpeza_padrao'),   // Limpeza padrão
+  heavy('limpeza_pesada');       // Limpeza pesada
   
   final String documentName;
   
@@ -33,7 +33,7 @@ enum CleaningType {
       case 'standard':
       case 'padrao':
       case 'padrão':
-      case 'cleaning_pricing':
+      case 'limpeza_padrao':
         return CleaningType.standard;
       case 'heavy':
       case 'pesada':
