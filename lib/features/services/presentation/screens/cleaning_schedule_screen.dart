@@ -6,6 +6,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../providers/cleaning_pricing_provider.dart';
 import '../../data/models/cleaning_pricing_model.dart';
 import '../../data/enums/cleaning_type.dart';
+import 'date_time_selection_screen.dart';
 
 class CleaningScheduleScreen extends StatefulWidget {
   final String serviceTitle;
@@ -46,9 +47,9 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   final List<AnimationController> _cardAnimationControllers = [];
   final List<Animation<double>> _cardAnimations = [];
   
-  // Page Controller
-  final PageController _pageController = PageController();
-  int _currentPage = 0;
+  // Page Controller (removido pois agora é apenas uma página)
+  // final PageController _pageController = PageController();
+  // int _currentPage = 0;
   
   // State
   String _selectedResidence = 'apartment';
@@ -1681,11 +1682,23 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                         child: InkWell(
                           onTap: canContinue ? () {
                             HapticFeedback.mediumImpact();
-                            if (_currentPage == 0) {
-                              _goToNextPage();
-                            } else {
-                              _confirmSchedule();
-                            }
+                            // Navega para a nova tela de seleção de data e hora
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => DateTimeSelectionScreen(
+                                  serviceTitle: widget.serviceTitle,
+                                  totalPrice: _targetPrice,
+                                  serviceDetails: {
+                                    'residence': _selectedResidence,
+                                    'rooms': _rooms,
+                                    'bathrooms': _bathrooms,
+                                    'includeProducts': _includeProducts,
+                                    'includePets': _includePets,
+                                  },
+                                ),
+                              ),
+                            );
                           } : null,
                           borderRadius: BorderRadius.circular(16),
                           child: Container(
@@ -1693,7 +1706,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                             child: Row(
                               children: [
                                 Text(
-                                  _currentPage == 0 ? 'Continuar' : 'Confirmar',
+                                  'Escolher Data e Hora',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
