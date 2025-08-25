@@ -27,22 +27,40 @@ class PricingBreakdownWidget extends StatelessWidget {
             child: CircularProgressIndicator(),
           );
         }
+        
+        if (!configProvider.hasConfig) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(
+                  configProvider.error ?? 'Configuração não carregada',
+                  style: const TextStyle(color: Colors.red),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          );
+        }
 
-        final basePrice = configProvider.getBasePrice(residenceType);
-        final baseTime = configProvider.getBaseTime(residenceType);
-        
-        // Calculate extra rooms cost
-        final baseRooms = residenceType == 'studio' ? 1 : 2;
-        final extraRooms = rooms > baseRooms ? rooms - baseRooms : 0;
-        final extraRoomsCost = extraRooms * (configProvider.config?.getRoomPriceMultiplier() ?? 30);
-        
-        // Calculate extra bathrooms cost
-        final extraBathrooms = bathrooms > 1 ? bathrooms - 1 : 0;
-        final extraBathroomsCost = extraBathrooms * (configProvider.config?.getBathroomPriceMultiplier() ?? 25);
-        
-        // Calculate extras
-        final productsCost = includeProducts ? configProvider.getProductsIncludedPrice() : 0;
-        final petsCost = includePets ? configProvider.getPetsExtraPrice() : 0;
+        try {
+          final basePrice = configProvider.getBasePrice(residenceType);
+          final baseTime = configProvider.getBaseTime(residenceType);
+          
+          // Calculate extra rooms cost
+          final baseRooms = residenceType == 'studio' ? 1 : 2;
+          final extraRooms = rooms > baseRooms ? rooms - baseRooms : 0;
+          final extraRoomsCost = extraRooms * configProvider.config!.getRoomPriceMultiplier();
+          
+          // Calculate extra bathrooms cost
+          final extraBathrooms = bathrooms > 1 ? bathrooms - 1 : 0;
+          final extraBathroomsCost = extraBathrooms * configProvider.config!.getBathroomPriceMultiplier();
+          
+          // Calculate extras
+          final productsCost = includeProducts ? configProvider.getProductsIncludedPrice() : 0;
+          final petsCost = includePets ? configProvider.getPetsExtraPrice() : 0;
         
         // Total
         final totalPrice = basePrice + extraRoomsCost + extraBathroomsCost + productsCost + petsCost;
@@ -160,6 +178,14 @@ class PricingBreakdownWidget extends StatelessWidget {
             ],
           ),
         );
+        } catch (e) {
+          return Center(
+            child: Text(
+              'Erro ao calcular preço: $e',
+              style: const TextStyle(color: Colors.red),
+            ),
+          );
+        }
       },
     );
   }

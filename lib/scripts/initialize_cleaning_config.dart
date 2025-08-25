@@ -12,7 +12,8 @@ void main() async {
 
   final firestore = FirebaseFirestore.instance;
   
-  // Configuration data as specified
+  // Configuration data matching EXACTLY the Firestore structure
+  // Note: There's a typo in Firestore (max_bathrroms), but we handle it in the model
   final configData = {
     'base_prices': {
       'apartment': 149,
@@ -29,18 +30,18 @@ void main() async {
       'products_included': 40,
     },
     'limits': {
-      'max_bathrooms': 5,
+      'min_rooms': 1,
       'max_rooms': 10,
       'min_bathrooms': 1,
-      'min_rooms': 1,
+      'max_bathrroms': 5,  // Note: typo exists in Firestore
     },
     'multipliers': {
-      'bathroom_price': 25,
-      'bathroom_time': 20,
       'room_price': 30,
       'room_time': 20,
-      'pets_extra_time': 30,
+      'bathroom_price': 25,
+      'bathroom_time': 20,
     },
+    'pets_extra_time': 30,  // This is outside multipliers in Firestore
   };
 
   try {

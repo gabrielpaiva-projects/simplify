@@ -4,6 +4,8 @@ import 'dart:math' as math;
 import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../providers/cleaning_config_provider.dart';
+import '../widgets/config_loading_widget.dart';
+import '../widgets/config_error_widget.dart';
 
 class CleaningScheduleScreen extends StatefulWidget {
   final String serviceTitle;
@@ -210,36 +212,46 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     
     final provider = context.read<CleaningConfigProvider>();
     
-    // Calculate price using configuration from Firestore
-    double base = provider.calculatePrice(
-      residenceType: _selectedResidence,
-      rooms: _rooms,
-      bathrooms: _bathrooms,
-      includeProducts: _includeProducts,
-      includePets: _includePets,
-    );
+    // Only calculate if configuration is loaded
+    if (!provider.hasConfig) {
+      print('Configuration not loaded yet');
+      return;
+    }
     
-    // Calculate estimated time using configuration from Firestore
-    int timeInMinutes = provider.calculateEstimatedTime(
-      residenceType: _selectedResidence,
-      rooms: _rooms,
-      bathrooms: _bathrooms,
-      includePets: _includePets,
-    );
-    
-    setState(() {
-      _currentPrice = _targetPrice;
-      _targetPrice = base;
-      _estimatedTimeInMinutes = timeInMinutes;
-      _priceAnimation = Tween<double>(
-        begin: _currentPrice,
-        end: _targetPrice,
-      ).animate(CurvedAnimation(
-        parent: _priceController,
-        curve: Curves.easeInOut,
-      ));
-      _priceController.forward(from: 0);
-    });
+    try {
+      // Calculate price using configuration from Firestore
+      double base = provider.calculatePrice(
+        residenceType: _selectedResidence,
+        rooms: _rooms,
+        bathrooms: _bathrooms,
+        includeProducts: _includeProducts,
+        includePets: _includePets,
+      );
+      
+      // Calculate estimated time using configuration from Firestore
+      int timeInMinutes = provider.calculateEstimatedTime(
+        residenceType: _selectedResidence,
+        rooms: _rooms,
+        bathrooms: _bathrooms,
+        includePets: _includePets,
+      );
+      
+      setState(() {
+        _currentPrice = _targetPrice;
+        _targetPrice = base;
+        _estimatedTimeInMinutes = timeInMinutes;
+        _priceAnimation = Tween<double>(
+          begin: _currentPrice,
+          end: _targetPrice,
+        ).animate(CurvedAnimation(
+          parent: _priceController,
+          curve: Curves.easeInOut,
+        ));
+        _priceController.forward(from: 0);
+      });
+    } catch (e) {
+      print('Error calculating price: $e');
+    }
   }
 
   void _goToNextPage() {
@@ -290,7 +302,31 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFAFBFD),
-      body: Stack(
+      body: Consumer<CleaningConfigProvider>(
+        builder: (context, configProvider, child) {
+          // Show loading state
+          if (configProvider.isLoading) {
+            return const Center(
+              child: ConfigLoadingWidget(
+                message: 'Carregando configuração de preços...',
+              ),
+            );
+          }
+          
+          // Show error state
+          if (configProvider.error != null && !configProvider.hasConfig) {
+            return Center(
+              child: ConfigErrorWidget(
+                error: configProvider.error,
+                onRetry: () {
+                  configProvider.loadConfiguration(forceRefresh: true);
+                },
+              ),
+            );
+          }
+          
+          // Show main content
+          return Stack(
         children: [
           // Background gradient
           Container(
@@ -362,6 +398,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             ),
           ),
         ],
+      );
+        },
       ),
     );
   }
@@ -758,19 +796,33 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           // Room counter
           Consumer<CleaningConfigProvider>(
             builder: (context, configProvider, child) {
+              if (!configProvider.hasConfig) {
+                return _buildCounterRow(
+                  icon: Icons.weekend,
+                  label: 'Cômodos',
+                  value: _rooms,
+                  color: Colors.indigo,
+                  onDecrease: null,
+                  onIncrease: null,
+                );
+              }
+              
+              final minRooms = configProvider.getMinRooms();
+              final maxRooms = configProvider.getMaxRooms();
+              
               return _buildCounterRow(
                 icon: Icons.weekend,
                 label: 'Cômodos',
                 value: _rooms,
                 color: Colors.indigo,
-                onDecrease: _rooms > configProvider.getMinRooms() ? () {
+                onDecrease: _rooms > minRooms ? () {
                   HapticFeedback.lightImpact();
                   setState(() {
                     _rooms--;
                     _calculatePrice();
                   });
                 } : null,
-                onIncrease: _rooms < configProvider.getMaxRooms() ? () {
+                onIncrease: _rooms < maxRooms ? () {
                   HapticFeedback.lightImpact();
                   setState(() {
                     _rooms++;
@@ -786,19 +838,33 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           // Bathroom counter
           Consumer<CleaningConfigProvider>(
             builder: (context, configProvider, child) {
+              if (!configProvider.hasConfig) {
+                return _buildCounterRow(
+                  icon: Icons.bathtub,
+                  label: 'Banheiros',
+                  value: _bathrooms,
+                  color: Colors.purple,
+                  onDecrease: null,
+                  onIncrease: null,
+                );
+              }
+              
+              final minBathrooms = configProvider.getMinBathrooms();
+              final maxBathrooms = configProvider.getMaxBathrooms();
+              
               return _buildCounterRow(
                 icon: Icons.bathtub,
                 label: 'Banheiros',
                 value: _bathrooms,
                 color: Colors.purple,
-                onDecrease: _bathrooms > configProvider.getMinBathrooms() ? () {
+                onDecrease: _bathrooms > minBathrooms ? () {
                   HapticFeedback.lightImpact();
                   setState(() {
                     _bathrooms--;
                     _calculatePrice();
                   });
                 } : null,
-                onIncrease: _bathrooms < configProvider.getMaxBathrooms() ? () {
+                onIncrease: _bathrooms < maxBathrooms ? () {
                   HapticFeedback.lightImpact();
                   setState(() {
                     _bathrooms++;

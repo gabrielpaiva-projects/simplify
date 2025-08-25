@@ -15,12 +15,25 @@ class CleaningConfigModel {
   });
 
   factory CleaningConfigModel.fromJson(Map<String, dynamic> json) {
+    // Handle pets_extra_time that might be outside multipliers in Firestore
+    final multipliers = Map<String, dynamic>.from(json['multipliers'] ?? {});
+    if (json['pets_extra_time'] != null && !multipliers.containsKey('pets_extra_time')) {
+      multipliers['pets_extra_time'] = json['pets_extra_time'];
+    }
+    
+    // Fix typo in Firestore field name
+    final limits = Map<String, dynamic>.from(json['limits'] ?? {});
+    if (limits.containsKey('max_bathrroms') && !limits.containsKey('max_bathrooms')) {
+      limits['max_bathrooms'] = limits['max_bathrroms'];
+      limits.remove('max_bathrroms');
+    }
+    
     return CleaningConfigModel(
-      basePrices: _convertToDoubleMap(json['base_prices'] ?? {}),
-      baseTimes: _convertToIntMap(json['base_times'] ?? {}),
-      extraServices: _convertToDoubleMap(json['extra_services'] ?? {}),
-      limits: _convertToIntMap(json['limits'] ?? {}),
-      multipliers: _convertToDoubleMap(json['multipliers'] ?? {}),
+      basePrices: _convertToDoubleMap(json['base_prices']),
+      baseTimes: _convertToIntMap(json['base_times']),
+      extraServices: _convertToDoubleMap(json['extra_services']),
+      limits: _convertToIntMap(limits),
+      multipliers: _convertToDoubleMap(multipliers),
     );
   }
 
@@ -52,90 +65,115 @@ class CleaningConfigModel {
     });
   }
 
-  // Default configuration
-  factory CleaningConfigModel.defaultConfig() {
-    return CleaningConfigModel(
-      basePrices: {
-        'apartment': 149.0,
-        'house': 180.0,
-        'studio': 90.0,
-      },
-      baseTimes: {
-        'apartment': 120,
-        'house': 180,
-        'studio': 90,
-      },
-      extraServices: {
-        'pets': 25.0,
-        'products_included': 40.0,
-      },
-      limits: {
-        'max_bathrooms': 5,
-        'max_rooms': 10,
-        'min_bathrooms': 1,
-        'min_rooms': 1,
-      },
-      multipliers: {
-        'bathroom_price': 25.0,
-        'bathroom_time': 20.0,
-        'room_price': 30.0,
-        'room_time': 20.0,
-        'pets_extra_time': 30.0,
-      },
-    );
+  // Removed default configuration - should only use Firestore data
+  // This constructor should not be used in production
+  factory CleaningConfigModel.empty() {
+    throw Exception('Configuration must be loaded from Firestore. No fallback values allowed.');
   }
 
   // Helper methods
   double getBasePrice(String residenceType) {
-    return basePrices[residenceType] ?? basePrices['apartment']!;
+    final price = basePrices[residenceType];
+    if (price == null) {
+      throw Exception('Base price not found for residence type: $residenceType');
+    }
+    return price;
   }
 
   int getBaseTime(String residenceType) {
-    return baseTimes[residenceType] ?? baseTimes['apartment']!;
+    final time = baseTimes[residenceType];
+    if (time == null) {
+      throw Exception('Base time not found for residence type: $residenceType');
+    }
+    return time;
   }
 
   double getPetsExtraPrice() {
-    return extraServices['pets'] ?? 25.0;
+    final price = extraServices['pets'];
+    if (price == null) {
+      throw Exception('Pets extra price not configured in Firestore');
+    }
+    return price;
   }
 
   double getProductsIncludedPrice() {
-    return extraServices['products_included'] ?? 40.0;
+    final price = extraServices['products_included'];
+    if (price == null) {
+      throw Exception('Products included price not configured in Firestore');
+    }
+    return price;
   }
 
   double getRoomPriceMultiplier() {
-    return multipliers['room_price'] ?? 30.0;
+    final price = multipliers['room_price'];
+    if (price == null) {
+      throw Exception('Room price multiplier not configured in Firestore');
+    }
+    return price;
   }
 
   double getBathroomPriceMultiplier() {
-    return multipliers['bathroom_price'] ?? 25.0;
+    final price = multipliers['bathroom_price'];
+    if (price == null) {
+      throw Exception('Bathroom price multiplier not configured in Firestore');
+    }
+    return price;
   }
 
   double getRoomTimeMultiplier() {
-    return multipliers['room_time'] ?? 20.0;
+    final time = multipliers['room_time'];
+    if (time == null) {
+      throw Exception('Room time multiplier not configured in Firestore');
+    }
+    return time;
   }
 
   double getBathroomTimeMultiplier() {
-    return multipliers['bathroom_time'] ?? 20.0;
+    final time = multipliers['bathroom_time'];
+    if (time == null) {
+      throw Exception('Bathroom time multiplier not configured in Firestore');
+    }
+    return time;
   }
 
   double getPetsExtraTime() {
-    return multipliers['pets_extra_time'] ?? 30.0;
+    final time = multipliers['pets_extra_time'];
+    if (time == null) {
+      throw Exception('Pets extra time not configured in Firestore');
+    }
+    return time;
   }
 
   int getMinRooms() {
-    return limits['min_rooms'] ?? 1;
+    final limit = limits['min_rooms'];
+    if (limit == null) {
+      throw Exception('Min rooms limit not configured in Firestore');
+    }
+    return limit;
   }
 
   int getMaxRooms() {
-    return limits['max_rooms'] ?? 10;
+    final limit = limits['max_rooms'];
+    if (limit == null) {
+      throw Exception('Max rooms limit not configured in Firestore');
+    }
+    return limit;
   }
 
   int getMinBathrooms() {
-    return limits['min_bathrooms'] ?? 1;
+    final limit = limits['min_bathrooms'];
+    if (limit == null) {
+      throw Exception('Min bathrooms limit not configured in Firestore');
+    }
+    return limit;
   }
 
   int getMaxBathrooms() {
-    return limits['max_bathrooms'] ?? 5;
+    final limit = limits['max_bathrooms'];
+    if (limit == null) {
+      throw Exception('Max bathrooms limit not configured in Firestore');
+    }
+    return limit;
   }
 
   // Calculate price based on configuration

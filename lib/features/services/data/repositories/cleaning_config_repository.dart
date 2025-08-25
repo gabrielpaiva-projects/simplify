@@ -32,30 +32,25 @@ class CleaningConfigRepository {
         _lastFetchTime = DateTime.now();
         return _cachedConfig!;
       } else {
-        // If document doesn't exist, create it with default values
-        final defaultConfig = CleaningConfigModel.defaultConfig();
-        await createDefaultConfig(defaultConfig);
-        _cachedConfig = defaultConfig;
-        _lastFetchTime = DateTime.now();
-        return defaultConfig;
+        throw Exception('Cleaning configuration not found in Firestore. Document "$_documentId" does not exist in collection "$_collectionName".');
       }
     } catch (e) {
       print('Error fetching cleaning config: $e');
-      // Return default configuration if there's an error
-      return CleaningConfigModel.defaultConfig();
+      throw Exception('Failed to fetch cleaning configuration from Firestore: $e');
     }
   }
 
-  /// Create default configuration in Firestore
-  Future<void> createDefaultConfig(CleaningConfigModel config) async {
+  /// Create configuration in Firestore (should only be used for initial setup)
+  Future<void> createConfig(Map<String, dynamic> configData) async {
     try {
       await _firestore
           .collection(_collectionName)
           .doc(_documentId)
-          .set(config.toJson());
-      print('Default cleaning configuration created successfully');
+          .set(configData);
+      print('Cleaning configuration created successfully');
     } catch (e) {
-      print('Error creating default config: $e');
+      print('Error creating config: $e');
+      throw Exception('Failed to create cleaning configuration: $e');
     }
   }
 
@@ -111,7 +106,7 @@ class CleaningConfigRepository {
             _lastFetchTime = DateTime.now();
             return config;
           } else {
-            return CleaningConfigModel.defaultConfig();
+            throw Exception('Cleaning configuration document does not exist in Firestore');
           }
         });
   }

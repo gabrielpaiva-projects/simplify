@@ -33,8 +33,7 @@ class CleaningConfigProvider extends ChangeNotifier {
       _error = null;
     } catch (e) {
       _error = 'Failed to load configuration: $e';
-      // Use default configuration as fallback
-      _config = CleaningConfigModel.defaultConfig();
+      _config = null;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -50,14 +49,7 @@ class CleaningConfigProvider extends ChangeNotifier {
     bool includePets = false,
   }) {
     if (_config == null) {
-      // Use default configuration if not loaded
-      return CleaningConfigModel.defaultConfig().calculatePrice(
-        residenceType: residenceType,
-        rooms: rooms,
-        bathrooms: bathrooms,
-        includeProducts: includeProducts,
-        includePets: includePets,
-      );
+      throw Exception('Configuration not loaded. Cannot calculate price.');
     }
 
     return _config!.calculatePrice(
@@ -77,13 +69,7 @@ class CleaningConfigProvider extends ChangeNotifier {
     bool includePets = false,
   }) {
     if (_config == null) {
-      // Use default configuration if not loaded
-      return CleaningConfigModel.defaultConfig().calculateEstimatedTime(
-        residenceType: residenceType,
-        rooms: rooms,
-        bathrooms: bathrooms,
-        includePets: includePets,
-      );
+      throw Exception('Configuration not loaded. Cannot calculate estimated time.');
     }
 
     return _config!.calculateEstimatedTime(
@@ -96,41 +82,63 @@ class CleaningConfigProvider extends ChangeNotifier {
 
   /// Get base price for a residence type
   double getBasePrice(String residenceType) {
-    return _config?.getBasePrice(residenceType) ?? 
-           CleaningConfigModel.defaultConfig().getBasePrice(residenceType);
+    if (_config == null) {
+      throw Exception('Configuration not loaded');
+    }
+    return _config!.getBasePrice(residenceType);
   }
 
   /// Get base time for a residence type
   int getBaseTime(String residenceType) {
-    return _config?.getBaseTime(residenceType) ?? 
-           CleaningConfigModel.defaultConfig().getBaseTime(residenceType);
+    if (_config == null) {
+      throw Exception('Configuration not loaded');
+    }
+    return _config!.getBaseTime(residenceType);
   }
 
   /// Get room limits
   int getMinRooms() {
-    return _config?.getMinRooms() ?? 1;
+    if (_config == null) {
+      throw Exception('Configuration not loaded');
+    }
+    return _config!.getMinRooms();
   }
 
   int getMaxRooms() {
-    return _config?.getMaxRooms() ?? 10;
+    if (_config == null) {
+      throw Exception('Configuration not loaded');
+    }
+    return _config!.getMaxRooms();
   }
 
   /// Get bathroom limits
   int getMinBathrooms() {
-    return _config?.getMinBathrooms() ?? 1;
+    if (_config == null) {
+      throw Exception('Configuration not loaded');
+    }
+    return _config!.getMinBathrooms();
   }
 
   int getMaxBathrooms() {
-    return _config?.getMaxBathrooms() ?? 5;
+    if (_config == null) {
+      throw Exception('Configuration not loaded');
+    }
+    return _config!.getMaxBathrooms();
   }
 
   /// Get extra service prices
   double getPetsExtraPrice() {
-    return _config?.getPetsExtraPrice() ?? 25.0;
+    if (_config == null) {
+      throw Exception('Configuration not loaded');
+    }
+    return _config!.getPetsExtraPrice();
   }
 
   double getProductsIncludedPrice() {
-    return _config?.getProductsIncludedPrice() ?? 40.0;
+    if (_config == null) {
+      throw Exception('Configuration not loaded');
+    }
+    return _config!.getProductsIncludedPrice();
   }
 
   /// Validate room and bathroom counts
