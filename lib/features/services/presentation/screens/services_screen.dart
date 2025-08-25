@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import 'cleaning_schedule_screen.dart';
+import '../../data/enums/cleaning_type.dart';
 
 class ServicesScreen extends StatefulWidget {
   const ServicesScreen({super.key});
@@ -104,12 +105,21 @@ class _ServicesScreenState extends State<ServicesScreen>
     
     // Verifica se é um serviço de limpeza
     if (service.title.toLowerCase().contains('limpeza')) {
+      // Determina o tipo de limpeza baseado no título
+      CleaningType cleaningType = CleaningType.standard;
+      if (service.title.toLowerCase().contains('pesada')) {
+        cleaningType = CleaningType.heavy;
+      }
+      
       // Navega para a tela de agendamento de limpeza
       Navigator.push(
         context,
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) =>
-              CleaningScheduleScreen(serviceTitle: service.title),
+              CleaningScheduleScreen(
+                serviceTitle: service.title,
+                cleaningType: cleaningType,
+              ),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             const begin = Offset(0.0, 1.0);
             const end = Offset.zero;
