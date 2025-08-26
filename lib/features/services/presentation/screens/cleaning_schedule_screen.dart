@@ -1818,14 +1818,15 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   }
   
   Widget _buildPaymentPage() {
-    return GestureDetector(
-      onTap: () {
-        // Fecha o teclado ao tocar em qualquer lugar
-        FocusScope.of(context).unfocus();
-      },
-      child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.only(bottom: 100),
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 100),
+      child: GestureDetector(
+        onTap: () {
+          // Fecha o teclado ao tocar em qualquer lugar
+          FocusScope.of(context).unfocus();
+        },
+        behavior: HitTestBehavior.translucent,
         child: Column(
           children: [
             const SizedBox(height: 24),
@@ -2363,30 +2364,35 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
               ),
             ],
           ),
-          child: TextFormField(
-            controller: controller,
-            keyboardType: keyboardType,
-            onChanged: onChanged,
-            cursorColor: AppColors.primaryGreen,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.black,
-              fontWeight: FontWeight.w500,
-            ),
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: TextStyle(
-                color: Colors.grey[400],
-                fontSize: 15,
-                fontWeight: FontWeight.w400,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: TextFormField(
+              controller: controller,
+              keyboardType: keyboardType,
+              onChanged: onChanged,
+              cursorColor: AppColors.primaryGreen,
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.black,
+                fontWeight: FontWeight.w500,
               ),
-              border: InputBorder.none,
-              errorBorder: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.white,
+                hintText: hint,
+                hintStyle: TextStyle(
+                  color: Colors.grey[400],
+                  fontSize: 15,
+                  fontWeight: FontWeight.w400,
+                ),
+                border: InputBorder.none,
+                errorBorder: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
               ),
             ),
           ),
