@@ -1833,12 +1833,12 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             // Total value highlight
             _buildAnimatedCard(0, _buildTotalValueCard()),
             
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
             
             // Payment method selector with better UX
             _buildAnimatedCard(1, _buildPaymentMethodSelector()),
             
-            const SizedBox(height: 8),
+            const SizedBox(height: 24),
             
             // Dynamic payment content
             AnimatedSwitcher(
@@ -2064,6 +2064,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SizedBox(height: 8),
           // Form fields header
           Row(
             children: [
@@ -2079,7 +2080,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           
           _buildModernInput(
             controller: _cardNumberController,
@@ -2154,6 +2155,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SizedBox(height: 8),
           // PIX Header
           Row(
             children: [
@@ -2167,11 +2169,11 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                   color: Colors.grey[800],
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          
-          // PIX Code Section
+                          ],
+            ),
+            const SizedBox(height: 24),
+            
+            // PIX Code Section
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -2337,33 +2339,47 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE8ECEF), width: 1.5),
+        border: Border.all(color: const Color(0xFFDDDDDD), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
         onChanged: onChanged,
+        cursorColor: AppColors.primaryGreen,
         style: const TextStyle(
-          fontSize: 15,
-          color: Color(0xFF2D3436),
+          fontSize: 16,
+          color: Colors.black,
+          fontWeight: FontWeight.w500,
         ),
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
           labelStyle: TextStyle(
             fontSize: 14,
             color: Colors.grey[600],
+            fontWeight: FontWeight.w400,
           ),
           hintStyle: TextStyle(
-            fontSize: 14,
+            fontSize: 15,
             color: Colors.grey[400],
+            fontWeight: FontWeight.w400,
           ),
           floatingLabelStyle: TextStyle(
             fontSize: 13,
             color: AppColors.primaryGreen,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
+            backgroundColor: Colors.white,
           ),
         ),
       ),
