@@ -6,7 +6,6 @@ import '../../../../core/constants/app_colors.dart';
 import '../providers/cleaning_pricing_provider.dart';
 import '../../data/models/cleaning_pricing_model.dart';
 import '../../data/enums/cleaning_type.dart';
-import 'payment_screen.dart';
 
 class CleaningScheduleScreen extends StatefulWidget {
   final String serviceTitle;
@@ -50,6 +49,17 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   // Page Controller
   final PageController _pageController = PageController();
   int _currentPage = 0;
+  
+  // Payment related
+  String _selectedPaymentMethod = 'credit_card';
+  final _cardNumberController = TextEditingController();
+  final _cardHolderController = TextEditingController();
+  final _expiryDateController = TextEditingController();
+  final _cvvController = TextEditingController();
+  int _cardInstallments = 1;
+  String _pixCode = '';
+  bool _pixCodeGenerated = false;
+  bool _pixCopied = false;
   
   // State
   String _selectedResidence = 'apartment';
@@ -265,31 +275,43 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   }
 
   void _goToNextPage() {
-    if (_currentPage == 0) {
+    if (_currentPage < 2) {
       setState(() {
-        _currentPage = 1;
+        _currentPage++;
       });
       _pageController.animateToPage(
-        1,
+        _currentPage,
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOut,
       );
       _pageTransitionController.forward();
+      
+      // Generate PIX code when entering payment page
+      if (_currentPage == 2 && _selectedPaymentMethod == 'pix' && !_pixCodeGenerated) {
+        _generatePixCode();
+      }
     }
   }
 
   void _goToPreviousPage() {
-    if (_currentPage == 1) {
+    if (_currentPage > 0) {
       setState(() {
-        _currentPage = 0;
+        _currentPage--;
       });
       _pageController.animateToPage(
-        0,
+        _currentPage,
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOut,
       );
       _pageTransitionController.reverse();
     }
+  }
+  
+  void _generatePixCode() {
+    setState(() {
+      _pixCodeGenerated = true;
+      _pixCode = '00020126360014BR.GOV.BCB.PIX0114+5511999999999520400005303986540${_targetPrice.toStringAsFixed(2)}5802BR5925NOME DO RECEBEDOR6009SAO PAULO62070503***6304A1B2';
+    });
   }
 
   @override
@@ -365,6 +387,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                       _buildServiceConfigurationPage(),
                       // Second Page - Date and Time Selection
                       _buildDateTimePage(),
+                      // Third Page - Payment
+                      _buildPaymentPage(),
                     ],
                   ),
                 ),
@@ -411,7 +435,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           // Back button
           GestureDetector(
             onTap: () {
-              if (_currentPage == 1) {
+              if (_currentPage > 0) {
                 _goToPreviousPage();
               } else {
                 Navigator.pop(context);
@@ -453,7 +477,11 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                     Row(
                       children: [
                         Text(
-                          _currentPage == 0 ? 'Personalize sua limpeza' : 'Escolha data e hora',
+                          _currentPage == 0 
+                              ? 'Personalize sua limpeza' 
+                              : _currentPage == 1 
+                                  ? 'Escolha data e hora'
+                                  : 'Finalizar pagamento',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[600],
@@ -516,6 +544,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: Row(
         children: [
+          // Step 1 - Configuração
           Expanded(
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
@@ -526,11 +555,25 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             ),
           ),
           const SizedBox(width: 8),
+          // Step 2 - Data e Hora
           Expanded(
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               decoration: BoxDecoration(
                 color: _currentPage >= 1 
+                    ? AppColors.primaryGreen 
+                    : AppColors.primaryGreen.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Step 3 - Pagamento
+          Expanded(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              decoration: BoxDecoration(
+                color: _currentPage >= 2 
                     ? AppColors.primaryGreen 
                     : AppColors.primaryGreen.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(2),
@@ -1682,7 +1725,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                         child: InkWell(
                           onTap: canContinue ? () {
                             HapticFeedback.mediumImpact();
-                            if (_currentPage == 0) {
+                            if (_currentPage < 2) {
                               _goToNextPage();
                             } else {
                               _confirmSchedule();
@@ -1694,7 +1737,11 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                             child: Row(
                               children: [
                                 Text(
-                                  _currentPage == 0 ? 'Continuar' : 'Confirmar',
+                                  _currentPage == 2 
+                                      ? 'Finalizar Pagamento' 
+                                      : _currentPage == 1 
+                                          ? 'Ir para Pagamento'
+                                          : 'Continuar',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
@@ -1763,46 +1810,311 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   void _confirmSchedule() {
     HapticFeedback.mediumImpact();
     
-    // Prepara os detalhes do agendamento
-    final bookingDetails = {
-      'serviceType': widget.serviceTitle,
-      'cleaningType': widget.cleaningType.toString(),
-      'date': _selectedDate,
-      'time': _selectedTime,
-      'residence': _selectedResidence,
-      'rooms': _rooms,
-      'bathrooms': _bathrooms,
-      'includeProducts': _includeProducts,
-      'includePets': _includePets,
-      'estimatedTime': _estimatedTimeInMinutes,
-    };
-    
-    // Navega para a tela de pagamento
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            PaymentScreen(
-              serviceTitle: widget.serviceTitle,
-              scheduledDate: _selectedDate,
-              scheduledTime: _selectedTime,
-              totalAmount: _targetPrice,
-              bookingDetails: bookingDetails,
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => _buildSuccessDialog(),
+    );
+  }
+  
+  Widget _buildPaymentPage() {
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 100),
+      child: Column(
+        children: [
+          const SizedBox(height: 20),
+          
+          // Payment method selector
+          _buildAnimatedCard(0, _buildPaymentMethodSelector()),
+          
+          // Payment content based on selected method
+          _buildAnimatedCard(1, 
+            _selectedPaymentMethod == 'pix' 
+                ? _buildPixPaymentContent()
+                : _buildCreditCardContent(),
+          ),
+          
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildPaymentMethodSelector() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Método de Pagamento',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF2D3436),
             ),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          const begin = Offset(0.0, 1.0);
-          const end = Offset.zero;
-          const curve = Curves.easeOutCubic;
-
-          var tween = Tween(begin: begin, end: end).chain(
-            CurveTween(curve: curve),
-          );
-
-          return SlideTransition(
-            position: animation.drive(tween),
-            child: child,
-          );
-        },
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildPaymentMethodCard('credit_card', 'Cartão', Icons.credit_card),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildPaymentMethodCard('pix', 'PIX', Icons.qr_code_2),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildPaymentMethodCard(String method, String label, IconData icon) {
+    final isSelected = _selectedPaymentMethod == method;
+    
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedPaymentMethod = method;
+          if (method == 'pix' && !_pixCodeGenerated) {
+            _generatePixCode();
+          }
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primaryGreen.withOpacity(0.05) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? AppColors.primaryGreen : const Color(0xFFE8ECEF),
+            width: isSelected ? 2 : 1.5,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? AppColors.primaryGreen : const Color(0xFF74788D),
+              size: 32,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: isSelected ? AppColors.primaryGreen : const Color(0xFF2D3436),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildCreditCardContent() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Dados do Cartão',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF2D3436),
+            ),
+          ),
+          const SizedBox(height: 20),
+          
+          // Card Number
+          TextField(
+            controller: _cardNumberController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: 'Número do Cartão',
+              hintText: '0000 0000 0000 0000',
+              prefixIcon: const Icon(Icons.credit_card),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          // Card Holder
+          TextField(
+            controller: _cardHolderController,
+            decoration: InputDecoration(
+              labelText: 'Nome do Titular',
+              prefixIcon: const Icon(Icons.person),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          // Expiry and CVV
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _expiryDateController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Validade',
+                    hintText: 'MM/AA',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: TextField(
+                  controller: _cvvController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'CVV',
+                    hintText: '000',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          
+          // Installments
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F6FA),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Parcelamento',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  _cardInstallments == 1
+                      ? 'À vista: R\$ ${_targetPrice.toStringAsFixed(2)}'
+                      : '${_cardInstallments}x de R\$ ${(_targetPrice / _cardInstallments).toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primaryGreen,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildPixPaymentContent() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          const Text(
+            'Escaneie o QR Code',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF2D3436),
+            ),
+          ),
+          const SizedBox(height: 20),
+          
+          // QR Code
+          Container(
+            width: 200,
+            height: 200,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: AppColors.primaryGreen.withOpacity(0.2),
+                width: 2,
+              ),
+            ),
+            child: _pixCodeGenerated
+                ? Icon(
+                    Icons.qr_code_2,
+                    size: 180,
+                    color: Colors.grey[800],
+                  )
+                : CircularProgressIndicator(
+                    color: AppColors.primaryGreen,
+                  ),
+          ),
+          const SizedBox(height: 20),
+          
+          // Copy PIX Code
+          GestureDetector(
+            onTap: () {
+              Clipboard.setData(ClipboardData(text: _pixCode));
+              setState(() {
+                _pixCopied = true;
+              });
+              Future.delayed(const Duration(seconds: 2), () {
+                if (mounted) {
+                  setState(() {
+                    _pixCopied = false;
+                  });
+                }
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+              decoration: BoxDecoration(
+                color: _pixCopied ? AppColors.primaryGreen : Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _pixCopied ? AppColors.primaryGreen : const Color(0xFFE8ECEF),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    _pixCopied ? Icons.check : Icons.copy,
+                    size: 20,
+                    color: _pixCopied ? Colors.white : const Color(0xFF74788D),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _pixCopied ? 'Código copiado!' : 'Copiar código PIX',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: _pixCopied ? Colors.white : const Color(0xFF2D3436),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
