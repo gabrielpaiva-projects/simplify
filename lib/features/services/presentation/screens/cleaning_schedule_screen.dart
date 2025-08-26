@@ -2720,11 +2720,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Credit Card Preview
-          _buildCreditCardPreview(),
-          
-          const SizedBox(height: 24),
-
           // Card Form Fields
           Container(
             padding: const EdgeInsets.all(20),
@@ -2763,7 +2758,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                         selection: TextSelection.collapsed(offset: formatted.length),
                       );
                     }
-                    setState(() {}); // Update card preview
                   },
                 ),
                 
@@ -2776,9 +2770,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                   hint: 'NOME COMPLETO',
                   prefixIcon: Icons.person_outline,
                   textCapitalization: TextCapitalization.characters,
-                  onChanged: (value) {
-                    setState(() {}); // Update card preview
-                  },
                 ),
                 
                 const SizedBox(height: 20),
@@ -2805,7 +2796,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                               );
                             }
                           }
-                          setState(() {}); // Update card preview
                         },
                       ),
                     ),
@@ -2823,11 +2813,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 20),
-
-                // Installments selector
-                _buildInstallmentSelector(),
               ],
             ),
           ),
@@ -3274,199 +3259,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     );
   }
 
-  Widget _buildCreditCardPreview() {
-    final cardNumber = _cardNumberController.text.isEmpty 
-        ? '•••• •••• •••• ••••' 
-        : _cardNumberController.text.padRight(19, '•');
-    final cardHolder = _cardHolderController.text.isEmpty 
-        ? 'NOME DO TITULAR' 
-        : _cardHolderController.text.toUpperCase();
-    final expiry = _expiryDateController.text.isEmpty 
-        ? 'MM/AA' 
-        : _expiryDateController.text;
 
-    return Container(
-      height: 200,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF1E3C72),
-            const Color(0xFF2A5298),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1E3C72).withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Card chip and logo
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                width: 50,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.amber[300],
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Icon(
-                  Icons.memory,
-                  color: Colors.amber[700],
-                  size: 24,
-                ),
-              ),
-              Icon(
-                Icons.contactless,
-                color: Colors.white,
-                size: 28,
-              ),
-            ],
-          ),
-          
-          // Card number
-          Text(
-            cardNumber,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 2,
-            ),
-          ),
-          
-          // Card holder and expiry
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'TITULAR',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 10,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    cardHolder,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'VALIDADE',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 10,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    expiry,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInstallmentSelector() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(Icons.payment, size: 16, color: Colors.grey[600]),
-            const SizedBox(width: 6),
-            Text(
-              'Parcelamento',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[700],
-                letterSpacing: 0.3,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: const Color(0xFFE8ECEF),
-              width: 1,
-            ),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<int>(
-              value: _cardInstallments,
-              isExpanded: true,
-              icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
-              style: const TextStyle(
-                fontSize: 15,
-                color: Color(0xFF2D3436),
-                fontWeight: FontWeight.w500,
-              ),
-              items: List.generate(12, (index) {
-                final installment = index + 1;
-                final installmentValue = _targetPrice / installment;
-                return DropdownMenuItem(
-                  value: installment,
-                  child: Text(
-                    installment == 1 
-                        ? 'À vista - ${_formatCurrency(_targetPrice)}'
-                        : '${installment}x de ${_formatCurrency(installmentValue)} sem juros',
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                );
-              }),
-              onChanged: (value) {
-                setState(() {
-                  _cardInstallments = value ?? 1;
-                });
-              },
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildSecurityBadge(IconData icon, String text) {
     return Container(

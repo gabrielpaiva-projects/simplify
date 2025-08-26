@@ -9,7 +9,6 @@ class PaymentConfirmationScreen extends StatefulWidget {
   final DateTime selectedDate;
   final String selectedTime;
   final String paymentMethod;
-  final int? installments;
   
   const PaymentConfirmationScreen({
     Key? key,
@@ -18,7 +17,6 @@ class PaymentConfirmationScreen extends StatefulWidget {
     required this.selectedDate,
     required this.selectedTime,
     required this.paymentMethod,
-    this.installments,
   }) : super(key: key);
 
   @override
@@ -493,26 +491,13 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen>
                   color: Colors.grey[600],
                 ),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    _formatCurrency(widget.totalAmount),
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF00BFA5),
-                    ),
-                  ),
-                  if (widget.installments != null && widget.installments! > 1)
-                    Text(
-                      '${widget.installments}x de ${_formatCurrency(widget.totalAmount / widget.installments!)}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[500],
-                      ),
-                    ),
-                ],
+              Text(
+                _formatCurrency(widget.totalAmount),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF00BFA5),
+                ),
               ),
             ],
           ),
