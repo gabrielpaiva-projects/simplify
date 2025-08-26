@@ -1825,17 +1825,21 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
         children: [
           const SizedBox(height: 20),
           
-          // Payment Summary - Clean style matching other pages
-          _buildAnimatedCard(0, _buildPaymentSummary()),
+          // Total value highlight
+          _buildAnimatedCard(0, _buildTotalValueCard()),
           
-          // Payment Method Selection - Clean cards
-          _buildAnimatedCard(1, _buildCleanPaymentMethods()),
+          // Payment method selector with better UX
+          _buildAnimatedCard(1, _buildPaymentMethodSelector()),
           
-          // Payment Details
-          if (_selectedPaymentMethod == 'pix')
-            _buildAnimatedCard(2, _buildCleanPixContent())
-          else
-            _buildAnimatedCard(2, _buildCleanCardContent()),
+          // Dynamic payment content
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            switchInCurve: Curves.easeInOut,
+            switchOutCurve: Curves.easeInOut,
+            child: _selectedPaymentMethod == 'pix'
+                ? _buildAnimatedCard(2, _buildPixPayment(), key: const ValueKey('pix'))
+                : _buildAnimatedCard(2, _buildCardPayment(), key: const ValueKey('card')),
+          ),
           
           const SizedBox(height: 20),
         ],
@@ -1843,60 +1847,142 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     );
   }
   
-  Widget _buildPaymentSummary() {
+  Widget _buildTotalValueCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primaryGreen,
+            AppColors.primaryGreen.withOpacity(0.8),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryGreen.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Total a pagar',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white.withOpacity(0.9),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'R\$ ${_targetPrice.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.account_balance_wallet,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildInfoItem(Icons.cleaning_services, widget.serviceTitle),
+                Container(width: 1, height: 20, color: Colors.white.withOpacity(0.3)),
+                _buildInfoItem(Icons.calendar_today, '${_selectedDate?.day}/${_selectedDate?.month}'),
+                Container(width: 1, height: 20, color: Colors.white.withOpacity(0.3)),
+                _buildInfoItem(Icons.access_time, _selectedTime ?? '--:--'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildInfoItem(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: Colors.white.withOpacity(0.9)),
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.white.withOpacity(0.9),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildPaymentMethodSelector() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Resumo do Pagamento',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF2D3436),
-            ),
+          Row(
+            children: [
+              Icon(Icons.payment, size: 20, color: Colors.grey[700]),
+              const SizedBox(width: 8),
+              const Text(
+                'Escolha como pagar',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF2D3436),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           Container(
-            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFB),
+              color: const Color(0xFFF5F6FA),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Column(
+            padding: const EdgeInsets.all(4),
+            child: Row(
               children: [
-                _buildSummaryRow('Serviço', widget.serviceTitle),
-                const SizedBox(height: 12),
-                _buildSummaryRow('Data', '${_selectedDate?.day}/${_selectedDate?.month}/${_selectedDate?.year}'),
-                const SizedBox(height: 12),
-                _buildSummaryRow('Horário', _selectedTime ?? '--:--'),
-                const SizedBox(height: 16),
-                Container(
-                  height: 1,
-                  color: const Color(0xFFE8ECEF),
+                Expanded(
+                  child: _buildMethodOption('credit_card', 'Cartão', Icons.credit_card),
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Total',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF2D3436),
-                      ),
-                    ),
-                    Text(
-                      'R\$ ${_targetPrice.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.primaryGreen,
-                      ),
-                    ),
-                  ],
+                Expanded(
+                  child: _buildMethodOption('pix', 'PIX', Icons.pix),
                 ),
               ],
             ),
@@ -1906,76 +1992,12 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     );
   }
   
-  Widget _buildSummaryRow(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey[600],
-          ),
-        ),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF2D3436),
-          ),
-        ),
-      ],
-    );
-  }
-  
-  Widget _buildCleanPaymentMethods() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Forma de Pagamento',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF2D3436),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildPaymentMethodCard(
-                  'credit_card',
-                  'Cartão',
-                  Icons.credit_card,
-                  'Crédito/Débito',
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildPaymentMethodCard(
-                  'pix',
-                  'PIX',
-                  Icons.qr_code_2,
-                  'Instantâneo',
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildPaymentMethodCard(String method, String title, IconData icon, String subtitle) {
+  Widget _buildMethodOption(String method, String label, IconData icon) {
     final isSelected = _selectedPaymentMethod == method;
     
     return GestureDetector(
       onTap: () {
-        HapticFeedback.lightImpact();
+        HapticFeedback.selectionClick();
         setState(() {
           _selectedPaymentMethod = method;
           if (method == 'pix' && !_pixCodeGenerated) {
@@ -1985,47 +2007,33 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? AppColors.primaryGreen : const Color(0xFFE8ECEF),
-            width: isSelected ? 2 : 1,
-          ),
+          color: isSelected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: isSelected ? [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ] : [],
         ),
-        child: Column(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: isSelected 
-                    ? AppColors.primaryGreen.withOpacity(0.1)
-                    : const Color(0xFFF8FAFB),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                icon,
-                color: isSelected ? AppColors.primaryGreen : const Color(0xFF74788D),
-                size: 24,
-              ),
+            Icon(
+              icon,
+              size: 20,
+              color: isSelected ? AppColors.primaryGreen : Colors.grey[600],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(width: 8),
             Text(
-              title,
+              label,
               style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: isSelected ? const Color(0xFF2D3436) : const Color(0xFF74788D),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
+                fontSize: 14,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? const Color(0xFF2D3436) : Colors.grey[600],
               ),
             ),
           ],
@@ -2034,58 +2042,140 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     );
   }
   
-  Widget _buildCleanCardContent() {
+  Widget _buildCardPayment() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Dados do Cartão',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF2D3436),
+          // Card Preview
+          Container(
+            height: 190,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF2D3436), Color(0xFF636E72)],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Icon(Icons.credit_card, color: Colors.white.withOpacity(0.5), size: 32),
+                    Icon(Icons.contactless, color: Colors.white.withOpacity(0.5), size: 24),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _cardNumberController.text.isEmpty
+                          ? '**** **** **** ****'
+                          : _formatCardNumber(_cardNumberController.text),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        letterSpacing: 2,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _cardHolderController.text.isEmpty
+                              ? 'NOME DO TITULAR'
+                              : _cardHolderController.text.toUpperCase(),
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 12,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                        Text(
+                          _expiryDateController.text.isEmpty
+                              ? 'MM/AA'
+                              : _expiryDateController.text,
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 16),
           
-          // Card form
-          _buildCleanTextField(
+          const SizedBox(height: 24),
+          
+          // Form fields
+          Row(
+            children: [
+              Icon(Icons.edit, size: 18, color: Colors.grey[700]),
+              const SizedBox(width: 8),
+              Text(
+                'Informações do cartão',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[700],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          
+          _buildModernInput(
             controller: _cardNumberController,
-            label: 'Número do Cartão',
+            label: 'Número do cartão',
             hint: '0000 0000 0000 0000',
-            icon: Icons.credit_card,
             keyboardType: TextInputType.number,
+            onChanged: (_) => setState(() {}),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           
-          _buildCleanTextField(
+          _buildModernInput(
             controller: _cardHolderController,
-            label: 'Nome do Titular',
+            label: 'Nome do titular',
             hint: 'Como está no cartão',
-            icon: Icons.person,
+            onChanged: (_) => setState(() {}),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           
           Row(
             children: [
               Expanded(
-                child: _buildCleanTextField(
+                child: _buildModernInput(
                   controller: _expiryDateController,
                   label: 'Validade',
                   hint: 'MM/AA',
-                  icon: Icons.calendar_month,
                   keyboardType: TextInputType.number,
+                  onChanged: (_) => setState(() {}),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildCleanTextField(
+                child: _buildModernInput(
                   controller: _cvvController,
                   label: 'CVV',
-                  hint: '000',
-                  icon: Icons.lock,
+                  hint: '123',
                   keyboardType: TextInputType.number,
                 ),
               ),
@@ -2095,84 +2185,76 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           const SizedBox(height: 24),
           
           // Installments
-          const Text(
-            'Parcelamento',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF2D3436),
-            ),
+          Row(
+            children: [
+              Icon(Icons.calendar_view_month, size: 18, color: Colors.grey[700]),
+              const SizedBox(width: 8),
+              Text(
+                'Parcelamento',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[700],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: List.generate(6, (index) {
-              final installments = index + 1;
-              final isSelected = _cardInstallments == installments;
-              
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _cardInstallments = installments;
-                  });
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: isSelected ? AppColors.primaryGreen : Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: isSelected ? AppColors.primaryGreen : const Color(0xFFE8ECEF),
-                    ),
-                  ),
-                  child: Text(
-                    installments == 1 
-                        ? 'À vista'
-                        : '${installments}x',
-                    style: TextStyle(
-                      color: isSelected ? Colors.white : const Color(0xFF2D3436),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ),
-          
-          const SizedBox(height: 16),
-          
           Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFB),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  _cardInstallments == 1 
-                      ? 'Total à vista'
-                      : 'Parcela mensal',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
+            height: 45,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: 6,
+              itemBuilder: (context, index) {
+                final installments = index + 1;
+                final isSelected = _cardInstallments == installments;
+                
+                return GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() {
+                      _cardInstallments = installments;
+                    });
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    decoration: BoxDecoration(
+                      gradient: isSelected ? LinearGradient(
+                        colors: [AppColors.primaryGreen, AppColors.primaryGreen.withOpacity(0.8)],
+                      ) : null,
+                      color: isSelected ? null : Colors.white,
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(
+                        color: isSelected ? AppColors.primaryGreen : const Color(0xFFE8ECEF),
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          installments == 1 ? 'À vista' : '${installments}x',
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : const Color(0xFF2D3436),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (installments > 1)
+                          Text(
+                            'R\$ ${(_targetPrice / installments).toStringAsFixed(2)}',
+                            style: TextStyle(
+                              color: isSelected ? Colors.white.withOpacity(0.9) : Colors.grey[600],
+                              fontSize: 10,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
-                Text(
-                  _cardInstallments == 1
-                      ? 'R\$ ${_targetPrice.toStringAsFixed(2)}'
-                      : 'R\$ ${(_targetPrice / _cardInstallments).toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primaryGreen,
-                  ),
-                ),
-              ],
+                );
+              },
             ),
           ),
         ],
@@ -2180,59 +2262,208 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     );
   }
   
-  Widget _buildCleanPixContent() {
+  Widget _buildPixPayment() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Pagamento via PIX',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF2D3436),
+          // PIX Header Card
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFF00BFA5),
+                  const Color(0xFF00897B),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF00BFA5).withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.pix,
+                    color: Colors.white,
+                    size: 32,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Pagamento PIX',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Aprovação instantânea',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
+          
+          const SizedBox(height: 20),
+          
+          // QR Code Section
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE8ECEF)),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  width: 200,
+                  height: 200,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.grey[50]!,
+                        Colors.grey[100]!,
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFFE8ECEF),
+                      width: 2,
+                    ),
+                  ),
+                  child: _pixCodeGenerated
+                      ? Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Icon(
+                              Icons.qr_code_2,
+                              size: 180,
+                              color: Colors.grey[800],
+                            ),
+                            Container(
+                              width: 50,
+                              height: 50,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(8),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 4,
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.pix,
+                                size: 30,
+                                color: Color(0xFF00BFA5),
+                              ),
+                            ),
+                          ],
+                        )
+                      : const CircularProgressIndicator(
+                          color: Color(0xFF00BFA5),
+                        ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Escaneie para pagar',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF2D3436),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Use o app do seu banco',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
           const SizedBox(height: 16),
           
-          // QR Code container
-          Center(
+          // Copy button
+          GestureDetector(
+            onTap: () {
+              if (_pixCode.isNotEmpty) {
+                Clipboard.setData(ClipboardData(text: _pixCode));
+                HapticFeedback.mediumImpact();
+                setState(() {
+                  _pixCopied = true;
+                });
+                Future.delayed(const Duration(seconds: 2), () {
+                  if (mounted) {
+                    setState(() {
+                      _pixCopied = false;
+                    });
+                  }
+                });
+              }
+            },
             child: Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                gradient: _pixCopied ? LinearGradient(
+                  colors: [AppColors.primaryGreen, AppColors.primaryGreen.withOpacity(0.8)],
+                ) : null,
+                color: _pixCopied ? null : Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xFFE8ECEF),
+                  color: _pixCopied ? AppColors.primaryGreen : const Color(0xFFE8ECEF),
                 ),
               ),
-              child: Column(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    width: 180,
-                    height: 180,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFB),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: _pixCodeGenerated
-                        ? Icon(
-                            Icons.qr_code_2,
-                            size: 160,
-                            color: Colors.grey[800],
-                          )
-                        : CircularProgressIndicator(
-                            color: AppColors.primaryGreen,
-                          ),
+                  Icon(
+                    _pixCopied ? Icons.check_circle : Icons.copy,
+                    size: 20,
+                    color: _pixCopied ? Colors.white : const Color(0xFF2D3436),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(width: 8),
                   Text(
-                    'Escaneie o QR Code',
+                    _pixCopied ? 'Código PIX copiado!' : 'Copiar código PIX',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF2D3436),
+                      color: _pixCopied ? Colors.white : const Color(0xFF2D3436),
                     ),
                   ),
                 ],
@@ -2240,111 +2471,26 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             ),
           ),
           
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
           
-          // PIX Copy Code
+          // Instructions
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFB),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'PIX Copia e Cola',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _pixCode.isNotEmpty 
-                            ? '${_pixCode.substring(0, min(30, _pixCode.length))}...'
-                            : 'Gerando código...',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontFamily: 'monospace',
-                        ),
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Clipboard.setData(ClipboardData(text: _pixCode));
-                        HapticFeedback.lightImpact();
-                        setState(() {
-                          _pixCopied = true;
-                        });
-                        Future.delayed(const Duration(seconds: 2), () {
-                          if (mounted) {
-                            setState(() {
-                              _pixCopied = false;
-                            });
-                          }
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: _pixCopied ? AppColors.primaryGreen : Colors.white,
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: _pixCopied ? AppColors.primaryGreen : const Color(0xFFE8ECEF),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              _pixCopied ? Icons.check : Icons.copy,
-                              size: 16,
-                              color: _pixCopied ? Colors.white : const Color(0xFF74788D),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              _pixCopied ? 'Copiado!' : 'Copiar',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: _pixCopied ? Colors.white : const Color(0xFF74788D),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Timer info
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.1),
+              color: const Color(0xFFFFF3E0),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
               children: [
-                Icon(
-                  Icons.timer,
-                  size: 16,
-                  color: Colors.orange[700],
-                ),
+                Icon(Icons.info_outline, size: 18, color: Colors.orange[700]),
                 const SizedBox(width: 8),
-                Text(
-                  'Código válido por 30 minutos',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.orange[700],
+                Expanded(
+                  child: Text(
+                    'Código válido por 30 minutos • Confirmação imediata',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.orange[800],
+                    ),
                   ),
                 ),
               ],
@@ -2355,34 +2501,40 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     );
   }
   
-  Widget _buildCleanTextField({
+  Widget _buildModernInput({
     required TextEditingController controller,
     required String label,
     required String hint,
-    required IconData icon,
     TextInputType? keyboardType,
+    Function(String)? onChanged,
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFB),
-        borderRadius: BorderRadius.circular(8),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE8ECEF)),
       ),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
+        onChanged: onChanged,
+        style: const TextStyle(fontSize: 14),
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
-          prefixIcon: Icon(icon, size: 20, color: const Color(0xFF74788D)),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           labelStyle: TextStyle(
-            fontSize: 14,
+            fontSize: 13,
             color: Colors.grey[600],
           ),
           hintStyle: TextStyle(
-            fontSize: 14,
+            fontSize: 13,
             color: Colors.grey[400],
+          ),
+          floatingLabelStyle: TextStyle(
+            fontSize: 12,
+            color: AppColors.primaryGreen,
           ),
         ),
       ),
