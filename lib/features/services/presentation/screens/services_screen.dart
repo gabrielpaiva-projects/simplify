@@ -21,8 +21,10 @@ class _ServicesScreenState extends State<ServicesScreen>
   late AnimationController _scaleController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
+  late ScrollController _scrollController;
   int _currentPage = 0;
   int _selectedNavIndex = 0;
+  double _scrollOffset = 0.0;
   
   // Dados mockados dos serviços de limpeza
   final List<ServiceModel> _cleaningServices = [
@@ -58,7 +60,20 @@ class _ServicesScreenState extends State<ServicesScreen>
   void initState() {
     super.initState();
     _pageController = PageController(viewportFraction: 0.9);
+    _pageController.addListener(() {
+      setState(() {
+        // Força rebuild para atualizar o parallax
+      });
+    });
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
     _initializeAnimations();
+  }
+
+  void _onScroll() {
+    setState(() {
+      _scrollOffset = _scrollController.hasClients ? _scrollController.offset : 0;
+    });
   }
 
   void _initializeAnimations() {
@@ -97,6 +112,7 @@ class _ServicesScreenState extends State<ServicesScreen>
     _pageController.dispose();
     _fadeController.dispose();
     _scaleController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -465,6 +481,7 @@ class _ServicesScreenState extends State<ServicesScreen>
           child: ScaleTransition(
             scale: _scaleAnimation,
             child: SingleChildScrollView(
+              controller: _scrollController,
               physics: const BouncingScrollPhysics(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -959,6 +976,306 @@ class _ServicesScreenState extends State<ServicesScreen>
   }
 
   Widget _buildServiceCard(ServiceModel service, int index) {
+    return _buildParallaxServiceCard(service, index);
+  }
+
+  Widget _buildParallaxServiceCard(ServiceModel service, int index) {
+    // Calcula o offset para o efeito parallax baseado na posição do card e scroll
+    double parallaxOffset = 0.0;
+    double cardScale = 1.0;
+    double rotationY = 0.0; // Rotação 3D no eixo Y
+    
+    if (_pageController.hasClients) {
+      final pageOffset = _pageController.page ?? _currentPage.toDouble();
+      parallaxOffset = (index - pageOffset) * 100;
+      // Escala dinâmica baseada na distância do centro
+      final distance = (index - pageOffset).abs();
+      cardScale = (1 - (distance * 0.15)).clamp(0.85, 1.0);
+      // Rotação 3D para efeito de perspectiva
+      rotationY = (index - pageOffset) * 0.3; // Rotação em radianos
+    }
+    
+    // Calcula a intensidade da sombra baseada na posição
+    final isActive = index == _currentPage;
+    final shadowIntensity = isActive ? 0.15 : 0.08;
+    final shadowBlur = isActive ? 25.0 : 15.0;
+    final shadowOffset = isActive ? 8.0 : 5.0;
+    
+    return Transform(
+      alignment: Alignment.center,
+      transform: Matrix4.identity()
+        ..setEntry(3, 2, 0.001) // Perspectiva 3D
+        ..rotateY(rotationY) // Rotação no eixo Y
+        ..scale(cardScale), // Escala
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 6),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(shadowIntensity),
+                blurRadius: shadowBlur,
+                offset: Offset(0, shadowOffset),
+                spreadRadius: isActive ? 2 : 0,
+              ),
+              if (isActive)
+                BoxShadow(
+                  color: AppColors.primaryGreen.withOpacity(0.1),
+                  blurRadius: 30,
+                  offset: const Offset(0, 10),
+                  spreadRadius: 5,
+                ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Stack(
+              children: [
+                // Imagem de fundo com efeito parallax aprimorado
+                Positioned(
+                  left: parallaxOffset * 0.5, // Efeito parallax horizontal
+                  right: -parallaxOffset * 0.5,
+                  top: -30 + (_scrollOffset * 0.15), // Efeito parallax vertical aumentado
+                  bottom: -30 - (_scrollOffset * 0.15),
+                  child: AnimatedScale(
+                    scale: isActive ? 1.3 : 1.2,
+                    duration: const Duration(milliseconds: 400),
+                    curve: Curves.easeOutCubic,
+                    child: Image.asset(
+                      service.imagePath,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                
+                // Gradient overlay com múltiplas camadas
+                Positioned.fill(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 400),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        stops: const [0.0, 0.4, 0.8, 1.0],
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withOpacity(isActive ? 0.1 : 0.2),
+                          Colors.black.withOpacity(isActive ? 0.5 : 0.6),
+                          Colors.black.withOpacity(isActive ? 0.7 : 0.8),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                
+                // Efeito de brilho no topo (glass morphism)
+                if (isActive)
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 100,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.white.withOpacity(0.1),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                
+                // Conteúdo com animação de fade e slide
+                Positioned.fill(
+                  child: AnimatedOpacity(
+                    opacity: isActive ? 1.0 : 0.8,
+                    duration: const Duration(milliseconds: 300),
+                    child: AnimatedPadding(
+                      duration: const Duration(milliseconds: 300),
+                      padding: EdgeInsets.all(isActive ? 24 : 20),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Ícone com animação de rotação e pulse
+                          TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 0, end: isActive ? 1 : 0),
+                            duration: const Duration(milliseconds: 600),
+                            curve: Curves.easeOutBack,
+                            builder: (context, value, child) {
+                              return Transform.rotate(
+                                angle: value * 0.1,
+                                child: Transform.scale(
+                                  scale: 1 + (value * 0.15),
+                                  child: Container(
+                                    padding: EdgeInsets.all(10 + (value * 2)),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.2 + (value * 0.15)),
+                                      borderRadius: BorderRadius.circular(12 + (value * 2)),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.white.withOpacity(value * 0.3),
+                                          blurRadius: 15,
+                                          spreadRadius: 2,
+                                        ),
+                                        BoxShadow(
+                                          color: AppColors.primaryGreen.withOpacity(value * 0.2),
+                                          blurRadius: 20,
+                                          spreadRadius: -5,
+                                        ),
+                                      ],
+                                    ),
+                                    child: Icon(
+                                      service.icon,
+                                      color: Colors.white,
+                                      size: 24 + (value * 2),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          // Título com animação de slide e blur
+                          Transform.translate(
+                            offset: Offset(parallaxOffset * 0.1, isActive ? 0 : 5),
+                            child: AnimatedDefaultTextStyle(
+                              duration: const Duration(milliseconds: 300),
+                              style: TextStyle(
+                                fontSize: isActive ? 26 : 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                letterSpacing: -0.5,
+                                shadows: [
+                                  Shadow(
+                                    offset: const Offset(0, 2),
+                                    blurRadius: isActive ? 8 : 4,
+                                    color: Colors.black.withOpacity(0.4),
+                                  ),
+                                  if (isActive)
+                                    Shadow(
+                                      offset: const Offset(0, 4),
+                                      blurRadius: 15,
+                                      color: AppColors.primaryGreen.withOpacity(0.3),
+                                    ),
+                                ],
+                              ),
+                              child: Text(service.title),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          
+                          // Descrição com animação de fade e slide
+                          Transform.translate(
+                            offset: Offset(parallaxOffset * 0.05, isActive ? 0 : 3),
+                            child: AnimatedOpacity(
+                              opacity: isActive ? 1.0 : 0.85,
+                              duration: const Duration(milliseconds: 300),
+                              child: Text(
+                                service.description,
+                                style: TextStyle(
+                                  fontSize: isActive ? 15 : 14,
+                                  color: Colors.white.withOpacity(0.95),
+                                  height: 1.4,
+                                  shadows: [
+                                    Shadow(
+                                      offset: const Offset(0, 1),
+                                      blurRadius: 3,
+                                      color: Colors.black.withOpacity(0.3),
+                                    ),
+                                  ],
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          
+                          // Botão com animação de escala e elevação
+                          Transform.translate(
+                            offset: Offset(0, isActive ? 0 : 15),
+                            child: AnimatedScale(
+                              scale: isActive ? 1.05 : 0.95,
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeOutBack,
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 300),
+                                height: isActive ? 44 : 40,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: isActive ? [
+                                    BoxShadow(
+                                      color: Colors.white.withOpacity(0.3),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                    BoxShadow(
+                                      color: AppColors.primaryGreen.withOpacity(0.2),
+                                      blurRadius: 15,
+                                      offset: const Offset(0, 5),
+                                    ),
+                                  ] : [],
+                                ),
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    HapticFeedback.lightImpact();
+                                    _handleScheduleService(service);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: isActive ? Colors.white : Colors.white.withOpacity(0.95),
+                                    foregroundColor: isActive ? AppColors.primaryGreen : const Color(0xFF1A1A1A),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    elevation: isActive ? 8 : 2,
+                                    padding: EdgeInsets.symmetric(horizontal: isActive ? 28 : 24),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'Agendar',
+                                        style: TextStyle(
+                                          fontSize: isActive ? 15 : 14,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      if (isActive) ...[
+                                        const SizedBox(width: 8),
+                                        Icon(
+                                          Icons.arrow_forward_rounded,
+                                          size: 16,
+                                          color: AppColors.primaryGreen,
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildServiceCardOld(ServiceModel service, int index) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 6),
       child: Container(
