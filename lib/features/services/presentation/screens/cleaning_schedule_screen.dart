@@ -49,6 +49,43 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   final PageController _pageController = PageController();
   int _currentPage = 0;
   
+  // Payment state
+  String? _selectedPaymentMethod;
+  final List<Map<String, dynamic>> _paymentMethods = [
+    {
+      'id': 'pix',
+      'name': 'PIX',
+      'description': 'Pagamento instantâneo',
+      'icon': Icons.qr_code_2,
+      'color': const Color(0xFF00BFA5),
+      'discount': 10,
+    },
+    {
+      'id': 'credit',
+      'name': 'Cartão de Crédito',
+      'description': 'Parcelamento em até 3x',
+      'icon': Icons.credit_card,
+      'color': const Color(0xFF5E72E4),
+      'discount': 0,
+    },
+    {
+      'id': 'debit',
+      'name': 'Cartão de Débito',
+      'description': 'Débito em conta',
+      'icon': Icons.account_balance_wallet,
+      'color': const Color(0xFF2DCE89),
+      'discount': 5,
+    },
+    {
+      'id': 'cash',
+      'name': 'Dinheiro',
+      'description': 'Pagamento na hora',
+      'icon': Icons.payments,
+      'color': const Color(0xFF11CDEF),
+      'discount': 0,
+    },
+  ];
+  
   // State
   String _selectedResidence = 'apartment';
   int _rooms = 2; // Default for apartment (will be updated from Firestore if needed)
@@ -270,12 +307,12 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   }
 
   void _goToNextPage() {
-    if (_currentPage == 0) {
+    if (_currentPage < 2) {
       setState(() {
-        _currentPage = 1;
+        _currentPage++;
       });
       _pageController.animateToPage(
-        1,
+        _currentPage,
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOut,
       );
@@ -284,16 +321,18 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   }
 
   void _goToPreviousPage() {
-    if (_currentPage == 1) {
+    if (_currentPage > 0) {
       setState(() {
-        _currentPage = 0;
+        _currentPage--;
       });
       _pageController.animateToPage(
-        0,
+        _currentPage,
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOut,
       );
-      _pageTransitionController.reverse();
+      if (_currentPage == 0) {
+        _pageTransitionController.reverse();
+      }
     }
   }
 
@@ -390,6 +429,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                       _buildServiceConfigurationPage(),
                       // Second Page - Date and Time Selection
                       _buildDateTimePage(),
+                      // Third Page - Payment Method
+                      _buildPaymentPage(),
                     ],
                   ),
                 ),
@@ -437,7 +478,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           // Back button
           GestureDetector(
             onTap: () {
-              if (_currentPage == 1) {
+              if (_currentPage > 0) {
                 _goToPreviousPage();
               } else {
                 Navigator.pop(context);
@@ -465,7 +506,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _currentPage == 0 ? 'Configurar Serviço' : 'Agendar Horário',
+                  _currentPage == 0 ? 'Configurar Serviço' : 
+                  _currentPage == 1 ? 'Agendar Horário' : 'Pagamento',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -474,7 +516,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                   ),
                 ),
                 Text(
-                  _currentPage == 0 ? 'Personalize sua limpeza' : 'Escolha data e hora',
+                  _currentPage == 0 ? 'Personalize sua limpeza' : 
+                  _currentPage == 1 ? 'Escolha data e hora' : 'Forma de pagamento',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey[600],
@@ -542,6 +585,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: Row(
         children: [
+          // Step 1 - Service Configuration
           Expanded(
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
@@ -552,11 +596,25 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             ),
           ),
           const SizedBox(width: 8),
+          // Step 2 - Date & Time
           Expanded(
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               decoration: BoxDecoration(
                 color: _currentPage >= 1 
+                    ? AppColors.primaryGreen 
+                    : AppColors.primaryGreen.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Step 3 - Payment
+          Expanded(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              decoration: BoxDecoration(
+                color: _currentPage >= 2 
                     ? AppColors.primaryGreen 
                     : AppColors.primaryGreen.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(2),
@@ -636,6 +694,33 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
               );
             },
           ),
+          
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentPage() {
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 100),
+      child: Column(
+        children: [
+          const SizedBox(height: 20),
+          
+          // Order Summary Card
+          _buildOrderSummaryCard(),
+          
+          const SizedBox(height: 24),
+          
+          // Payment Methods Section
+          _buildPaymentMethodsSection(),
+          
+          const SizedBox(height: 24),
+          
+          // Security Badge
+          _buildSecurityBadge(),
           
           const SizedBox(height: 20),
         ],
@@ -1559,10 +1644,413 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     );
   }
 
+  Widget _buildOrderSummaryCard() {
+    final discount = _selectedPaymentMethod != null
+        ? _paymentMethods.firstWhere((m) => m['id'] == _selectedPaymentMethod)['discount'] as int
+        : 0;
+    final originalPrice = _targetPrice;
+    final discountAmount = originalPrice * (discount / 100);
+    final finalPrice = originalPrice - discountAmount;
 
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white,
+            Colors.grey.shade50,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.receipt_long,
+                  color: AppColors.primaryGreen,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Resumo do Pedido',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2D3436),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          
+          // Service Details
+          _buildSummaryRow(
+            'Tipo de imóvel',
+            _selectedResidence == 'studio' ? 'Studio' :
+            _selectedResidence == 'apartment' ? 'Apartamento' : 'Casa',
+            icon: Icons.home,
+          ),
+          _buildSummaryRow(
+            'Cômodos',
+            '$_rooms',
+            icon: Icons.weekend,
+          ),
+          _buildSummaryRow(
+            'Banheiros',
+            '$_bathrooms',
+            icon: Icons.bathtub,
+          ),
+          if (_selectedDate != null)
+            _buildSummaryRow(
+              'Data',
+              '${_selectedDate!.day}/${_selectedDate!.month}',
+              icon: Icons.calendar_today,
+            ),
+          if (_selectedTime != null)
+            _buildSummaryRow(
+              'Horário',
+              _selectedTime!,
+              icon: Icons.access_time,
+            ),
+          
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Divider(),
+          ),
+          
+          // Pricing
+          _buildPriceRow('Valor do serviço', originalPrice),
+          if (discount > 0)
+            _buildPriceRow(
+              'Desconto ($discount%)',
+              -discountAmount,
+              isDiscount: true,
+            ),
+          
+          const SizedBox(height: 12),
+          
+          // Total
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.primaryGreen.withOpacity(0.05),
+                  AppColors.primaryGreen.withOpacity(0.1),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Total a pagar',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF2D3436),
+                  ),
+                ),
+                Text(
+                  'R\$ ${finalPrice.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryGreen,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryRow(String label, String value, {required IconData icon}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: Colors.grey.shade600),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF2D3436),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPriceRow(String label, double value, {bool isDiscount = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              color: isDiscount ? Colors.green.shade600 : Colors.grey.shade700,
+            ),
+          ),
+          Text(
+            'R\$ ${value.abs().toStringAsFixed(2)}',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: isDiscount ? Colors.green.shade600 : const Color(0xFF2D3436),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentMethodsSection() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Escolha a forma de pagamento',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2D3436),
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          ...List.generate(_paymentMethods.length, (index) {
+            final method = _paymentMethods[index];
+            final isSelected = _selectedPaymentMethod == method['id'];
+            final hasDiscount = (method['discount'] as int) > 0;
+            
+            return TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: 1),
+              duration: Duration(milliseconds: 300 + (index * 100)),
+              curve: Curves.easeOutBack,
+              builder: (context, value, child) {
+                return Transform.scale(
+                  scale: 0.8 + (0.2 * value),
+                  child: Opacity(
+                    opacity: value,
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            setState(() {
+                              _selectedPaymentMethod = method['id'];
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: isSelected 
+                                  ? (method['color'] as Color).withOpacity(0.1)
+                                  : Colors.white,
+                              border: Border.all(
+                                color: isSelected 
+                                    ? method['color'] as Color
+                                    : Colors.grey.shade200,
+                                width: isSelected ? 2 : 1,
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: isSelected ? [
+                                BoxShadow(
+                                  color: (method['color'] as Color).withOpacity(0.2),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ] : [],
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: (method['color'] as Color).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Icon(
+                                    method['icon'] as IconData,
+                                    color: method['color'] as Color,
+                                    size: 24,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Text(
+                                            method['name'],
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                              color: isSelected 
+                                                  ? method['color'] as Color
+                                                  : const Color(0xFF2D3436),
+                                            ),
+                                          ),
+                                          if (hasDiscount) ...[
+                                            const SizedBox(width: 8),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 8,
+                                                vertical: 2,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.green.shade100,
+                                                borderRadius: BorderRadius.circular(6),
+                                              ),
+                                              child: Text(
+                                                '${method['discount']}% OFF',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.green.shade700,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        method['description'],
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.grey.shade600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  width: 24,
+                                  height: 24,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: isSelected 
+                                          ? method['color'] as Color
+                                          : Colors.grey.shade300,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: isSelected 
+                                      ? Center(
+                                          child: Container(
+                                            width: 12,
+                                            height: 12,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: method['color'] as Color,
+                                            ),
+                                          ),
+                                        )
+                                      : null,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSecurityBadge() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.lock, size: 16, color: Colors.grey.shade600),
+          const SizedBox(width: 8),
+          Text(
+            'Pagamento 100% seguro',
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildModernFooter() {
-    final canContinue = _currentPage == 0 || (_selectedDate != null && _selectedTime != null);
+    final canContinue = _currentPage == 0 || 
+                        (_currentPage == 1 && _selectedDate != null && _selectedTime != null) ||
+                        (_currentPage == 2 && _selectedPaymentMethod != null);
+    
+    // Calculate final price with discount
+    final discount = _selectedPaymentMethod != null
+        ? _paymentMethods.firstWhere((m) => m['id'] == _selectedPaymentMethod)['discount'] as int
+        : 0;
+    final discountAmount = _targetPrice * (discount / 100);
+    final finalPrice = _targetPrice - discountAmount;
     
     return Container(
       decoration: BoxDecoration(
@@ -1621,52 +2109,20 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.blue.withOpacity(0.1),
-                                Colors.blue.withOpacity(0.05),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.access_time,
-                                size: 10,
-                                color: Colors.blue[700],
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                _formatEstimatedTime(),
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.blue[700],
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (_includeProducts || _includePets) ...[
+                        if (discount > 0 && _currentPage == 2) ...[
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                             decoration: BoxDecoration(
-                              color: Colors.orange.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(4),
+                              color: Colors.green.shade100,
+                              borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
-                              '${(_includeProducts ? 1 : 0) + (_includePets ? 1 : 0)} extra${((_includeProducts ? 1 : 0) + (_includePets ? 1 : 0)) > 1 ? 's' : ''}',
-                              style: const TextStyle(
+                              '$discount% OFF',
+                              style: TextStyle(
                                 fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.orange,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.green.shade700,
                               ),
                             ),
                           ),
@@ -1677,6 +2133,10 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                     AnimatedBuilder(
                       animation: _priceAnimation,
                       builder: (context, child) {
+                        final displayPrice = _currentPage == 2 && discount > 0 
+                            ? finalPrice 
+                            : _priceAnimation.value;
+                        
                         return Row(
                           crossAxisAlignment: CrossAxisAlignment.baseline,
                           textBaseline: TextBaseline.alphabetic,
@@ -1691,7 +2151,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              _priceAnimation.value.toStringAsFixed(0),
+                              displayPrice.toStringAsFixed(0),
                               style: TextStyle(
                                 fontSize: 32,
                                 fontWeight: FontWeight.w800,
@@ -1700,7 +2160,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                               ),
                             ),
                             Text(
-                              ',00',
+                              ',${((displayPrice % 1) * 100).toStringAsFixed(0).padLeft(2, '0')}',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w500,
@@ -1750,7 +2210,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                         child: InkWell(
                           onTap: canContinue ? () {
                             HapticFeedback.mediumImpact();
-                            if (_currentPage == 0) {
+                            if (_currentPage < 2) {
                               _goToNextPage();
                             } else {
                               _confirmSchedule();
@@ -1762,7 +2222,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                             child: Row(
                               children: [
                                 Text(
-                                  _currentPage == 0 ? 'Continuar' : 'Confirmar',
+                                  _currentPage < 2 ? 'Continuar' : 'Confirmar Agendamento',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
@@ -1782,7 +2242,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Icon(
-                                    _currentPage == 0 ? Icons.arrow_forward : Icons.check,
+                                    _currentPage < 2 ? Icons.arrow_forward : Icons.check,
                                     size: 16,
                                     color: canContinue 
                                         ? Colors.white
