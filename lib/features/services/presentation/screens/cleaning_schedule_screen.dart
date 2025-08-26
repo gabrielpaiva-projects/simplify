@@ -1818,37 +1818,47 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   }
   
   Widget _buildPaymentPage() {
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.only(bottom: 100),
-      child: Column(
-        children: [
-          const SizedBox(height: 20),
-          
-          // Total value highlight
-          _buildAnimatedCard(0, _buildTotalValueCard()),
-          
-          // Payment method selector with better UX
-          _buildAnimatedCard(1, _buildPaymentMethodSelector()),
-          
-          // Dynamic payment content
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            switchInCurve: Curves.easeInOut,
-            switchOutCurve: Curves.easeInOut,
-            child: _selectedPaymentMethod == 'pix'
-                ? Container(
-                    key: const ValueKey('pix'),
-                    child: _buildAnimatedCard(2, _buildPixPayment()),
-                  )
-                : Container(
-                    key: const ValueKey('card'),
-                    child: _buildAnimatedCard(2, _buildCardPayment()),
-                  ),
-          ),
-          
-          const SizedBox(height: 20),
-        ],
+    return GestureDetector(
+      onTap: () {
+        // Fecha o teclado ao tocar em qualquer lugar
+        FocusScope.of(context).unfocus();
+      },
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.only(bottom: 100),
+        child: Column(
+          children: [
+            const SizedBox(height: 24),
+            
+            // Total value highlight
+            _buildAnimatedCard(0, _buildTotalValueCard()),
+            
+            const SizedBox(height: 8),
+            
+            // Payment method selector with better UX
+            _buildAnimatedCard(1, _buildPaymentMethodSelector()),
+            
+            const SizedBox(height: 8),
+            
+            // Dynamic payment content
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              switchInCurve: Curves.easeInOut,
+              switchOutCurve: Curves.easeInOut,
+              child: _selectedPaymentMethod == 'pix'
+                  ? Container(
+                      key: const ValueKey('pix'),
+                      child: _buildAnimatedCard(2, _buildPixPayment()),
+                    )
+                  : Container(
+                      key: const ValueKey('card'),
+                      child: _buildAnimatedCard(2, _buildCardPayment()),
+                    ),
+            ),
+            
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
   }
@@ -2054,116 +2064,37 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Card Preview
-          Container(
-            height: 190,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF2D3436), Color(0xFF636E72)],
-              ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 16,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Icon(Icons.credit_card, color: Colors.white.withOpacity(0.5), size: 32),
-                    Icon(Icons.contactless, color: Colors.white.withOpacity(0.5), size: 24),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _cardNumberController.text.isEmpty
-                          ? '**** **** **** ****'
-                          : _formatCardNumber(_cardNumberController.text),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        letterSpacing: 2,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          _cardHolderController.text.isEmpty
-                              ? 'NOME DO TITULAR'
-                              : _cardHolderController.text.toUpperCase(),
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
-                            fontSize: 12,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                        Text(
-                          _expiryDateController.text.isEmpty
-                              ? 'MM/AA'
-                              : _expiryDateController.text,
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          
-          const SizedBox(height: 24),
-          
-          // Form fields
+          // Form fields header
           Row(
             children: [
-              Icon(Icons.edit, size: 18, color: Colors.grey[700]),
+              Icon(Icons.credit_card, size: 20, color: Colors.grey[700]),
               const SizedBox(width: 8),
               Text(
-                'Informações do cartão',
+                'Dados do Cartão',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: Colors.grey[700],
+                  color: Colors.grey[800],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
           
           _buildModernInput(
             controller: _cardNumberController,
             label: 'Número do cartão',
             hint: '0000 0000 0000 0000',
             keyboardType: TextInputType.number,
-            onChanged: (_) => setState(() {}),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           
           _buildModernInput(
             controller: _cardHolderController,
             label: 'Nome do titular',
             hint: 'Como está no cartão',
-            onChanged: (_) => setState(() {}),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           
           Row(
             children: [
@@ -2173,7 +2104,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                   label: 'Validade',
                   hint: 'MM/AA',
                   keyboardType: TextInputType.number,
-                  onChanged: (_) => setState(() {}),
                 ),
               ),
               const SizedBox(width: 12),
@@ -2188,79 +2118,29 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             ],
           ),
           
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           
-          // Installments
-          Row(
-            children: [
-              Icon(Icons.calendar_view_month, size: 18, color: Colors.grey[700]),
-              const SizedBox(width: 8),
-              Text(
-                'Parcelamento',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey[700],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          
+          // Payment info
           Container(
-            height: 45,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: 6,
-              itemBuilder: (context, index) {
-                final installments = index + 1;
-                final isSelected = _cardInstallments == installments;
-                
-                return GestureDetector(
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    setState(() {
-                      _cardInstallments = installments;
-                    });
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    decoration: BoxDecoration(
-                      gradient: isSelected ? LinearGradient(
-                        colors: [AppColors.primaryGreen, AppColors.primaryGreen.withOpacity(0.8)],
-                      ) : null,
-                      color: isSelected ? null : Colors.white,
-                      borderRadius: BorderRadius.circular(22),
-                      border: Border.all(
-                        color: isSelected ? AppColors.primaryGreen : const Color(0xFFE8ECEF),
-                      ),
-                    ),
-                    alignment: Alignment.center,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          installments == 1 ? 'À vista' : '${installments}x',
-                          style: TextStyle(
-                            color: isSelected ? Colors.white : const Color(0xFF2D3436),
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        if (installments > 1)
-                          Text(
-                            'R\$ ${(_targetPrice / installments).toStringAsFixed(2)}',
-                            style: TextStyle(
-                              color: isSelected ? Colors.white.withOpacity(0.9) : Colors.grey[600],
-                              fontSize: 10,
-                            ),
-                          ),
-                      ],
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFB),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, size: 18, color: Colors.grey[600]),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Pagamento à vista no valor de R\$ ${_targetPrice.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[700],
                     ),
                   ),
-                );
-              },
+                ),
+              ],
             ),
           ),
         ],
@@ -2272,151 +2152,81 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // PIX Header Card
+          // PIX Header
+          Row(
+            children: [
+              Icon(Icons.pix, size: 20, color: Colors.grey[700]),
+              const SizedBox(width: 8),
+              Text(
+                'Pagamento via PIX',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[800],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          
+          // PIX Code Section
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFF00BFA5),
-                  const Color(0xFF00897B),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF00BFA5).withOpacity(0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.pix,
-                    color: Colors.white,
-                    size: 32,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Pagamento PIX',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Aprovação instantânea',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          const SizedBox(height: 20),
-          
-          // QR Code Section
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(color: const Color(0xFFE8ECEF)),
             ),
             child: Column(
               children: [
-                Container(
-                  width: 200,
-                  height: 200,
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.grey[50]!,
-                        Colors.grey[100]!,
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: const Color(0xFFE8ECEF),
-                      width: 2,
-                    ),
-                  ),
-                  child: _pixCodeGenerated
-                      ? Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Icon(
-                              Icons.qr_code_2,
-                              size: 180,
-                              color: Colors.grey[800],
-                            ),
-                            Container(
-                              width: 50,
-                              height: 50,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
-                                    blurRadius: 4,
-                                  ),
-                                ],
-                              ),
-                              child: const Icon(
-                                Icons.pix,
-                                size: 30,
-                                color: Color(0xFF00BFA5),
-                              ),
-                            ),
-                          ],
-                        )
-                      : const CircularProgressIndicator(
-                          color: Color(0xFF00BFA5),
-                        ),
+                Icon(
+                  Icons.pix,
+                  size: 48,
+                  color: const Color(0xFF00BFA5),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
                 Text(
-                  'Escaneie para pagar',
+                  'Código PIX Copia e Cola',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF2D3436),
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 8),
                 Text(
-                  'Use o app do seu banco',
+                  'Copie o código abaixo e cole no app do seu banco',
                   style: TextStyle(
                     fontSize: 13,
                     color: Colors.grey[600],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                
+                // PIX Code Container
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFB),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: const Color(0xFFE8ECEF),
+                    ),
+                  ),
+                  child: Text(
+                    _pixCode.isNotEmpty 
+                        ? _pixCode
+                        : 'Gerando código PIX...',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontFamily: 'monospace',
+                      color: Color(0xFF2D3436),
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -2446,10 +2256,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                gradient: _pixCopied ? LinearGradient(
-                  colors: [AppColors.primaryGreen, AppColors.primaryGreen.withOpacity(0.8)],
-                ) : null,
-                color: _pixCopied ? null : Colors.white,
+                color: _pixCopied ? AppColors.primaryGreen : Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: _pixCopied ? AppColors.primaryGreen : const Color(0xFFE8ECEF),
@@ -2465,7 +2272,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    _pixCopied ? 'Código PIX copiado!' : 'Copiar código PIX',
+                    _pixCopied ? 'Código copiado com sucesso!' : 'Copiar código PIX',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
@@ -2477,26 +2284,38 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             ),
           ),
           
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           
           // Instructions
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: const Color(0xFFFFF3E0),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Row(
+            child: Column(
               children: [
-                Icon(Icons.info_outline, size: 18, color: Colors.orange[700]),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Código válido por 30 minutos • Confirmação imediata',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.orange[800],
+                Row(
+                  children: [
+                    Icon(Icons.info_outline, size: 18, color: Colors.orange[700]),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Como pagar com PIX',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.orange[800],
+                      ),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '1. Copie o código acima\n2. Abra o app do seu banco\n3. Escolha pagar com PIX Copia e Cola\n4. Cole o código e confirme',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.orange[700],
+                    height: 1.4,
                   ),
                 ),
               ],
@@ -2518,29 +2337,33 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE8ECEF)),
+        border: Border.all(color: const Color(0xFFE8ECEF), width: 1.5),
       ),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
         onChanged: onChanged,
-        style: const TextStyle(fontSize: 14),
+        style: const TextStyle(
+          fontSize: 15,
+          color: Color(0xFF2D3436),
+        ),
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           labelStyle: TextStyle(
-            fontSize: 13,
+            fontSize: 14,
             color: Colors.grey[600],
           ),
           hintStyle: TextStyle(
-            fontSize: 13,
+            fontSize: 14,
             color: Colors.grey[400],
           ),
           floatingLabelStyle: TextStyle(
-            fontSize: 12,
+            fontSize: 13,
             color: AppColors.primaryGreen,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ),
