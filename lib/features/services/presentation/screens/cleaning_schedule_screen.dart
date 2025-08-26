@@ -6,6 +6,8 @@ import '../../../../core/constants/app_colors.dart';
 import '../providers/cleaning_pricing_provider.dart';
 import '../../data/models/cleaning_pricing_model.dart';
 import '../../data/enums/cleaning_type.dart';
+import 'date_time_selection_screen.dart';
+import 'payment_screen.dart';
 
 class CleaningScheduleScreen extends StatefulWidget {
   final String serviceTitle;
@@ -573,7 +575,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
         children: [
           const SizedBox(height: 20),
           
-          // Date Selection Section
+          // Modern Date & Time Selection Button
           AnimatedBuilder(
             animation: _pageTransitionAnimation,
             builder: (context, child) {
@@ -581,21 +583,134 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                 scale: 0.8 + (0.2 * _pageTransitionAnimation.value),
                 child: Opacity(
                   opacity: _pageTransitionAnimation.value,
-                  child: _buildDateSection(),
-                ),
-              );
-            },
-          ),
-          
-          // Time Selection Section
-          AnimatedBuilder(
-            animation: _pageTransitionAnimation,
-            builder: (context, child) {
-              return Transform.translate(
-                offset: Offset(0, 50 * (1 - _pageTransitionAnimation.value)),
-                child: Opacity(
-                  opacity: _pageTransitionAnimation.value,
-                  child: _buildTimeSection(),
+                  child: GestureDetector(
+                    onTap: () async {
+                      HapticFeedback.lightImpact();
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DateTimeSelectionScreen(
+                            initialDate: _selectedDate,
+                            initialTime: _selectedTime,
+                            onDateTimeSelected: (date, time) {
+                              setState(() {
+                                _selectedDate = date;
+                                _selectedTime = time;
+                              });
+                            },
+                          ),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.primaryGreen.withOpacity(0.05),
+                            AppColors.primaryGreen.withOpacity(0.02),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: AppColors.primaryGreen.withOpacity(0.3),
+                          width: 2,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryGreen,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  Icons.event_available,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Selecionar Data e Hora',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF1A1A1A),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _selectedDate != null && _selectedTime != null
+                                          ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year} às $_selectedTime'
+                                          : 'Toque para escolher o melhor horário',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: _selectedDate != null && _selectedTime != null
+                                            ? AppColors.primaryGreen
+                                            : Colors.grey[600],
+                                        fontWeight: _selectedDate != null && _selectedTime != null
+                                            ? FontWeight.w600
+                                            : FontWeight.normal,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(
+                                Icons.arrow_forward_ios,
+                                color: AppColors.primaryGreen,
+                                size: 20,
+                              ),
+                            ],
+                          ),
+                          if (_selectedDate != null && _selectedTime != null) ...[
+                            const SizedBox(height: 20),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.green[50],
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.green[200]!,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.check_circle,
+                                    color: Colors.green[700],
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Agendamento confirmado para ${_getWeekday(_selectedDate!)} ${_selectedDate!.day} de ${_getMonth(_selectedDate!)} às $_selectedTime',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.green[700],
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               );
             },
@@ -1762,10 +1877,35 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   void _confirmSchedule() {
     HapticFeedback.mediumImpact();
     
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => _buildSuccessDialog(),
+    // Navigate to payment screen
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PaymentScreen(
+          totalAmount: _targetPrice,
+          serviceDetails: {
+            'service': widget.serviceTitle,
+            'date': _selectedDate != null 
+                ? '${_selectedDate!.day} de ${_getMonth(_selectedDate!)}'
+                : '',
+            'time': _selectedTime ?? '',
+            'duration': _formatEstimatedTime(),
+            'rooms': '$_rooms quartos',
+            'bathrooms': '$_bathrooms banheiros',
+            'includeProducts': _includeProducts,
+            'includePets': _includePets,
+          },
+          onPaymentConfirmed: (method, paymentData) {
+            // After payment confirmation, show success dialog
+            Navigator.pop(context); // Close payment screen
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => _buildSuccessDialog(),
+            );
+          },
+        ),
+      ),
     );
   }
 
