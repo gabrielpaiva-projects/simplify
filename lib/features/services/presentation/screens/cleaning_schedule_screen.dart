@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../providers/cleaning_pricing_provider.dart';
 import '../../data/models/cleaning_pricing_model.dart';
@@ -49,6 +50,18 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   // Page Controller
   final PageController _pageController = PageController();
   int _currentPage = 0;
+  
+  // Payment related
+  String _selectedPaymentMethod = 'credit_card';
+  final _cardNumberController = TextEditingController();
+  final _cardHolderController = TextEditingController();
+  final _expiryDateController = TextEditingController();
+  final _cvvController = TextEditingController();
+  int _cardInstallments = 1;
+  String _pixCode = '';
+  bool _pixCodeGenerated = false;
+  bool _pixCopied = false;
+  bool _isProcessingPix = false;
   
   // State
   String _selectedResidence = 'apartment';
@@ -264,31 +277,49 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   }
 
   void _goToNextPage() {
-    if (_currentPage == 0) {
+    if (_currentPage < 2) {
       setState(() {
-        _currentPage = 1;
+        _currentPage++;
       });
       _pageController.animateToPage(
-        1,
+        _currentPage,
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOut,
       );
       _pageTransitionController.forward();
+      
+      // Generate PIX code when entering payment page
+      if (_currentPage == 2 && _selectedPaymentMethod == 'pix' && !_pixCodeGenerated) {
+        _generatePixCode();
+      }
     }
   }
 
   void _goToPreviousPage() {
-    if (_currentPage == 1) {
+    if (_currentPage > 0) {
       setState(() {
-        _currentPage = 0;
+        _currentPage--;
       });
       _pageController.animateToPage(
-        0,
+        _currentPage,
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOut,
       );
-      _pageTransitionController.reverse();
+
+      // Ensure animation is properly set for previous pages
+      if (_currentPage > 0) {
+        _pageTransitionController.forward();
+      } else {
+        _pageTransitionController.reverse();
+      }
     }
+  }
+  
+  void _generatePixCode() {
+    setState(() {
+      _pixCodeGenerated = true;
+      _pixCode = '00020126360014BR.GOV.BCB.PIX0114+5511999999999520400005303986540${_targetPrice.toStringAsFixed(2)}5802BR5925NOME DO RECEBEDOR6009SAO PAULO62070503***6304A1B2';
+    });
   }
 
   @override
@@ -364,6 +395,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                       _buildServiceConfigurationPage(),
                       // Second Page - Date and Time Selection
                       _buildDateTimePage(),
+                      // Third Page - Payment
+                      _buildPaymentPage(),
                     ],
                   ),
                 ),
@@ -410,7 +443,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           // Back button
           GestureDetector(
             onTap: () {
-              if (_currentPage == 1) {
+              if (_currentPage > 0) {
                 _goToPreviousPage();
               } else {
                 Navigator.pop(context);
@@ -452,7 +485,11 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                     Row(
                       children: [
                         Text(
-                          _currentPage == 0 ? 'Personalize sua limpeza' : 'Escolha data e hora',
+                          _currentPage == 0 
+                              ? 'Personalize sua limpeza' 
+                              : _currentPage == 1 
+                                  ? 'Escolha data e hora'
+                                  : 'Finalizar pagamento',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[600],
@@ -486,26 +523,383 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           ),
           
           // Help button
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppColors.primaryGreen.withOpacity(0.1),
-                  AppColors.primaryGreen.withOpacity(0.05),
-                ],
+          GestureDetector(
+            onTap: _showHelpModal,
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primaryGreen.withOpacity(0.1),
+                    AppColors.primaryGreen.withOpacity(0.05),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(10),
               ),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              Icons.help_outline,
-              size: 20,
-              color: AppColors.primaryGreen,
+              child: Icon(
+                Icons.help_outline,
+                size: 20,
+                color: AppColors.primaryGreen,
+              ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  void _showHelpModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _buildHelpModal(),
+    );
+  }
+
+  Widget _buildHelpModal() {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.85,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.primaryGreen,
+                  AppColors.primaryGreen.withOpacity(0.8),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(24),
+                topRight: Radius.circular(24),
+              ),
+            ),
+            child: Column(
+              children: [
+                // Handle
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0x4DFFFFFF),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: const Color(0x33FFFFFF),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.help_outline,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Como funciona',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Entenda como agendar seu serviço',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: const Color(0xFFE6FFFFFF),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: const Color(0x33FFFFFF),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // Content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Step 1
+                  _buildHelpStep(
+                    step: 1,
+                    title: 'Configure seu serviço',
+                    description: 'Personalize sua limpeza escolhendo o tipo de imóvel, quantidade de cômodos e serviços extras.',
+                    icon: Icons.cleaning_services,
+                    color: Colors.indigo,
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Step 2
+                  _buildHelpStep(
+                    step: 2,
+                    title: 'Escolha data e horário',
+                    description: 'Selecione a data disponível e o horário que melhor se adapta à sua agenda.',
+                    icon: Icons.calendar_today,
+                    color: Colors.deepPurple,
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Step 3
+                  _buildHelpStep(
+                    step: 3,
+                    title: 'Finalize o pagamento',
+                    description: 'Escolha entre cartão de crédito ou PIX para efetuar o pagamento de forma segura.',
+                    icon: Icons.payment,
+                    color: Colors.teal,
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Additional Information
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFB),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: const Color(0xFFE8ECEF),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              color: Colors.blue[600],
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Informações importantes',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.blue[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        _buildInfoItem(
+                          '⏰',
+                          'Serviços disponíveis das 8h às 18h',
+                        ),
+                        const SizedBox(height: 8),
+                        _buildInfoItem(
+                          '📅',
+                          'Agendamentos com até 24h de antecedência',
+                        ),
+                        const SizedBox(height: 8),
+                        _buildInfoItem(
+                          '💳',
+                          'Pagamento seguro via cartão ou PIX',
+                        ),
+                        const SizedBox(height: 8),
+                        _buildInfoItem(
+                          '🔄',
+                          'Cancelamento gratuito até 2h antes',
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Contact
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryGreen.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.support_agent,
+                              color: AppColors.primaryGreen,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Precisa de ajuda?',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primaryGreen,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Entre em contato conosco através do WhatsApp ou email para tirar dúvidas sobre o agendamento.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[700],
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHelpStep({
+    required int step,
+    required String title,
+    required String description,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [color, color.withOpacity(0.8)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Center(
+            child: Text(
+              step.toString(),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, size: 20, color: color),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF2D3436),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                description,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoItem(String emoji, String text) {
+    return Row(
+      children: [
+        Text(
+          emoji,
+          style: const TextStyle(fontSize: 16),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[700],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -515,6 +909,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: Row(
         children: [
+          // Step 1 - Configuração
           Expanded(
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
@@ -525,11 +920,25 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             ),
           ),
           const SizedBox(width: 8),
+          // Step 2 - Data e Hora
           Expanded(
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               decoration: BoxDecoration(
                 color: _currentPage >= 1 
+                    ? AppColors.primaryGreen 
+                    : AppColors.primaryGreen.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Step 3 - Pagamento
+          Expanded(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              decoration: BoxDecoration(
+                color: _currentPage >= 2 
                     ? AppColors.primaryGreen 
                     : AppColors.primaryGreen.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(2),
@@ -572,35 +981,39 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       child: Column(
         children: [
           const SizedBox(height: 20),
-          
+
           // Date Selection Section
           AnimatedBuilder(
             animation: _pageTransitionAnimation,
             builder: (context, child) {
+              // Ensure content is always visible when on this page
+              final animationValue = _currentPage == 1 ? 1.0 : _pageTransitionAnimation.value;
               return Transform.scale(
-                scale: 0.8 + (0.2 * _pageTransitionAnimation.value),
+                scale: 0.8 + (0.2 * animationValue),
                 child: Opacity(
-                  opacity: _pageTransitionAnimation.value,
+                  opacity: animationValue,
                   child: _buildDateSection(),
                 ),
               );
             },
           ),
-          
+
           // Time Selection Section
           AnimatedBuilder(
             animation: _pageTransitionAnimation,
             builder: (context, child) {
+              // Ensure content is always visible when on this page
+              final animationValue = _currentPage == 1 ? 1.0 : _pageTransitionAnimation.value;
               return Transform.translate(
-                offset: Offset(0, 50 * (1 - _pageTransitionAnimation.value)),
+                offset: Offset(0, 50 * (1 - animationValue)),
                 child: Opacity(
-                  opacity: _pageTransitionAnimation.value,
+                  opacity: animationValue,
                   child: _buildTimeSection(),
                 ),
               );
             },
           ),
-          
+
           const SizedBox(height: 20),
         ],
       ),
@@ -711,24 +1124,24 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
               return Row(
                 children: [
                   _buildResidenceOption(
-                    'studio', 
-                    'Studio', 
-                    Icons.single_bed, 
-                    'R\$ ${provider.getBasePriceForResidence('studio').toStringAsFixed(0)}'
+                    'studio',
+                    'Studio',
+                    Icons.single_bed,
+                    _formatCurrency(provider.getBasePriceForResidence('studio'))
                   ),
                   const SizedBox(width: 12),
                   _buildResidenceOption(
-                    'apartment', 
-                    'Apto', 
-                    Icons.apartment, 
-                    'R\$ ${provider.getBasePriceForResidence('apartment').toStringAsFixed(0)}'
+                    'apartment',
+                    'Apto',
+                    Icons.apartment,
+                    _formatCurrency(provider.getBasePriceForResidence('apartment'))
                   ),
                   const SizedBox(width: 12),
                   _buildResidenceOption(
-                    'house', 
-                    'Casa', 
-                    Icons.house, 
-                    'R\$ ${provider.getBasePriceForResidence('house').toStringAsFixed(0)}'
+                    'house',
+                    'Casa',
+                    Icons.house,
+                    _formatCurrency(provider.getBasePriceForResidence('house'))
                   ),
                 ],
               );
@@ -1074,7 +1487,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                     icon: Icons.cleaning_services,
                     label: 'Produtos inclusos',
                     description: 'Fornecemos todos os produtos de limpeza profissionais',
-                    price: '+ R\$ ${provider.getProductsPrice().toStringAsFixed(0)}',
+                    price: '+ ${_formatCurrency(provider.getProductsPrice())}',
                     isSelected: _includeProducts,
                     color: Colors.teal,
                     onTap: () {
@@ -1090,7 +1503,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                     icon: Icons.pets,
                     label: 'Tenho pets',
                     description: 'Cuidado especial com pelos e odores de animais',
-                    price: '+ R\$ ${provider.getPetsPrice().toStringAsFixed(0)}',
+                    price: '+ ${_formatCurrency(provider.getPetsPrice())}',
                     isSelected: _includePets,
                     color: Colors.pink,
                     onTap: () {
@@ -1493,241 +1906,184 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
 
 
   Widget _buildModernFooter() {
-    final canContinue = _currentPage == 0 || (_selectedDate != null && _selectedTime != null);
-    
+    // Verifica se pode continuar baseado na página e método de pagamento
+    bool canContinue = false;
+
+    if (_currentPage == 2) {
+      // Página de pagamento
+      if (_selectedPaymentMethod == 'pix') {
+        canContinue = true; // Sempre pode prosseguir com PIX
+      } else {
+        // Cartão: só se todos os campos estiverem preenchidos
+        canContinue = _cardNumberController.text.length >= 16 &&
+                     _cardHolderController.text.isNotEmpty &&
+                     _expiryDateController.text.length >= 5 &&
+                     _cvvController.text.length >= 3;
+      }
+    } else {
+      // Páginas anteriores
+      canContinue = _currentPage == 0 || (_selectedDate != null && _selectedTime != null);
+    }
+
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.white,
-            Colors.white.withOpacity(0.98),
-          ],
-        ),
+        color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 20,
-            offset: const Offset(0, -10),
+            offset: const Offset(0, -5),
           ),
         ],
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(30),
-          topRight: Radius.circular(30),
-        ),
       ),
       child: SafeArea(
         top: false,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Row(
             children: [
-              // Price and Time section with animation
+              // Price display
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                AppColors.primaryGreen.withOpacity(0.1),
-                                AppColors.primaryGreen.withOpacity(0.05),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            'TOTAL',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.primaryGreen,
-                              letterSpacing: 1,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.blue.withOpacity(0.1),
-                                Colors.blue.withOpacity(0.05),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.access_time,
-                                size: 10,
-                                color: Colors.blue[700],
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                _formatEstimatedTime(),
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.blue[700],
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (_includeProducts || _includePets) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.orange.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              '${(_includeProducts ? 1 : 0) + (_includePets ? 1 : 0)} extra${((_includeProducts ? 1 : 0) + (_includePets ? 1 : 0)) > 1 ? 's' : ''}',
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.orange,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
+                    Text(
+                      'Total',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     AnimatedBuilder(
                       animation: _priceAnimation,
                       builder: (context, child) {
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.baseline,
-                          textBaseline: TextBaseline.alphabetic,
-                          children: [
-                            Text(
-                              'R\$',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.primaryGreen,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              _priceAnimation.value.toStringAsFixed(0),
-                              style: TextStyle(
-                                fontSize: 32,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.primaryGreen,
-                                letterSpacing: -1,
-                              ),
-                            ),
-                            Text(
-                              ',00',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.primaryGreen.withOpacity(0.7),
-                              ),
-                            ),
-                          ],
+                        return Text(
+                          _formatCurrency(_priceAnimation.value),
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primaryGreen,
+                            letterSpacing: -0.4,
+                          ),
                         );
                       },
                     ),
                   ],
                 ),
               ),
-              
-              // CTA Button with pulse animation
-              AnimatedBuilder(
-                animation: _pulseAnimation,
-                builder: (context, child) {
-                  return Transform.scale(
-                    scale: canContinue ? _pulseAnimation.value : 1.0,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        gradient: canContinue
-                            ? LinearGradient(
-                                colors: [
-                                  AppColors.primaryGreen,
-                                  AppColors.primaryGreen.withOpacity(0.8),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              )
-                            : null,
-                        color: canContinue ? null : const Color(0xFFE8ECEF),
-                        boxShadow: canContinue
-                            ? [
-                                BoxShadow(
-                                  color: AppColors.primaryGreen.withOpacity(0.3),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 10),
-                                ),
-                              ]
-                            : [],
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: canContinue ? () {
-                            HapticFeedback.mediumImpact();
-                            if (_currentPage == 0) {
-                              _goToNextPage();
-                            } else {
-                              _confirmSchedule();
-                            }
-                          } : null,
-                          borderRadius: BorderRadius.circular(16),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-                            child: Row(
-                              children: [
-                                Text(
-                                  _currentPage == 0 ? 'Continuar' : 'Confirmar',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                    color: canContinue 
-                                        ? Colors.white
-                                        : const Color(0xFF74788D),
-                                    letterSpacing: -0.5,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: BoxDecoration(
-                                    color: canContinue 
-                                        ? Colors.white.withOpacity(0.2)
-                                        : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Icon(
-                                    _currentPage == 0 ? Icons.arrow_forward : Icons.check,
-                                    size: 16,
-                                    color: canContinue 
-                                        ? Colors.white
-                                        : const Color(0xFF74788D),
-                                  ),
-                                ),
-                              ],
-                            ),
+
+              const SizedBox(width: 16),
+
+              // CTA Button - Smaller size
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  gradient: canContinue && !_isProcessingPix
+                      ? LinearGradient(
+                          colors: [
+                            AppColors.primaryGreen,
+                            AppColors.primaryGreen.withOpacity(0.8),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : null,
+                  color: (canContinue && !_isProcessingPix) ? null : const Color(0xFFE8ECEF),
+                  boxShadow: (canContinue && !_isProcessingPix)
+                      ? [
+                          BoxShadow(
+                            color: AppColors.primaryGreen.withOpacity(0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
                           ),
-                        ),
+                        ]
+                      : [],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: (canContinue && !_isProcessingPix) ? () {
+                      HapticFeedback.mediumImpact();
+                      if (_currentPage < 2) {
+                        _goToNextPage();
+                      } else {
+                        // Página de pagamento
+                        if (_selectedPaymentMethod == 'pix') {
+                          _processPixPayment();
+                        } else {
+                          _confirmSchedule();
+                        }
+                      }
+                    } : null,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (_isProcessingPix) ...[
+                            const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Gerando código...',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: canContinue
+                                    ? Colors.white
+                                    : const Color(0xFF74788D),
+                                letterSpacing: -0.2,
+                              ),
+                            ),
+                          ] else ...[
+                            Text(
+                              _currentPage == 2
+                                  ? 'Confirmar'
+                                  : 'Próximo',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: canContinue
+                                    ? Colors.white
+                                    : const Color(0xFF74788D),
+                                letterSpacing: -0.2,
+                              ),
+                            ),
+                            if (_currentPage < 2) ...[
+                              const SizedBox(width: 6),
+                              Icon(
+                                Icons.arrow_forward,
+                                size: 16,
+                                color: canContinue
+                                    ? Colors.white
+                                    : const Color(0xFF74788D),
+                              ),
+                            ] else ...[
+                              const SizedBox(width: 6),
+                              Icon(
+                                Icons.check_circle,
+                                size: 16,
+                                color: canContinue
+                                    ? Colors.white
+                                    : const Color(0xFF74788D),
+                              ),
+                            ],
+                          ],
+                        ],
                       ),
                     ),
-                  );
-                },
+                  ),
+                ),
               ),
             ],
           ),
@@ -1749,7 +2105,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   String _formatEstimatedTime() {
     final hours = _estimatedTimeInMinutes ~/ 60;
     final minutes = _estimatedTimeInMinutes % 60;
-    
+
     if (hours > 0 && minutes > 0) {
       return '${hours}h${minutes}min';
     } else if (hours > 0) {
@@ -1759,14 +2115,1058 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     }
   }
 
+  String _formatCurrency(double value) {
+    // Formatar para Real brasileiro: R$ 1.234,56
+    final formatter = NumberFormat.currency(
+      locale: 'pt_BR',
+      symbol: 'R\$',
+      decimalDigits: 2,
+    );
+    return formatter.format(value);
+  }
+
+  void _processPixPayment() async {
+    HapticFeedback.mediumImpact();
+
+    // Simula processamento da API para gerar código PIX
+    setState(() {
+      _isProcessingPix = true;
+    });
+
+    // Simula delay da API
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (!mounted) return;
+
+    setState(() {
+      _isProcessingPix = false;
+    });
+
+    // Abre modal com código PIX
+    _showPixPaymentModal();
+  }
+
+    void _showPixPaymentModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _buildPixPaymentModal(),
+    );
+  }
+
   void _confirmSchedule() {
     HapticFeedback.mediumImpact();
-    
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => _buildSuccessDialog(),
     );
+  }
+  
+  Widget _buildPaymentPage() {
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 120),
+      child: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        behavior: HitTestBehavior.translucent,
+        child: Column(
+          children: [
+            const SizedBox(height: 32),
+
+            // Title Section
+            _buildTitleSection(),
+
+            const SizedBox(height: 32),
+
+            // Service Summary
+            _buildServiceSummary(),
+
+            const SizedBox(height: 32),
+
+            // Payment Methods
+            _buildPaymentMethodSelector(),
+
+            const SizedBox(height: 32),
+
+            // Payment Content - Only show if credit card is selected
+            if (_selectedPaymentMethod == 'credit_card') ...[
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                transitionBuilder: (child, animation) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: child,
+                  );
+                },
+                child: Container(
+                  key: const ValueKey('card'),
+                  child: _buildCreditCardContent(),
+                ),
+              ),
+            ] else if (_selectedPaymentMethod == 'pix') ...[
+              // Beautiful PIX selection card
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFF00BFA5).withOpacity(0.1),
+                      const Color(0xFF00BFA5).withOpacity(0.05),
+                      const Color(0xFF00ACC1).withOpacity(0.08),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: const Color(0xFF00BFA5).withOpacity(0.3),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF00BFA5).withOpacity(0.15),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                    BoxShadow(
+                      color: const Color(0xFF00BFA5).withOpacity(0.1),
+                      blurRadius: 40,
+                      offset: const Offset(0, 16),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    // Animated PIX icon with glow effect
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            const Color(0xFF00BFA5),
+                            const Color(0xFF00ACC1),
+                            const Color(0xFF00BFA5),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF00BFA5).withOpacity(0.4),
+                            blurRadius: 16,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.pix,
+                        size: 40,
+                        color: Colors.white,
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Title with better typography
+                    ShaderMask(
+                      shaderCallback: (bounds) => LinearGradient(
+                        colors: [
+                          const Color(0xFF00BFA5),
+                          const Color(0xFF00ACC1),
+                        ],
+                      ).createShader(bounds),
+                      child: const Text(
+                        'PIX Selecionado',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // Subtitle
+                    Text(
+                      'Pagamento instantâneo',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF00BFA5),
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Description with better styling
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                size: 18,
+                                color: const Color(0xFF00BFA5),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Como funciona:',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF00BFA5),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '1. Clique em "Confirmar" para gerar o código\n2. Copie e use no seu app bancário\n3. Volte aqui para confirmar o pagamento',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.blue[700],
+                              height: 1.5,
+                              fontWeight: FontWeight.w400,
+                            ),
+                            textAlign: TextAlign.left,
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Benefits list
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildPixBenefit('Rápido', Icons.flash_on),
+                        const SizedBox(width: 16),
+                        _buildPixBenefit('Seguro', Icons.security),
+                        const SizedBox(width: 16),
+                        _buildPixBenefit('Grátis', Icons.monetization_on),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 32),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildTitleSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Finalizar Agendamento',
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF2D3436),
+              letterSpacing: -0.4,
+              height: 1.2,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Escolha como deseja pagar pelo serviço',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w400,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildServiceSummary() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: const Color(0xFFE8E8E8),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            // Service info
+            Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.cleaning_services,
+                    color: AppColors.primaryGreen,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.serviceTitle,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF2D3436),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today,
+                            size: 14,
+                            color: Colors.grey[500],
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${_selectedDate?.day}/${_selectedDate?.month}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Icon(
+                            Icons.access_time,
+                            size: 14,
+                            color: Colors.grey[500],
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            _selectedTime ?? '',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+            const Divider(height: 1, color: Color(0xFFE8E8E8)),
+
+            const SizedBox(height: 20),
+
+            // Total price
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Total',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  _formatCurrency(_targetPrice),
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primaryGreen,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTotalValueCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primaryGreen,
+            AppColors.primaryGreen.withOpacity(0.8),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryGreen.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Total a pagar',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white.withOpacity(0.9),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'R\$ ${_targetPrice.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0x33FFFFFF),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.account_balance_wallet,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0x33FFFFFF),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildTotalInfoItem(Icons.cleaning_services, widget.serviceTitle),
+                Container(width: 1, height: 20, color: Colors.white.withOpacity(0.3)),
+                _buildTotalInfoItem(Icons.calendar_today, '${_selectedDate?.day}/${_selectedDate?.month}'),
+                Container(width: 1, height: 20, color: Colors.white.withOpacity(0.3)),
+                _buildTotalInfoItem(Icons.access_time, _selectedTime ?? '--:--'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildTotalInfoItem(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: Colors.white.withOpacity(0.9)),
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.white.withOpacity(0.9),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildPaymentMethodSelector() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Método de Pagamento',
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF2D3436),
+              letterSpacing: -0.3,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildPaymentMethodCard('credit_card', 'Cartão', Icons.credit_card, 'Crédito ou Débito'),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildPaymentMethodCard('pix', 'PIX', Icons.qr_code_2, 'Pagamento instantâneo'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildPaymentMethodCard(String method, String title, IconData icon, String subtitle) {
+    final isSelected = _selectedPaymentMethod == method;
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        setState(() {
+          _selectedPaymentMethod = method;
+          if (method == 'pix' && !_pixCodeGenerated) {
+            _generatePixCode();
+          }
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : const Color(0xFFF8F8F8),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? AppColors.primaryGreen : Colors.transparent,
+            width: 2,
+          ),
+          boxShadow: isSelected ? [
+            BoxShadow(
+              color: AppColors.primaryGreen.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ] : null,
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? AppColors.primaryGreen.withOpacity(0.1)
+                    : const Color(0xFFE8E8E8),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: isSelected ? AppColors.primaryGreen : const Color(0xFF9B9B9B),
+                size: 24,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? AppColors.primaryGreen : const Color(0xFF2D3436),
+                letterSpacing: -0.2,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w400,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildCreditCardContent() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Card header
+          Row(
+            children: [
+              Icon(Icons.credit_card, size: 20, color: Colors.grey[700]),
+              const SizedBox(width: 8),
+              Text(
+                'Dados do Cartão',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[800],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // Card number field
+          _buildModernInput(
+            controller: _cardNumberController,
+            label: 'Número do cartão',
+            hint: '0000 0000 0000 0000',
+            keyboardType: TextInputType.number,
+            onChanged: (value) {
+              final cleanValue = value.replaceAll(' ', '');
+              final buffer = StringBuffer();
+              for (int i = 0; i < cleanValue.length && i < 16; i++) {
+                if (i > 0 && i % 4 == 0) {
+                  buffer.write(' ');
+                }
+                buffer.write(cleanValue[i]);
+              }
+              final formatted = buffer.toString();
+              if (formatted != value) {
+                _cardNumberController.value = TextEditingValue(
+                  text: formatted,
+                  selection: TextSelection.collapsed(offset: formatted.length),
+                );
+              }
+            },
+          ),
+          const SizedBox(height: 16),
+
+          // Card holder name field
+          _buildModernInput(
+            controller: _cardHolderController,
+            label: 'Nome do titular',
+            hint: 'Como está no cartão',
+          ),
+          const SizedBox(height: 16),
+
+          // Expiry date and CVV fields
+          Row(
+            children: [
+              Expanded(
+                child: _buildModernInput(
+                  controller: _expiryDateController,
+                  label: 'Validade',
+                  hint: 'MM/AA',
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) {
+                    final cleanValue = value.replaceAll('/', '');
+                    if (cleanValue.length >= 2) {
+                      final formatted = '${cleanValue.substring(0, min(2, cleanValue.length))}/${cleanValue.substring(min(2, cleanValue.length))}';
+                      if (formatted != value) {
+                        _expiryDateController.value = TextEditingValue(
+                          text: formatted,
+                          selection: TextSelection.collapsed(offset: formatted.length),
+                        );
+                      }
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildModernInput(
+                  controller: _cvvController,
+                  label: 'CVV',
+                  hint: '123',
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          // Payment info
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFB),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, size: 18, color: Colors.grey[600]),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Pagamento à vista no valor de ${_formatCurrency(_targetPrice)}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[700],
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildPixContent() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // PIX Header
+          Row(
+            children: [
+              Icon(Icons.pix, size: 20, color: Colors.grey[700]),
+              const SizedBox(width: 8),
+              Text(
+                'Pagamento via PIX',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[800],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // PIX Code Section
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE8ECEF)),
+            ),
+            child: Column(
+              children: [
+                // PIX Code Container
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFB),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFFE8ECEF),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.pix,
+                            size: 24,
+                            color: const Color(0xFF00BFA5),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Código PIX Copia e Cola',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF2D3436),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        _pixCode.isNotEmpty
+                            ? _pixCode
+                            : 'Gerando código PIX...',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontFamily: 'monospace',
+                          color: Color(0xFF2D3436),
+                          height: 1.4,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Instructions
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5F6FA),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        size: 20,
+                        color: Colors.grey[700],
+                      ),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'Copie o código acima e cole no app do seu banco',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF2D3436),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Copy PIX Code button
+          GestureDetector(
+            onTap: () {
+              if (_pixCode.isNotEmpty) {
+                Clipboard.setData(ClipboardData(text: _pixCode));
+                HapticFeedback.mediumImpact();
+                setState(() {
+                  _pixCopied = true;
+                });
+                Future.delayed(const Duration(seconds: 2), () {
+                  if (mounted) {
+                    setState(() {
+                      _pixCopied = false;
+                    });
+                  }
+                });
+              }
+            },
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+              decoration: BoxDecoration(
+                color: _pixCopied ? AppColors.primaryGreen : Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _pixCopied ? AppColors.primaryGreen : const Color(0xFFE8ECEF),
+                  width: 1.5,
+                ),
+                boxShadow: _pixCopied ? [
+                  BoxShadow(
+                    color: AppColors.primaryGreen.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ] : null,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    _pixCopied ? Icons.check_circle : Icons.copy,
+                    size: 20,
+                    color: _pixCopied ? Colors.white : const Color(0xFF74788D),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _pixCopied ? 'Código copiado com sucesso!' : 'Copiar código PIX',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: _pixCopied ? Colors.white : const Color(0xFF2D3436),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Timer and Instructions
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.timer,
+                      size: 18,
+                      color: Colors.orange[700],
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Código válido por 30 minutos',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.orange[700],
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Após copiar, abra seu app bancário e procure por "PIX Copia e Cola"',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.orange[600],
+                    height: 1.4,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildModernInput({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    TextInputType? keyboardType,
+    Function(String)? onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[700],
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          onChanged: onChanged,
+          cursorColor: AppColors.primaryGreen,
+          style: const TextStyle(
+            fontSize: 16,
+            color: Color(0xFF2D3436),
+            fontWeight: FontWeight.w500,
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              color: Colors.grey[400],
+              fontSize: 15,
+              fontWeight: FontWeight.w400,
+            ),
+            filled: true,
+            fillColor: const Color(0xFFF8F8F8),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: AppColors.primaryGreen,
+                width: 2,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: Colors.red,
+                width: 1,
+              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+  
+  int min(int a, int b) => a < b ? a : b;
+  
+  String _formatCardNumber(String value) {
+    final cleanValue = value.replaceAll(' ', '');
+    final buffer = StringBuffer();
+    for (int i = 0; i < cleanValue.length && i < 16; i++) {
+      if (i > 0 && i % 4 == 0) {
+        buffer.write(' ');
+      }
+      buffer.write(cleanValue[i]);
+    }
+    return buffer.toString();
   }
 
   Widget _buildSuccessDialog() {
@@ -1843,10 +3243,10 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                'Valor: R\$ ${_targetPrice.toStringAsFixed(2)}',
+                'Valor: ${_formatCurrency(_targetPrice)}',
                 style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
                   color: AppColors.primaryGreen,
                 ),
               ),
@@ -1902,6 +3302,474 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPixPaymentModal() {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.9,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.primaryGreen,
+                  AppColors.primaryGreen.withOpacity(0.8),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(24),
+                topRight: Radius.circular(24),
+              ),
+            ),
+            child: Column(
+              children: [
+                // Handle
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0x4DFFFFFF),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: const Color(0x33FFFFFF),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(
+                        Icons.pix,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Pagamento PIX',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Use o código abaixo no seu app bancário',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: const Color(0xE6FFFFFF),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: const Color(0x33FFFFFF),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // Content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Service Summary
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFB),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryGreen.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                Icons.cleaning_services,
+                                color: AppColors.primaryGreen,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    widget.serviceTitle,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF2D3436),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.calendar_today,
+                                        size: 14,
+                                        color: Colors.grey[500],
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        '${_selectedDate?.day}/${_selectedDate?.month}',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Icon(
+                                        Icons.access_time,
+                                        size: 14,
+                                        color: Colors.grey[500],
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        _selectedTime ?? '',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryGreen.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            'Valor: ${_formatCurrency(_targetPrice)}',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primaryGreen,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // PIX Instructions
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              color: Colors.blue[600],
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Como pagar',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.blue[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          '1. Copie o código PIX abaixo\n2. Abra seu app bancário\n3. Procure por "PIX Copia e Cola"\n4. Cole o código e confirme o pagamento\n5. Volte aqui e clique em "Pagamento Confirmado"',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.blue[600],
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // PIX Code Section
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFE8ECEF)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.pix,
+                              size: 24,
+                              color: const Color(0xFF00BFA5),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Código PIX',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF2D3436),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8FAFB),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: const Color(0xFFE8ECEF),
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                _pixCode,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontFamily: 'monospace',
+                                  color: Color(0xFF2D3436),
+                                  height: 1.4,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Copy Button
+                  GestureDetector(
+                    onTap: () {
+                      Clipboard.setData(ClipboardData(text: _pixCode));
+                      HapticFeedback.mediumImpact();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Código PIX copiado!'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8F8F8),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(0xFFE8ECEF),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.copy,
+                            size: 20,
+                            color: const Color(0xFF74788D),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Copiar código PIX',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF2D3436),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Confirm Payment Button
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.primaryGreen,
+                          AppColors.primaryGreen.withOpacity(0.8),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primaryGreen.withOpacity(0.3),
+                          blurRadius: 12,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.pop(context); // Fecha o modal PIX
+                          _confirmSchedule(); // Mostra confirmação final
+                        },
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.check_circle,
+                                size: 20,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Pagamento Confirmado',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                  letterSpacing: -0.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPixBenefit(String text, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF00BFA5).withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFF00BFA5).withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 14,
+            color: const Color(0xFF00BFA5),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF00BFA5),
+              letterSpacing: -0.1,
+            ),
+          ),
+        ],
       ),
     );
   }
