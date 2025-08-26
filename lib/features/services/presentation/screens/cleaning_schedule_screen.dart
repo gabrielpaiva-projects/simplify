@@ -6,6 +6,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../providers/cleaning_pricing_provider.dart';
 import '../../data/models/cleaning_pricing_model.dart';
 import '../../data/enums/cleaning_type.dart';
+import 'payment_screen.dart';
 
 class CleaningScheduleScreen extends StatefulWidget {
   final String serviceTitle;
@@ -1762,10 +1763,51 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   void _confirmSchedule() {
     HapticFeedback.mediumImpact();
     
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => _buildSuccessDialog(),
+    // Prepara os detalhes do agendamento
+    final bookingDetails = {
+      'serviceType': widget.serviceTitle,
+      'cleaningType': widget.cleaningType.toString(),
+      'date': _selectedDate,
+      'time': _selectedTime,
+      'area': _selectedArea,
+      'rooms': _selectedRooms,
+      'bathrooms': _selectedBathrooms,
+      'hasKitchen': _hasKitchen,
+      'hasLaundry': _hasLaundry,
+      'hasBalcony': _hasBalcony,
+      'hasGarage': _hasGarage,
+      'hasPets': _hasPets,
+      'frequency': _selectedFrequency,
+      'estimatedTime': _estimatedTimeInMinutes,
+    };
+    
+    // Navega para a tela de pagamento
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            PaymentScreen(
+              serviceTitle: widget.serviceTitle,
+              scheduledDate: _selectedDate,
+              scheduledTime: _selectedTime,
+              totalAmount: _targetPrice,
+              bookingDetails: bookingDetails,
+            ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          const begin = Offset(0.0, 1.0);
+          const end = Offset.zero;
+          const curve = Curves.easeOutCubic;
+
+          var tween = Tween(begin: begin, end: end).chain(
+            CurveTween(curve: curve),
+          );
+
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          );
+        },
+      ),
     );
   }
 
