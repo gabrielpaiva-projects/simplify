@@ -2335,51 +2335,61 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     TextInputType? keyboardType,
     Function(String)? onChanged,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFDDDDDD), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: TextField(
-        controller: controller,
-        keyboardType: keyboardType,
-        onChanged: onChanged,
-        cursorColor: AppColors.primaryGreen,
-        style: const TextStyle(
-          fontSize: 16,
-          color: Colors.black,
-          fontWeight: FontWeight.w500,
+    return Theme(
+      data: Theme.of(context).copyWith(
+        inputDecorationTheme: const InputDecorationTheme(
+          fillColor: Colors.white,
+          filled: true,
         ),
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-          labelStyle: TextStyle(
-            fontSize: 14,
-            color: Colors.grey[600],
-            fontWeight: FontWeight.w400,
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFFDDDDDD), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          onChanged: onChanged,
+          cursorColor: AppColors.primaryGreen,
+          style: const TextStyle(
+            fontSize: 16,
+            color: Colors.black,
+            fontWeight: FontWeight.w500,
           ),
-          hintStyle: TextStyle(
-            fontSize: 15,
-            color: Colors.grey[400],
-            fontWeight: FontWeight.w400,
-          ),
-          floatingLabelStyle: TextStyle(
-            fontSize: 13,
-            color: AppColors.primaryGreen,
-            fontWeight: FontWeight.w600,
-            backgroundColor: Colors.white,
+          decoration: InputDecoration(
+            labelText: label,
+            hintText: hint,
+            filled: true,
+            fillColor: Colors.white,
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+            labelStyle: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w400,
+            ),
+            hintStyle: TextStyle(
+              fontSize: 15,
+              color: Colors.grey[400],
+              fontWeight: FontWeight.w400,
+            ),
+            floatingLabelStyle: TextStyle(
+              fontSize: 13,
+              color: AppColors.primaryGreen,
+              fontWeight: FontWeight.w600,
+              backgroundColor: Colors.white,
+            ),
           ),
         ),
       ),
