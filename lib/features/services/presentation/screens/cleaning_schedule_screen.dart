@@ -1837,8 +1837,14 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             switchInCurve: Curves.easeInOut,
             switchOutCurve: Curves.easeInOut,
             child: _selectedPaymentMethod == 'pix'
-                ? _buildAnimatedCard(2, _buildPixPayment(), key: const ValueKey('pix'))
-                : _buildAnimatedCard(2, _buildCardPayment(), key: const ValueKey('card')),
+                ? Container(
+                    key: const ValueKey('pix'),
+                    child: _buildAnimatedCard(2, _buildPixPayment()),
+                  )
+                : Container(
+                    key: const ValueKey('card'),
+                    child: _buildAnimatedCard(2, _buildCardPayment()),
+                  ),
           ),
           
           const SizedBox(height: 20),
