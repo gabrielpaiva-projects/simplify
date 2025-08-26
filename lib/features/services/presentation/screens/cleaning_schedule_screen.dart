@@ -1825,14 +1825,18 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
         children: [
           const SizedBox(height: 20),
           
-          // Payment method selector
-          _buildAnimatedCard(0, _buildPaymentMethodSelector()),
+          // Order Summary with modern design
+          _buildAnimatedCard(0, _buildOrderSummary()),
           
-          // Payment content based on selected method
-          _buildAnimatedCard(1, 
-            _selectedPaymentMethod == 'pix' 
-                ? _buildPixPaymentContent()
-                : _buildCreditCardContent(),
+          // Payment Methods Tabs
+          _buildAnimatedCard(1, _buildPaymentTabs()),
+          
+          // Payment Content
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: _selectedPaymentMethod == 'pix'
+                ? _buildAnimatedCard(2, _buildModernPixContent())
+                : _buildAnimatedCard(2, _buildModernCardContent()),
           ),
           
           const SizedBox(height: 20),
@@ -1841,186 +1845,109 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     );
   }
   
-  Widget _buildPaymentMethodSelector() {
+  Widget _buildOrderSummary() {
     return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Método de Pagamento',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF2D3436),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildPaymentMethodCard('credit_card', 'Cartão', Icons.credit_card),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildPaymentMethodCard('pix', 'PIX', Icons.qr_code_2),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildPaymentMethodCard(String method, String label, IconData icon) {
-    final isSelected = _selectedPaymentMethod == method;
-    
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedPaymentMethod = method;
-          if (method == 'pix' && !_pixCodeGenerated) {
-            _generatePixCode();
-          }
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryGreen.withOpacity(0.05) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? AppColors.primaryGreen : const Color(0xFFE8ECEF),
-            width: isSelected ? 2 : 1.5,
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? AppColors.primaryGreen : const Color(0xFF74788D),
-              size: 32,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: isSelected ? AppColors.primaryGreen : const Color(0xFF2D3436),
-              ),
-            ),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primaryGreen.withOpacity(0.1),
+            AppColors.primaryGreen.withOpacity(0.05),
           ],
         ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.primaryGreen.withOpacity(0.2),
+          width: 1,
+        ),
       ),
-    );
-  }
-  
-  Widget _buildCreditCardContent() {
-    return Container(
-      padding: const EdgeInsets.all(20),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Dados do Cartão',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF2D3436),
-            ),
-          ),
-          const SizedBox(height: 20),
-          
-          // Card Number
-          TextField(
-            controller: _cardNumberController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText: 'Número do Cartão',
-              hintText: '0000 0000 0000 0000',
-              prefixIcon: const Icon(Icons.credit_card),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          
-          // Card Holder
-          TextField(
-            controller: _cardHolderController,
-            decoration: InputDecoration(
-              labelText: 'Nome do Titular',
-              prefixIcon: const Icon(Icons.person),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          
-          // Expiry and CVV
           Row(
             children: [
-              Expanded(
-                child: TextField(
-                  controller: _expiryDateController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Validade',
-                    hintText: 'MM/AA',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.receipt_long,
+                  color: AppColors.primaryGreen,
+                  size: 24,
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: TextField(
-                  controller: _cvvController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'CVV',
-                    hintText: '000',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Resumo do Pedido',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF74788D),
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.serviceTitle,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF2D3436),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          
-          // Installments
+          const SizedBox(height: 16),
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF5F6FA),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Parcelamento',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
+                Row(
+                  children: [
+                    Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${_selectedDate?.day}/${_selectedDate?.month}',
+                      style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                    ),
+                    const SizedBox(width: 12),
+                    Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
+                    const SizedBox(width: 6),
+                    Text(
+                      _selectedTime ?? '--:--',
+                      style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  _cardInstallments == 1
-                      ? 'À vista: R\$ ${_targetPrice.toStringAsFixed(2)}'
-                      : '${_cardInstallments}x de R\$ ${(_targetPrice / _cardInstallments).toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
                     color: AppColors.primaryGreen,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'R\$ ${_targetPrice.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
@@ -2031,92 +1958,714 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     );
   }
   
-  Widget _buildPixPaymentContent() {
+  Widget _buildPaymentTabs() {
     return Container(
-      padding: const EdgeInsets.all(20),
-      child: Column(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F6FA),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
         children: [
-          const Text(
-            'Escaneie o QR Code',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF2D3436),
+          Expanded(
+            child: _buildPaymentTab(
+              'credit_card',
+              'Cartão de Crédito',
+              Icons.credit_card,
+              'Parcelamento disponível',
             ),
           ),
-          const SizedBox(height: 20),
-          
-          // QR Code
-          Container(
-            width: 200,
-            height: 200,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: AppColors.primaryGreen.withOpacity(0.2),
-                width: 2,
-              ),
-            ),
-            child: _pixCodeGenerated
-                ? Icon(
-                    Icons.qr_code_2,
-                    size: 180,
-                    color: Colors.grey[800],
-                  )
-                : CircularProgressIndicator(
-                    color: AppColors.primaryGreen,
-                  ),
-          ),
-          const SizedBox(height: 20),
-          
-          // Copy PIX Code
-          GestureDetector(
-            onTap: () {
-              Clipboard.setData(ClipboardData(text: _pixCode));
-              setState(() {
-                _pixCopied = true;
-              });
-              Future.delayed(const Duration(seconds: 2), () {
-                if (mounted) {
-                  setState(() {
-                    _pixCopied = false;
-                  });
-                }
-              });
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-              decoration: BoxDecoration(
-                color: _pixCopied ? AppColors.primaryGreen : Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: _pixCopied ? AppColors.primaryGreen : const Color(0xFFE8ECEF),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    _pixCopied ? Icons.check : Icons.copy,
-                    size: 20,
-                    color: _pixCopied ? Colors.white : const Color(0xFF74788D),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _pixCopied ? 'Código copiado!' : 'Copiar código PIX',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: _pixCopied ? Colors.white : const Color(0xFF2D3436),
-                    ),
-                  ),
-                ],
-              ),
+          Expanded(
+            child: _buildPaymentTab(
+              'pix',
+              'PIX',
+              Icons.qr_code_scanner,
+              'Aprovação imediata',
             ),
           ),
         ],
       ),
     );
+  }
+  
+  Widget _buildPaymentTab(String method, String title, IconData icon, String subtitle) {
+    final isSelected = _selectedPaymentMethod == method;
+    
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        setState(() {
+          _selectedPaymentMethod = method;
+          if (method == 'pix' && !_pixCodeGenerated) {
+            _generatePixCode();
+          }
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : [],
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? AppColors.primaryGreen : const Color(0xFF74788D),
+              size: 24,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: isSelected ? const Color(0xFF2D3436) : const Color(0xFF74788D),
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 11,
+                color: isSelected ? AppColors.primaryGreen : Colors.grey[500],
+                fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildModernCardContent() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        children: [
+          // Visual Credit Card
+          Container(
+            height: 200,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFF1E3C72),
+                  const Color(0xFF2A5298),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Stack(
+              children: [
+                // Card pattern
+                Positioned(
+                  right: -50,
+                  top: -50,
+                  child: Container(
+                    width: 200,
+                    height: 200,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.1),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            width: 50,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Colors.amber[600],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          Icon(Icons.contactless, color: Colors.white, size: 30),
+                        ],
+                      ),
+                      const Spacer(),
+                      Text(
+                        _cardNumberController.text.isEmpty
+                            ? '•••• •••• •••• ••••'
+                            : _formatCardNumber(_cardNumberController.text),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'TITULAR',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.7),
+                                  fontSize: 10,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _cardHolderController.text.isEmpty
+                                    ? 'SEU NOME'
+                                    : _cardHolderController.text.toUpperCase(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'VALIDADE',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.7),
+                                  fontSize: 10,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _expiryDateController.text.isEmpty
+                                    ? 'MM/AA'
+                                    : _expiryDateController.text,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 24),
+          
+          // Card Form Fields
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                _buildModernTextField(
+                  controller: _cardNumberController,
+                  label: 'Número do Cartão',
+                  hint: '0000 0000 0000 0000',
+                  icon: Icons.credit_card,
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) {
+                    setState(() {});
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildModernTextField(
+                  controller: _cardHolderController,
+                  label: 'Nome do Titular',
+                  hint: 'Como está no cartão',
+                  icon: Icons.person,
+                  onChanged: (value) {
+                    setState(() {});
+                  },
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildModernTextField(
+                        controller: _expiryDateController,
+                        label: 'Validade',
+                        hint: 'MM/AA',
+                        icon: Icons.calendar_month,
+                        keyboardType: TextInputType.number,
+                        onChanged: (value) {
+                          setState(() {});
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildModernTextField(
+                        controller: _cvvController,
+                        label: 'CVV',
+                        hint: '000',
+                        icon: Icons.lock,
+                        keyboardType: TextInputType.number,
+                        onChanged: (value) {
+                          setState(() {});
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                
+                // Installments Selector
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Parcelamento',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF2D3436),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      height: 40,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: 12,
+                        itemBuilder: (context, index) {
+                          final installments = index + 1;
+                          final isSelected = _cardInstallments == installments;
+                          
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _cardInstallments = installments;
+                              });
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.only(right: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              decoration: BoxDecoration(
+                                color: isSelected 
+                                    ? AppColors.primaryGreen 
+                                    : const Color(0xFFF5F6FA),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '${installments}x',
+                                  style: TextStyle(
+                                    color: isSelected 
+                                        ? Colors.white 
+                                        : const Color(0xFF74788D),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryGreen.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            _cardInstallments == 1 ? 'À vista' : '${_cardInstallments}x sem juros',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            _cardInstallments == 1
+                                ? 'R\$ ${_targetPrice.toStringAsFixed(2)}'
+                                : 'R\$ ${(_targetPrice / _cardInstallments).toStringAsFixed(2)}/mês',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primaryGreen,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildModernPixContent() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        children: [
+          // PIX Info Card
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFF32BCAD),
+                  const Color(0xFF009688),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF32BCAD).withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.pix,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Pagamento via PIX',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Confirmação instantânea',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    children: [
+                      // QR Code
+                      Container(
+                        width: 180,
+                        height: 180,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: const Color(0xFFE8ECEF),
+                            width: 2,
+                          ),
+                        ),
+                        child: _pixCodeGenerated
+                            ? Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.qr_code_2,
+                                    size: 160,
+                                    color: Colors.grey[800],
+                                  ),
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Icon(
+                                      Icons.pix,
+                                      size: 28,
+                                      color: Color(0xFF32BCAD),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : CircularProgressIndicator(
+                                color: const Color(0xFF32BCAD),
+                              ),
+                      ),
+                      const SizedBox(height: 20),
+                      
+                      // PIX Code
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF5F6FA),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'PIX Copia e Cola',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF74788D),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _pixCode.isNotEmpty 
+                                        ? '${_pixCode.substring(0, 30)}...'
+                                        : 'Gerando código...',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      fontFamily: 'monospace',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            GestureDetector(
+                              onTap: () {
+                                Clipboard.setData(ClipboardData(text: _pixCode));
+                                HapticFeedback.mediumImpact();
+                                setState(() {
+                                  _pixCopied = true;
+                                });
+                                Future.delayed(const Duration(seconds: 2), () {
+                                  if (mounted) {
+                                    setState(() {
+                                      _pixCopied = false;
+                                    });
+                                  }
+                                });
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: _pixCopied 
+                                      ? const Color(0xFF32BCAD)
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: _pixCopied 
+                                        ? const Color(0xFF32BCAD)
+                                        : const Color(0xFFE8ECEF),
+                                  ),
+                                ),
+                                child: Icon(
+                                  _pixCopied ? Icons.check : Icons.copy,
+                                  size: 18,
+                                  color: _pixCopied 
+                                      ? Colors.white 
+                                      : const Color(0xFF74788D),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.timer,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Válido por 30 minutos',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 20),
+          
+          // Instructions
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.orange.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  color: Colors.orange[700],
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Como pagar com PIX',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.orange[900],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '1. Abra o app do seu banco\n2. Escolha pagar com PIX\n3. Escaneie o QR Code ou cole o código',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.orange[800],
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildModernTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    TextInputType? keyboardType,
+    Function(String)? onChanged,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F6FA),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: TextField(
+        controller: controller,
+        keyboardType: keyboardType,
+        onChanged: onChanged,
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          prefixIcon: Icon(icon, size: 20, color: const Color(0xFF74788D)),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          labelStyle: const TextStyle(
+            fontSize: 14,
+            color: Color(0xFF74788D),
+          ),
+        ),
+      ),
+    );
+  }
+  
+  String _formatCardNumber(String value) {
+    final cleanValue = value.replaceAll(' ', '');
+    final buffer = StringBuffer();
+    for (int i = 0; i < cleanValue.length && i < 16; i++) {
+      if (i > 0 && i % 4 == 0) {
+        buffer.write(' ');
+      }
+      buffer.write(cleanValue[i]);
+    }
+    return buffer.toString();
   }
 
   Widget _buildSuccessDialog() {
