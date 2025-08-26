@@ -2712,114 +2712,151 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Card header
-          Row(
-            children: [
-              Icon(Icons.credit_card, size: 20, color: Colors.grey[700]),
-              const SizedBox(width: 8),
-              Text(
-                'Dados do Cartão',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey[800],
-                ),
-              ),
-            ],
-          ),
+          // Credit Card Preview
+          _buildCreditCardPreview(),
+          
           const SizedBox(height: 24),
 
-          // Card number field
-          _buildModernInput(
-            controller: _cardNumberController,
-            label: 'Número do cartão',
-            hint: '0000 0000 0000 0000',
-            keyboardType: TextInputType.number,
-            onChanged: (value) {
-              final cleanValue = value.replaceAll(' ', '');
-              final buffer = StringBuffer();
-              for (int i = 0; i < cleanValue.length && i < 16; i++) {
-                if (i > 0 && i % 4 == 0) {
-                  buffer.write(' ');
-                }
-                buffer.write(cleanValue[i]);
-              }
-              final formatted = buffer.toString();
-              if (formatted != value) {
-                _cardNumberController.value = TextEditingValue(
-                  text: formatted,
-                  selection: TextSelection.collapsed(offset: formatted.length),
-                );
-              }
-            },
-          ),
-          const SizedBox(height: 16),
-
-          // Card holder name field
-          _buildModernInput(
-            controller: _cardHolderController,
-            label: 'Nome do titular',
-            hint: 'Como está no cartão',
-          ),
-          const SizedBox(height: 16),
-
-          // Expiry date and CVV fields
-          Row(
-            children: [
-              Expanded(
-                child: _buildModernInput(
-                  controller: _expiryDateController,
-                  label: 'Validade',
-                  hint: 'MM/AA',
+          // Card Form Fields
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0xFFE8ECEF),
+                width: 1,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Card number field with icon
+                _buildEnhancedInput(
+                  controller: _cardNumberController,
+                  label: 'Número do cartão',
+                  hint: '0000 0000 0000 0000',
+                  prefixIcon: Icons.credit_card,
                   keyboardType: TextInputType.number,
+                  maxLength: 19,
                   onChanged: (value) {
-                    final cleanValue = value.replaceAll('/', '');
-                    if (cleanValue.length >= 2) {
-                      final formatted = '${cleanValue.substring(0, min(2, cleanValue.length))}/${cleanValue.substring(min(2, cleanValue.length))}';
-                      if (formatted != value) {
-                        _expiryDateController.value = TextEditingValue(
-                          text: formatted,
-                          selection: TextSelection.collapsed(offset: formatted.length),
-                        );
+                    final cleanValue = value.replaceAll(' ', '');
+                    final buffer = StringBuffer();
+                    for (int i = 0; i < cleanValue.length && i < 16; i++) {
+                      if (i > 0 && i % 4 == 0) {
+                        buffer.write(' ');
                       }
+                      buffer.write(cleanValue[i]);
                     }
+                    final formatted = buffer.toString();
+                    if (formatted != value) {
+                      _cardNumberController.value = TextEditingValue(
+                        text: formatted,
+                        selection: TextSelection.collapsed(offset: formatted.length),
+                      );
+                    }
+                    setState(() {}); // Update card preview
                   },
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildModernInput(
-                  controller: _cvvController,
-                  label: 'CVV',
-                  hint: '123',
-                  keyboardType: TextInputType.number,
+                
+                const SizedBox(height: 20),
+
+                // Card holder name field
+                _buildEnhancedInput(
+                  controller: _cardHolderController,
+                  label: 'Nome do titular',
+                  hint: 'NOME COMPLETO',
+                  prefixIcon: Icons.person_outline,
+                  textCapitalization: TextCapitalization.characters,
+                  onChanged: (value) {
+                    setState(() {}); // Update card preview
+                  },
                 ),
-              ),
-            ],
+                
+                const SizedBox(height: 20),
+
+                // Expiry date and CVV in row
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildEnhancedInput(
+                        controller: _expiryDateController,
+                        label: 'Validade',
+                        hint: 'MM/AA',
+                        prefixIcon: Icons.calendar_month,
+                        keyboardType: TextInputType.number,
+                        maxLength: 5,
+                        onChanged: (value) {
+                          final cleanValue = value.replaceAll('/', '');
+                          if (cleanValue.length >= 2) {
+                            final formatted = '${cleanValue.substring(0, min(2, cleanValue.length))}/${cleanValue.substring(min(2, cleanValue.length))}';
+                            if (formatted != value) {
+                              _expiryDateController.value = TextEditingValue(
+                                text: formatted,
+                                selection: TextSelection.collapsed(offset: formatted.length),
+                              );
+                            }
+                          }
+                          setState(() {}); // Update card preview
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildEnhancedInput(
+                        controller: _cvvController,
+                        label: 'CVV',
+                        hint: '123',
+                        prefixIcon: Icons.lock_outline,
+                        keyboardType: TextInputType.number,
+                        maxLength: 4,
+                        helperText: 'Código de segurança',
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+
+                // Installments selector
+                _buildInstallmentSelector(),
+              ],
+            ),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
-          // Payment info
+          // Security badges
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: const Color(0xFFF8FAFB),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Row(
+            child: Column(
               children: [
-                Icon(Icons.info_outline, size: 18, color: Colors.grey[600]),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Pagamento à vista no valor de ${_formatCurrency(_targetPrice)}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[700],
-                      fontWeight: FontWeight.w600,
+                Row(
+                  children: [
+                    Icon(Icons.security, size: 18, color: AppColors.primaryGreen),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Pagamento 100% seguro',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[800],
+                      ),
                     ),
-                  ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildSecurityBadge(Icons.https, '256-bit'),
+                    _buildSecurityBadge(Icons.verified_user, 'PCI DSS'),
+                    _buildSecurityBadge(Icons.shield, 'Protegido'),
+                  ],
                 ),
               ],
             ),
@@ -3118,6 +3155,333 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildEnhancedInput({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    IconData? prefixIcon,
+    TextInputType? keyboardType,
+    Function(String)? onChanged,
+    int? maxLength,
+    String? helperText,
+    TextCapitalization textCapitalization = TextCapitalization.none,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            if (prefixIcon != null) ...[
+              Icon(prefixIcon, size: 16, color: Colors.grey[600]),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[700],
+                letterSpacing: 0.3,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TextFormField(
+            controller: controller,
+            keyboardType: keyboardType,
+            onChanged: onChanged,
+            maxLength: maxLength,
+            textCapitalization: textCapitalization,
+            cursorColor: AppColors.primaryGreen,
+            style: const TextStyle(
+              fontSize: 15,
+              color: Color(0xFF2D3436),
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.5,
+            ),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: TextStyle(
+                color: Colors.grey[400],
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                letterSpacing: 0.3,
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              counterText: '',
+              helperText: helperText,
+              helperStyle: TextStyle(
+                fontSize: 11,
+                color: Colors.grey[500],
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: const Color(0xFFE8ECEF),
+                  width: 1,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: const Color(0xFFE8ECEF),
+                  width: 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: AppColors.primaryGreen,
+                  width: 1.5,
+                ),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Colors.red[400]!,
+                  width: 1,
+                ),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCreditCardPreview() {
+    final cardNumber = _cardNumberController.text.isEmpty 
+        ? '•••• •••• •••• ••••' 
+        : _cardNumberController.text.padRight(19, '•');
+    final cardHolder = _cardHolderController.text.isEmpty 
+        ? 'NOME DO TITULAR' 
+        : _cardHolderController.text.toUpperCase();
+    final expiry = _expiryDateController.text.isEmpty 
+        ? 'MM/AA' 
+        : _expiryDateController.text;
+
+    return Container(
+      height: 200,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF1E3C72),
+            const Color(0xFF2A5298),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1E3C72).withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Card chip and logo
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                width: 50,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.amber[300],
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(
+                  Icons.memory,
+                  color: Colors.amber[700],
+                  size: 24,
+                ),
+              ),
+              Icon(
+                Icons.contactless,
+                color: Colors.white,
+                size: 28,
+              ),
+            ],
+          ),
+          
+          // Card number
+          Text(
+            cardNumber,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 2,
+            ),
+          ),
+          
+          // Card holder and expiry
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'TITULAR',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 10,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    cardHolder,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'VALIDADE',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 10,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    expiry,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInstallmentSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.payment, size: 16, color: Colors.grey[600]),
+            const SizedBox(width: 6),
+            Text(
+              'Parcelamento',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[700],
+                letterSpacing: 0.3,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: const Color(0xFFE8ECEF),
+              width: 1,
+            ),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<int>(
+              value: _cardInstallments,
+              isExpanded: true,
+              icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
+              style: const TextStyle(
+                fontSize: 15,
+                color: Color(0xFF2D3436),
+                fontWeight: FontWeight.w500,
+              ),
+              items: List.generate(12, (index) {
+                final installment = index + 1;
+                final installmentValue = _targetPrice / installment;
+                return DropdownMenuItem(
+                  value: installment,
+                  child: Text(
+                    installment == 1 
+                        ? 'À vista - ${_formatCurrency(_targetPrice)}'
+                        : '${installment}x de ${_formatCurrency(installmentValue)} sem juros',
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                );
+              }),
+              onChanged: (value) {
+                setState(() {
+                  _cardInstallments = value ?? 1;
+                });
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSecurityBadge(IconData icon, String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: AppColors.primaryGreen),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[700],
+            ),
+          ),
+        ],
+      ),
     );
   }
   
