@@ -58,7 +58,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   final _cardHolderController = TextEditingController();
   final _expiryDateController = TextEditingController();
   final _cvvController = TextEditingController();
-  int _cardInstallments = 1;
   String _pixCode = '';
   bool _pixCodeGenerated = false;
   bool _pixCopied = false;
@@ -2169,7 +2168,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           selectedDate: _selectedDate ?? DateTime.now(),
           selectedTime: _selectedTime ?? '',
           paymentMethod: _selectedPaymentMethod,
-          installments: _selectedPaymentMethod == 'credit_card' ? _cardInstallments : null,
         ),
       ),
     );
