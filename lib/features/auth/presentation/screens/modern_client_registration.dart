@@ -354,7 +354,7 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
       builder: (context) => _SuccessDialog(
         onContinue: () {
           Navigator.of(context).pushNamedAndRemoveUntil(
-            '/home',
+            '/services',
             (route) => false,
           );
         },
