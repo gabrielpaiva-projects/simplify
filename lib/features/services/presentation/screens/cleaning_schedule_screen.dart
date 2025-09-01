@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
+import 'dart:convert';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../providers/cleaning_pricing_provider.dart';
 import '../../data/models/cleaning_pricing_model.dart';
 import '../../data/enums/cleaning_type.dart';
 import 'payment_confirmation_screen.dart';
+import '../../../../services/payment_service.dart';
+import '../../../../models/payment_response.dart';
+import '../../../../utils/card_validator.dart';
 
 class CleaningScheduleScreen extends StatefulWidget {
   final String serviceTitle;
@@ -2128,25 +2133,62 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   void _processPixPayment() async {
     HapticFeedback.mediumImpact();
 
-    // Simula processamento da API para gerar código PIX
     setState(() {
       _isProcessingPix = true;
     });
 
-    // Simula delay da API
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      // Get current user
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        throw Exception('Usuário não autenticado');
+      }
 
-    if (!mounted) return;
+      // Process PIX payment via API
+      final response = await PaymentService.processPixPayment(
+        userId: currentUser.uid,
+        amount: _targetPrice,
+        description: 'Agendamento: ${widget.serviceTitle}',
+      );
 
-    setState(() {
-      _isProcessingPix = false;
-    });
+      if (!mounted) return;
 
-    // Abre modal com código PIX
-    _showPixPaymentModal();
+      if (response.success && response.data != null) {
+        setState(() {
+          _pixCode = response.data!.qrCode;
+          _pixCodeGenerated = true;
+          _isProcessingPix = false;
+        });
+        
+        // Show PIX modal with real data
+        _showPixPaymentModalWithData(response.data!);
+      } else {
+        setState(() {
+          _isProcessingPix = false;
+        });
+        _showErrorMessage(response.error ?? 'Erro ao gerar código PIX');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isProcessingPix = false;
+        });
+        _showErrorMessage('Erro: ${e.toString()}');
+      }
+    }
+  }
+  
+  void _showErrorMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 4),
+      ),
+    );
   }
 
-    void _showPixPaymentModal() {
+  void _showPixPaymentModal() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -2154,23 +2196,440 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       builder: (context) => _buildPixPaymentModal(),
     );
   }
-
-  void _confirmSchedule() {
-    HapticFeedback.mediumImpact();
-    
-    // Navigate to confirmation screen
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PaymentConfirmationScreen(
-          serviceTitle: widget.serviceTitle,
-          totalAmount: _targetPrice,
-          selectedDate: _selectedDate ?? DateTime.now(),
-          selectedTime: _selectedTime ?? '',
-          paymentMethod: _selectedPaymentMethod,
+  
+  void _showPixPaymentModalWithData(PixPaymentResponse pixResponse) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      isDismissible: false,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.85,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(24),
+            topRight: Radius.circular(24),
+          ),
+        ),
+        child: Column(
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF00BFA5),
+                    const Color(0xFF00BFA5).withOpacity(0.8),
+                  ],
+                ),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(24),
+                  topRight: Radius.circular(24),
+                ),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.pix,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'PIX Gerado com Sucesso!',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'ID: ${pixResponse.paymentId}',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.white.withOpacity(0.9),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            
+            // Content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    // QR Code
+                    if (pixResponse.qrCodeBase64.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: const Color(0xFF00BFA5).withOpacity(0.2),
+                            width: 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Image.memory(
+                          base64Decode(pixResponse.qrCodeBase64),
+                          width: 250,
+                          height: 250,
+                        ),
+                      ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Amount
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFB),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Valor a pagar',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Color(0xFF74788D),
+                            ),
+                          ),
+                          Text(
+                            'R\$ ${pixResponse.amount.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF00BFA5),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // PIX Code
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(0xFFE8ECEF),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.content_copy, size: 18, color: Colors.grey[600]),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Código PIX Copia e Cola',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey[700],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            pixResponse.qrCode,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontFamily: 'monospace',
+                              color: Color(0xFF2D3436),
+                            ),
+                            maxLines: 4,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Copy button
+                    GestureDetector(
+                      onTap: () {
+                        Clipboard.setData(ClipboardData(text: pixResponse.qrCode));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Código PIX copiado!'),
+                            backgroundColor: Color(0xFF00BFA5),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              const Color(0xFF00BFA5),
+                              const Color(0xFF00BFA5).withOpacity(0.8),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF00BFA5).withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.copy, color: Colors.white, size: 20),
+                            SizedBox(width: 8),
+                            Text(
+                              'Copiar Código PIX',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Expiration info
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.timer, size: 16, color: Colors.orange[700]),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Este código expira em ${_formatExpirationTime(pixResponse.expirationDate)}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.orange[700],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Confirm button
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _confirmSchedule();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryGreen,
+                        minimumSize: const Size(double.infinity, 48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Confirmar Agendamento',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
+  }
+  
+  String _formatExpirationTime(String expirationDate) {
+    try {
+      final expiration = DateTime.parse(expirationDate);
+      final now = DateTime.now();
+      final difference = expiration.difference(now);
+      
+      if (difference.inMinutes < 60) {
+        return '${difference.inMinutes} minutos';
+      } else {
+        final hours = difference.inHours;
+        return '$hours ${hours == 1 ? 'hora' : 'horas'}';
+      }
+    } catch (e) {
+      return '30 minutos';
+    }
+  }
+
+  void _confirmSchedule() async {
+    HapticFeedback.mediumImpact();
+    
+    // For credit card payment
+    if (_selectedPaymentMethod == 'credit_card') {
+      // Validate card fields
+      if (_cardNumberController.text.length < 16 ||
+          _cardHolderController.text.isEmpty ||
+          _expiryDateController.text.length < 5 ||
+          _cvvController.text.length < 3) {
+        _showErrorMessage('Por favor, preencha todos os campos do cartão');
+        return;
+      }
+      
+      setState(() {
+        _isProcessingPix = true; // Using same flag for loading state
+      });
+      
+      try {
+        // Get current user
+        final currentUser = FirebaseAuth.instance.currentUser;
+        if (currentUser == null) {
+          throw Exception('Usuário não autenticado');
+        }
+        
+        // Extract expiry date parts
+        final expiryParts = _expiryDateController.text.split('/');
+        final expiryMonth = expiryParts[0];
+        final expiryYear = '20${expiryParts[1]}'; // Convert YY to YYYY
+        
+        // Process card payment via API
+        final response = await PaymentService.processCardPayment(
+          userId: currentUser.uid,
+          amount: _targetPrice,
+          cardNumber: _cardNumberController.text.replaceAll(' ', ''),
+          expirationYear: expiryYear,
+          expirationMonth: expiryMonth,
+          securityCode: _cvvController.text,
+          installments: 1,
+          description: 'Agendamento: ${widget.serviceTitle}',
+        );
+        
+        if (!mounted) return;
+        
+        setState(() {
+          _isProcessingPix = false;
+        });
+        
+        if (response.success && response.data != null) {
+          if (response.data!.isApproved) {
+            // Payment approved - navigate to confirmation
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PaymentConfirmationScreen(
+                  serviceTitle: widget.serviceTitle,
+                  totalAmount: _targetPrice,
+                  selectedDate: _selectedDate ?? DateTime.now(),
+                  selectedTime: _selectedTime ?? '',
+                  paymentMethod: _selectedPaymentMethod,
+                ),
+              ),
+            );
+          } else {
+            _showErrorMessage('Pagamento recusado: ${response.data!.statusDetail}');
+          }
+        } else {
+          _showErrorMessage(response.error ?? 'Erro ao processar pagamento');
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isProcessingPix = false;
+          });
+          _showErrorMessage('Erro: ${e.toString()}');
+        }
+      }
+    } else {
+      // For PIX, just navigate to confirmation after showing QR code
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PaymentConfirmationScreen(
+            serviceTitle: widget.serviceTitle,
+            totalAmount: _targetPrice,
+            selectedDate: _selectedDate ?? DateTime.now(),
+            selectedTime: _selectedTime ?? '',
+            paymentMethod: _selectedPaymentMethod,
+          ),
+        ),
+      );
+    }
   }
   
   Widget _buildPaymentPage() {
