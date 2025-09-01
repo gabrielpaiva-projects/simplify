@@ -479,4 +479,4 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen>
   String _formatCurrency(double value) {
     return 'R\$ ${value.toStringAsFixed(2).replaceAll('.', ',')}';
   }
-  
+}
