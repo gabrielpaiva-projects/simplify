@@ -28,6 +28,14 @@ class PaymentService {
         userId: userId,
         amount: amount,
       );
+      
+      // DEBUG: Log da badge e dados
+      print('=== DEBUG PIX PAYMENT ===');
+      print('UserId: $userId');
+      print('Amount: $amount');
+      print('Badge gerada: $badge');
+      print('Badge length: ${badge.length}');
+      print('========================');
 
       // Obtém a URL da API (pode ser configurada dinamicamente)
       final apiUrl = await SecureConfig.getApiBaseUrl();
@@ -37,6 +45,11 @@ class PaymentService {
       final body = jsonEncode({
         'description': description,
       });
+      
+      // DEBUG: Log da requisição
+      print('URL: $url');
+      print('Headers: ${_getHeaders(badge)}');
+      print('Body: $body');
 
       // Faz a requisição
       final response = await http.post(
@@ -44,6 +57,10 @@ class PaymentService {
         headers: _getHeaders(badge),
         body: body,
       );
+      
+      // DEBUG: Log da resposta
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
 
       // Processa a resposta
       if (response.statusCode == 200 || response.statusCode == 201) {

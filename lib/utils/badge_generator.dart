@@ -101,16 +101,17 @@ class BadgeGenerator {
     final passwordBytes = utf8.encode(password);
     final totalLen = keyLen + ivLen;
     final derived = <int>[];
-    var lastHash = <int>[];
+    var data = <int>[];
 
+    // Primeira iteração
+    data = [...passwordBytes, ...salt];
+    
     while (derived.length < totalLen) {
-      final hash = md5.convert([
-        ...lastHash,
-        ...passwordBytes,
-        ...salt,
-      ]);
-      lastHash = hash.bytes;
-      derived.addAll(lastHash);
+      final hash = md5.convert(data);
+      derived.addAll(hash.bytes);
+      
+      // Próximas iterações usam hash anterior + password + salt
+      data = [...hash.bytes, ...passwordBytes, ...salt];
     }
 
     return Uint8List.fromList(derived.sublist(0, totalLen));
