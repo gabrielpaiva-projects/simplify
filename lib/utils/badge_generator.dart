@@ -9,7 +9,10 @@ import 'package:encrypt/encrypt.dart';
 class BadgeGenerator {
   /// Chave secreta para criptografia
   /// IMPORTANTE: Em produção, obtenha isso de forma segura!
-  static const String _secretKey = 'your-secret-key-here-change-in-production';
+  // Para desenvolvimento:
+  static const String _secretKey = 'default-secret-key';
+  // Para produção (altere quando for para produção):
+  // static const String _secretKey = 'your-secret-key-here-change-in-production';
 
   /// Gera uma badge criptografada para pagamento PIX
   static String generatePixBadge({
