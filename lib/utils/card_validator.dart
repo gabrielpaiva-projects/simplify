@@ -95,8 +95,9 @@ class CardValidator {
   static CardBrand detectCardBrand(String cardNumber) {
     final cleaned = cardNumber.replaceAll(RegExp(r'\D'), '');
     
-    // Usa a biblioteca para detectar a bandeira
-    final detectedBrand = CreditCardFlagDetector.detectCreditCardFlag(cleaned);
+    // Usa a biblioteca para detectar a bandeira (API v1.0.0+6)
+    final detector = CreditCardFlagDetector();
+    final detectedBrand = detector.detectFlag(cleaned);
     
     // Mapeia para o enum CardBrand
     switch (detectedBrand) {
