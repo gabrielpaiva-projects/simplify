@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
+import 'dart:convert';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../services/payment_service.dart';
+import '../../../../models/payment_response.dart';
+import '../../../../utils/card_validator.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 enum PaymentMethod { pix, creditCard }
 
@@ -174,10 +179,11 @@ class _PaymentScreenState extends State<PaymentScreen>
     super.dispose();
   }
 
-  void _generatePixCode() {
+  void _generatePixCode() async {
+    // PIX code will be generated when payment is processed
     setState(() {
-      _pixCodeGenerated = true;
-      _pixCode = '00020126360014BR.GOV.BCB.PIX0114+5511999999999520400005303986540${widget.totalAmount.toStringAsFixed(2)}5802BR5925NOME DO RECEBEDOR6009SAO PAULO62070503***6304A1B2';
+      _pixCodeGenerated = false;
+      _pixCode = '';
     });
   }
 
@@ -214,16 +220,200 @@ class _PaymentScreenState extends State<PaymentScreen>
 
     HapticFeedback.mediumImpact();
 
-    // Simula processamento
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      // Get current user ID
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        throw Exception('Usuário não autenticado');
+      }
 
-    if (!mounted) return;
-    
-    setState(() {
-      _isProcessing = false;
-    });
+      if (_selectedPaymentMethod == PaymentMethod.pix) {
+        // Process PIX payment
+        final response = await PaymentService.processPixPayment(
+          userId: currentUser.uid,
+          amount: widget.totalAmount,
+          description: 'Agendamento: ${widget.serviceTitle}',
+        );
 
-    _showSuccessDialog();
+        if (!mounted) return;
+
+        if (response.success && response.data != null) {
+          setState(() {
+            _pixCode = response.data!.qrCode;
+            _pixCodeGenerated = true;
+          });
+          
+          // Show PIX QR Code in a dialog
+          await _showPixPaymentDialog(response.data!);
+        } else {
+          _showErrorMessage(response.error ?? 'Erro ao processar pagamento PIX');
+        }
+      } else {
+        // Process Card payment
+        final expiryParts = _expiryDateController.text.split('/');
+        final expiryMonth = expiryParts[0];
+        final expiryYear = '20${expiryParts[1]}'; // Convert YY to YYYY
+
+        final response = await PaymentService.processCardPayment(
+          userId: currentUser.uid,
+          amount: widget.totalAmount,
+          cardNumber: _cardNumberController.text.replaceAll(' ', ''),
+          expirationYear: expiryYear,
+          expirationMonth: expiryMonth,
+          securityCode: _cvvController.text,
+          installments: _cardInstallments,
+          description: 'Agendamento: ${widget.serviceTitle}',
+        );
+
+        if (!mounted) return;
+
+        if (response.success && response.data != null) {
+          if (response.data!.isApproved) {
+            _showSuccessDialog();
+          } else {
+            _showErrorMessage('Pagamento recusado: ${response.data!.statusDetail}');
+          }
+        } else {
+          _showErrorMessage(response.error ?? 'Erro ao processar pagamento com cartão');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorMessage('Erro: ${e.toString()}');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
+    }
+  }
+
+  void _showErrorMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+
+  Future<void> _showPixPaymentDialog(PixPaymentResponse pixResponse) async {
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // QR Code
+              if (pixResponse.qrCodeBase64.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: AppColors.primaryGreen.withOpacity(0.2),
+                      width: 2,
+                    ),
+                  ),
+                  child: Image.memory(
+                    base64Decode(pixResponse.qrCodeBase64),
+                    width: 200,
+                    height: 200,
+                  ),
+                ),
+              
+              const SizedBox(height: 24),
+              
+              Text(
+                'PIX Gerado com Sucesso!',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF2D3436),
+                ),
+              ),
+              
+              const SizedBox(height: 12),
+              
+              Text(
+                'Valor: R\$ ${pixResponse.amount.toStringAsFixed(2)}',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primaryGreen,
+                ),
+              ),
+              
+              const SizedBox(height: 8),
+              
+              Text(
+                'ID do Pagamento: ${pixResponse.paymentId}',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Copy button
+              OutlinedButton.icon(
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: pixResponse.qrCode));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Código PIX copiado!'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.copy),
+                label: const Text('Copiar código PIX'),
+              ),
+              
+              const SizedBox(height: 24),
+              
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('Cancelar'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      _showSuccessDialog();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryGreen,
+                    ),
+                    child: const Text(
+                      'Confirmar Pagamento',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _showSuccessDialog() {
@@ -803,8 +993,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                 width: 2,
               ),
             ),
-            child: _pixCodeGenerated
-                ? Stack(
+            child: Stack(
                     alignment: Alignment.center,
                     children: [
                       Icon(
@@ -832,9 +1021,6 @@ class _PaymentScreenState extends State<PaymentScreen>
                         ),
                       ),
                     ],
-                  )
-                : CircularProgressIndicator(
-                    color: AppColors.primaryGreen,
                   ),
           ),
           

@@ -82,6 +82,12 @@ dependencies:
   firebase_auth: ^5.3.3
   cloud_firestore: ^5.5.0
   intl: ^0.20.2
+  
+  # Payment and encryption
+  crypto: ^3.0.3
+  encrypt: ^5.0.3
+  flutter_secure_storage: ^9.0.0
+  credit_card_flag_detector: ^2.0.0
 
 dev_dependencies:
   flutter_test:
