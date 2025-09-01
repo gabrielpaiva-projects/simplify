@@ -10,7 +10,7 @@ class SecureConfig {
   static const String _environmentKey = 'environment';
   
   // Valores padrão
-  static const String _defaultCryptoKey = 'your-secret-key-here-change-in-production';
+  static const String _defaultCryptoKey = '75bdb50d-b14c-4b8e-b196-8576b5b013e0';
   static const String _defaultApiBaseUrl = 'https://simplify-backend-paas.onrender.com';
   
   /// Ambiente atual (dev, staging, production)

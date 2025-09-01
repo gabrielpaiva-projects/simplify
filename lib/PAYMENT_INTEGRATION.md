@@ -29,8 +29,8 @@ A integração de pagamento via PIX e Cartão de Crédito está **COMPLETA e FUN
 ## 🔐 Segurança
 
 ### Chave de Criptografia
-- **Desenvolvimento**: `'default-secret-key'`
-- **Produção**: `'your-secret-key-here-change-in-production'`
+- **Atual**: `'75bdb50d-b14c-4b8e-b196-8576b5b013e0'`
+- **Nota**: Deve ser a mesma configurada no backend!
 
 ⚠️ **IMPORTANTE**: A chave deve ser a mesma configurada no backend!
 
