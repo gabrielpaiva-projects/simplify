@@ -1,4 +1,3 @@
-import 'package:credit_card_flag_detector/credit_card_flag_detector.dart';
 import '../models/badge_models.dart';
 
 /// Classe para validação de cartões de crédito
@@ -91,29 +90,39 @@ class CardValidator {
     return cleaned.length == 3 || cleaned.length == 4;
   }
 
-  /// Detecta a bandeira do cartão usando a biblioteca credit_card_flag_detector
+  /// Detecta a bandeira do cartão baseado nos primeiros dígitos
   static CardBrand detectCardBrand(String cardNumber) {
     final cleaned = cardNumber.replaceAll(RegExp(r'\D'), '');
     
-    // Usa a biblioteca para detectar a bandeira (API v1.0.0+6)
-    final detector = CreditCardFlagDetector();
-    final detectedBrand = detector.detectFlag(cleaned);
+    if (cleaned.isEmpty) return CardBrand.unknown;
     
-    // Mapeia para o enum CardBrand
-    switch (detectedBrand) {
-      case CreditCardFlag.mastercard:
-        return CardBrand.mastercard;
-      case CreditCardFlag.visa:
-        return CardBrand.visa;
-      case CreditCardFlag.americanExpress:
-        return CardBrand.amex;
-      case CreditCardFlag.elo:
-        return CardBrand.elo;
-      case CreditCardFlag.hipercard:
-        return CardBrand.hipercard;
-      default:
-        return CardBrand.unknown;
+    // Visa: começa com 4
+    if (cleaned.startsWith('4')) {
+      return CardBrand.visa;
     }
+    
+    // Mastercard: começa com 51-55 ou 2221-2720
+    if (RegExp(r'^5[1-5]').hasMatch(cleaned) ||
+        RegExp(r'^2(22[1-9]|2[3-9][0-9]|[3-6][0-9]{2}|7[0-1][0-9]|720)').hasMatch(cleaned)) {
+      return CardBrand.mastercard;
+    }
+    
+    // American Express: começa com 34 ou 37
+    if (cleaned.startsWith('34') || cleaned.startsWith('37')) {
+      return CardBrand.amex;
+    }
+    
+    // Elo: vários ranges específicos
+    if (RegExp(r'^(4011|4312|4389|4514|4576|5041|5066|5067|5090|6277|6362|6363|6504|6505|6506|6507|6509|6516|6550)').hasMatch(cleaned)) {
+      return CardBrand.elo;
+    }
+    
+    // Hipercard: começa com 6062
+    if (cleaned.startsWith('6062')) {
+      return CardBrand.hipercard;
+    }
+    
+    return CardBrand.unknown;
   }
 
   /// Formata o número do cartão para exibição
