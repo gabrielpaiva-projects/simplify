@@ -28,21 +28,46 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
     with SingleTickerProviderStateMixin {
   
   late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _slideAnimation;
+  
   bool _codeCopied = false;
   Timer? _expirationTimer;
   int _minutesRemaining = 30;
   int _secondsRemaining = 0;
-  int _selectedTab = 0; // 0 = QR Code, 1 = Copia e Cola
+  late String _orderNumber;
   
   @override
   void initState() {
     super.initState();
+    _orderNumber = DateTime.now().millisecondsSinceEpoch.toString().substring(6, 12);
+    _initializeAnimations();
+    _startExpirationTimer();
+  }
+  
+  void _initializeAnimations() {
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 600),
       vsync: this,
     );
+    
+    _fadeAnimation = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
+    ));
+    
+    _slideAnimation = Tween<double>(
+      begin: 20,
+      end: 0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    ));
+    
     _animationController.forward();
-    _startExpirationTimer();
   }
   
   void _startExpirationTimer() {
@@ -79,136 +104,182 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Compact Header
-            _buildHeader(),
-            
-            // Main Content
-            Expanded(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 24),
-                      
-                      // Amount Display - Clear hierarchy
-                      _buildAmountDisplay(),
-                      
-                      const SizedBox(height: 32),
-                      
-                      // Payment Tabs
-                      _buildPaymentTabs(),
-                      
-                      const SizedBox(height: 24),
-                      
-                      // Payment Content (QR or Code)
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 200),
-                        child: _selectedTab == 0
-                            ? _buildQRCodeView()
-                            : _buildCopyCodeView(),
-                      ),
-                      
-                      const SizedBox(height: 32),
-                      
-                      // Timer Info
-                      _buildTimerInfo(),
-                      
-                      const SizedBox(height: 24),
-                      
-                      // Quick Instructions
-                      _buildQuickInstructions(),
-                      
-                      const SizedBox(height: 100),
-                    ],
-                  ),
+      backgroundColor: const Color(0xFFFAFBFC),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          onPressed: () => Navigator.of(context).pop(),
+          icon: Icon(
+            Icons.close,
+            color: Colors.grey[700],
+          ),
+        ),
+        title: Text(
+          'Pagamento PIX',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[900],
+          ),
+        ),
+        centerTitle: true,
+        actions: [
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: Text(
+                '#$_orderNumber',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-      
-      // Fixed Bottom CTA
-      bottomNavigationBar: _buildBottomCTA(),
+      body: AnimatedBuilder(
+        animation: _animationController,
+        builder: (context, child) {
+          return FadeTransition(
+            opacity: _fadeAnimation,
+            child: Transform.translate(
+              offset: Offset(0, _slideAnimation.value),
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    // PIX Header
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 32),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Container(
+                            width: 72,
+                            height: 72,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF32BCAD).withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.pix,
+                              size: 40,
+                              color: Color(0xFF32BCAD),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Pague com PIX',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.grey[900],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'R\$ ${widget.amount.toStringAsFixed(2).replaceAll('.', ',')}',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primaryGreen,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        children: [
+                          // Timer Status
+                          _buildTimerStatus(),
+                          
+                          const SizedBox(height: 20),
+                          
+                          // QR Code Section
+                          _buildQRCodeSection(),
+                          
+                          const SizedBox(height: 20),
+                          
+                          // Copy Code Section
+                          _buildCopyCodeSection(),
+                          
+                          const SizedBox(height: 20),
+                          
+                          // Instructions
+                          _buildInstructions(),
+                          
+                          const SizedBox(height: 20),
+                          
+                          // Service Info
+                          _buildServiceInfo(),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+      bottomNavigationBar: _buildBottomBar(),
     );
   }
   
-  Widget _buildHeader() {
+  Widget _buildTimerStatus() {
+    final isUrgent = _minutesRemaining < 5;
+    
     return Container(
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: Colors.grey.shade200,
-            width: 1,
-          ),
+        color: isUrgent ? Colors.orange.shade50 : Colors.blue.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isUrgent ? Colors.orange.shade200 : Colors.blue.shade200,
+          width: 1,
         ),
       ),
       child: Row(
         children: [
-          IconButton(
-            onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.arrow_back, size: 24),
-            padding: EdgeInsets.zero,
+          Icon(
+            Icons.timer_outlined,
+            size: 20,
+            color: isUrgent ? Colors.orange[700] : Colors.blue[700],
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Pagamento PIX',
+                Text(
+                  'Tempo para pagamento',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF1A1F36),
+                    color: isUrgent ? Colors.orange[900] : Colors.blue[900],
                   ),
                 ),
+                const SizedBox(height: 4),
                 Text(
-                  widget.serviceTitle,
+                  'Este código expira em ${_minutesRemaining.toString().padLeft(2, '0')}:${_secondsRemaining.toString().padLeft(2, '0')}',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: AppColors.primaryGreen.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryGreen,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  'Aguardando',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primaryGreen,
+                    color: isUrgent ? Colors.orange[700] : Colors.blue[700],
                   ),
                 ),
               ],
@@ -219,17 +290,16 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
     );
   }
   
-  Widget _buildAmountDisplay() {
+  Widget _buildQRCodeSection() {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF000000).withOpacity(0.04),
-            blurRadius: 8,
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
             offset: const Offset(0, 2),
           ),
         ],
@@ -237,167 +307,18 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
       child: Column(
         children: [
           Text(
-            'Total a pagar',
+            'QR Code PIX',
             style: TextStyle(
-              fontSize: 13,
-              color: Colors.grey.shade600,
-              fontWeight: FontWeight.w500,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[900],
             ),
           ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: Text(
-                  'R\$',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey.shade700,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                widget.amount.toStringAsFixed(2).replaceAll('.', ','),
-                style: const TextStyle(
-                  fontSize: 36,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF1A1F36),
-                  height: 1,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildPaymentTabs() {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEEF2F5),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _selectedTab = 0),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: _selectedTab == 0 ? Colors.white : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: _selectedTab == 0
-                      ? [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 4,
-                            offset: const Offset(0, 1),
-                          ),
-                        ]
-                      : [],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.qr_code_2,
-                      size: 18,
-                      color: _selectedTab == 0
-                          ? const Color(0xFF1A1F36)
-                          : Colors.grey.shade600,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'QR Code',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: _selectedTab == 0
-                            ? const Color(0xFF1A1F36)
-                            : Colors.grey.shade600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _selectedTab = 1),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: _selectedTab == 1 ? Colors.white : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: _selectedTab == 1
-                      ? [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 4,
-                            offset: const Offset(0, 1),
-                          ),
-                        ]
-                      : [],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.copy,
-                      size: 18,
-                      color: _selectedTab == 1
-                          ? const Color(0xFF1A1F36)
-                          : Colors.grey.shade600,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Copia e Cola',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: _selectedTab == 1
-                            ? const Color(0xFF1A1F36)
-                            : Colors.grey.shade600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildQRCodeView() {
-    return Container(
-      key: const ValueKey(0),
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.grey.shade200,
-          width: 1,
-        ),
-      ),
-      child: Column(
-        children: [
+          const SizedBox(height: 20),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFB),
+              color: Colors.grey[50],
               borderRadius: BorderRadius.circular(12),
             ),
             child: QrImageView(
@@ -405,23 +326,14 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
               version: QrVersions.auto,
               size: 200,
               backgroundColor: Colors.transparent,
-              eyeStyle: const QrEyeStyle(
-                eyeShape: QrEyeShape.square,
-                color: Color(0xFF1A1F36),
-              ),
-              dataModuleStyle: const QrDataModuleStyle(
-                dataModuleShape: QrDataModuleShape.square,
-                color: Color(0xFF1A1F36),
-              ),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           Text(
-            'Aponte a câmera do seu banco',
+            'Escaneie com a câmera do seu banco',
             style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade700,
-              fontWeight: FontWeight.w500,
+              fontSize: 13,
+              color: Colors.grey[600],
             ),
           ),
         ],
@@ -429,75 +341,96 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
     );
   }
   
-  Widget _buildCopyCodeView() {
+  Widget _buildCopyCodeSection() {
     return Container(
-      key: const ValueKey(1),
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: _codeCopied ? AppColors.primaryGreen : Colors.grey.shade200,
+          color: _codeCopied ? AppColors.primaryGreen : Colors.grey[300]!,
           width: _codeCopied ? 2 : 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: _codeCopied 
+                ? AppColors.primaryGreen.withOpacity(0.1)
+                : Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFB),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Colors.grey.shade200,
-                width: 1,
+          Row(
+            children: [
+              Icon(
+                Icons.content_copy,
+                size: 20,
+                color: Colors.grey[700],
               ),
+              const SizedBox(width: 8),
+              Text(
+                'PIX Copia e Cola',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[900],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: Column(
-              children: [
-                Icon(
-                  _codeCopied ? Icons.check_circle : Icons.content_copy,
-                  size: 32,
-                  color: _codeCopied ? AppColors.primaryGreen : Colors.grey.shade400,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  widget.pixCode,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontFamily: 'monospace',
-                    color: Colors.grey.shade700,
-                    height: 1.5,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+            child: Text(
+              widget.pixCode,
+              style: TextStyle(
+                fontSize: 11,
+                fontFamily: 'monospace',
+                color: Colors.grey[700],
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
-            height: 48,
             child: ElevatedButton(
               onPressed: _copyToClipboard,
               style: ElevatedButton.styleFrom(
                 backgroundColor: _codeCopied 
                     ? AppColors.primaryGreen 
-                    : const Color(0xFF1A1F36),
+                    : Colors.grey[800],
                 foregroundColor: Colors.white,
-                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                 ),
+                elevation: 0,
               ),
-              child: Text(
-                _codeCopied ? 'Copiado!' : 'Copiar código PIX',
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    _codeCopied ? Icons.check : Icons.copy,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _codeCopied ? 'Copiado!' : 'Copiar código',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -506,69 +439,51 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
     );
   }
   
-  Widget _buildTimerInfo() {
-    final isUrgent = _minutesRemaining < 5;
-    
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: isUrgent 
-            ? const Color(0xFFFFF4E6) 
-            : const Color(0xFFE8F4FD),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.schedule,
-            size: 20,
-            color: isUrgent 
-                ? const Color(0xFFFF6B00) 
-                : const Color(0xFF0066CC),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'Código expira em ${_minutesRemaining.toString().padLeft(2, '0')}:${_secondsRemaining.toString().padLeft(2, '0')}',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: isUrgent 
-                    ? const Color(0xFFFF6B00) 
-                    : const Color(0xFF0066CC),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildQuickInstructions() {
+  Widget _buildInstructions() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFB),
+        color: Colors.blue[50],
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.blue[200]!,
+          width: 1,
+        ),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            Icons.lightbulb_outline,
+            Icons.info_outline,
             size: 20,
-            color: Colors.grey.shade600,
+            color: Colors.blue[700],
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              _selectedTab == 0
-                  ? 'Abra o app do seu banco e escaneie o QR Code'
-                  : 'Copie o código e cole no app do seu banco',
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey.shade700,
-                height: 1.4,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Como pagar',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.blue[900],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '1. Abra o app do seu banco\n'
+                  '2. Escolha pagar com PIX\n'
+                  '3. Escaneie o QR Code ou cole o código\n'
+                  '4. Confirme o pagamento',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.blue[700],
+                    height: 1.5,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -576,85 +491,90 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
     );
   }
   
-  Widget _buildBottomCTA() {
+  Widget _buildServiceInfo() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          _buildInfoRow('Serviço', widget.serviceTitle),
+          const SizedBox(height: 12),
+          _buildInfoRow('Data', _formatDate(widget.selectedDate)),
+          const SizedBox(height: 12),
+          _buildInfoRow('Horário', widget.selectedTime),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildInfoRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            color: Colors.grey[600],
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: Colors.grey[900],
+          ),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildBottomBar() {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(
-          top: BorderSide(
-            color: Colors.grey.shade200,
-            width: 1,
-          ),
-        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
-            offset: const Offset(0, -3),
+            offset: const Offset(0, -2),
           ),
         ],
       ),
       child: SafeArea(
         top: false,
-        child: Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () => Navigator.of(context).pop(),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  side: BorderSide(
-                    color: Colors.grey.shade300,
-                    width: 1,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  'Cancelar',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade700,
-                  ),
-                ),
-              ),
+        child: ElevatedButton(
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            _showVerificationDialog();
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primaryGreen,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 2,
-              child: ElevatedButton(
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                  _showPaymentConfirmation();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryGreen,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Já paguei',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
+            elevation: 0,
+          ),
+          child: const Text(
+            'Já fiz o pagamento',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
             ),
-          ],
+          ),
         ),
       ),
     );
   }
   
-  void _showPaymentConfirmation() {
+  void _showVerificationDialog() {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -667,39 +587,24 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryGreen.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      valueColor: AlwaysStoppedAnimation(AppColors.primaryGreen),
-                    ),
-                  ),
-                ),
+              const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation(AppColors.primaryGreen),
               ),
-              const SizedBox(height: 20),
-              const Text(
-                'Verificando pagamento',
+              const SizedBox(height: 24),
+              Text(
+                'Verificando pagamento...',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF1A1F36),
+                  color: Colors.grey[900],
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Aguarde um momento...',
+                'Aguarde alguns instantes',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey.shade600,
+                  color: Colors.grey[600],
                 ),
               ),
             ],
@@ -710,6 +615,17 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
     
     Future.delayed(const Duration(seconds: 2), () {
       Navigator.of(context).pop();
+      // Navigate to confirmation
     });
+  }
+  
+  String _formatDate(DateTime date) {
+    final weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    final months = [
+      'jan', 'fev', 'mar', 'abr', 'mai', 'jun',
+      'jul', 'ago', 'set', 'out', 'nov', 'dez'
+    ];
+    
+    return '${weekDays[date.weekday % 7]}, ${date.day} de ${months[date.month - 1]}';
   }
 }
