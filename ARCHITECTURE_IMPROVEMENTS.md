@@ -12,54 +12,77 @@ Este documento descreve as melhorias arquiteturais implementadas para garantir q
 - **Testabilidade**: Cada componente pode ser testado isoladamente
 - **Escalabilidade**: Fácil adicionar novas features sem afetar as existentes
 
-## 📁 Estrutura de Pastas Atualizada
+## 📁 Updated Folder Structure
 
 ```
 lib/
-├── core/                           # Componentes compartilhados
-│   ├── config/                    # Configurações da aplicação
-│   ├── constants/                 # Constantes globais
-│   ├── data/                      # Classes base para data layer
-│   ├── di/                        # Injeção de dependências
-│   ├── errors/                    # Sistema de tratamento de erros
-│   │   ├── exceptions.dart       # Exceções customizadas
-│   │   ├── failures.dart         # Failures para domain layer
-│   │   └── error_handler.dart    # Handler centralizado
-│   ├── navigation/                # Serviço de navegação
-│   ├── network/                   # Configuração de rede
-│   ├── presentation/              # Componentes UI compartilhados
-│   ├── routes/                    # Sistema de roteamento
-│   │   ├── app_routes.dart       # Definição de rotas
-│   │   ├── route_generator.dart  # Gerador de rotas
-│   │   └── route_arguments.dart  # Argumentos de navegação
-│   ├── theme/                     # Tema da aplicação
-│   ├── usecases/                  # Base para use cases
-│   └── utils/                     # Utilitários
+├── core/                           # Shared components
+│   ├── config/                    # App configurations
+│   ├── constants/                 # Global constants
+│   ├── data/                      # Base classes for data layer
+│   ├── di/                        # Dependency injection
+│   ├── errors/                    # Error handling system
+│   │   ├── exceptions.dart       # Custom exceptions
+│   │   ├── failures.dart         # Failures for domain layer
+│   │   └── error_handler.dart    # Centralized handler
+│   ├── navigation/                # Navigation service
+│   ├── network/                   # Network configuration
+│   ├── presentation/              # Shared UI components
+│   ├── routes/                    # Routing system
+│   │   ├── app_routes.dart       # Route definitions
+│   │   ├── route_generator.dart  # Route generator
+│   │   └── route_arguments.dart  # Navigation arguments
+│   ├── theme/                     # App theme
+│   ├── usecases/                  # Base use cases
+│   └── utils/                     # Utilities
 │
-├── features/                       # Features do aplicativo
-│   ├── auth/                      # Módulo de autenticação
-│   │   ├── data/                  # Camada de dados
-│   │   │   ├── models/           # DTOs e modelos
-│   │   │   ├── repositories/     # Implementação de repositórios
-│   │   │   └── services/         # Serviços externos
-│   │   ├── domain/                # Camada de domínio ✨ NOVO
-│   │   │   ├── entities/         # Entidades de negócio
-│   │   │   ├── repositories/     # Interfaces de repositórios
-│   │   │   └── usecases/         # Casos de uso
-│   │   └── presentation/          # Camada de apresentação
-│   │       ├── providers/        # Gerenciamento de estado
-│   │       ├── screens/          # Telas
-│   │       └── widgets/          # Widgets específicos
+├── features/                       # App features
+│   ├── auth/                      # Authentication module
+│   │   ├── data/                  # Data layer
+│   │   │   ├── models/           # DTOs and models
+│   │   │   ├── repositories/     # Repository implementations
+│   │   │   └── services/         # External services
+│   │   ├── domain/                # Domain layer ✨ NEW
+│   │   │   ├── entities/         # Business entities
+│   │   │   ├── repositories/     # Repository interfaces
+│   │   │   └── usecases/         # Use cases
+│   │   └── presentation/          # Presentation layer
+│   │       ├── providers/        # State management
+│   │       ├── screens/          # Screens
+│   │       └── widgets/          # Feature-specific widgets
 │   │
-│   └── services/                  # Módulo de serviços
-│       ├── data/                  # Camada de dados
-│       ├── domain/                # Camada de domínio ✨ NOVO
-│       │   ├── entities/         # Service e Booking entities
-│       │   ├── repositories/     # Service repository interface
-│       │   └── usecases/         # Get services, Create booking
-│       └── presentation/          # Camada de apresentação
+│   ├── services/                  # Services module
+│   │   ├── data/                  # Data layer
+│   │   ├── domain/                # Domain layer ✨ NEW
+│   │   │   ├── entities/         # Service and Booking entities
+│   │   │   ├── repositories/     # Service repository interface
+│   │   │   └── usecases/         # Get services, Create booking
+│   │   └── presentation/          # Presentation layer
+│   │
+│   ├── payment/                   # Payment module ✨ NEW
+│   │   ├── data/                  # Data layer
+│   │   │   ├── models/           # Payment models
+│   │   │   └── services/         # Payment services
+│   │   ├── domain/                # Domain layer
+│   │   │   ├── entities/         # Payment entities
+│   │   │   ├── repositories/     # Payment repository interfaces
+│   │   │   └── usecases/         # Payment use cases
+│   │   └── presentation/          # Presentation layer
+│   │       ├── screens/          # Payment screens
+│   │       └── widgets/          # Payment widgets
+│   │
+│   ├── badge/                     # Badge module ✨ NEW
+│   │   ├── data/                  # Data layer
+│   │   │   └── models/           # Badge models
+│   │   └── domain/                # Domain layer
+│   │       └── entities/         # Badge entities
+│   │
+│   └── splash/                    # Splash screen module
+│       └── presentation/          # Presentation layer
+│           └── screens/          # Splash screen
 │
-└── main.dart                      # Ponto de entrada
+├── utils/                          # Global utilities
+└── main.dart                      # Entry point
 ```
 
 ## 🎯 Melhorias Implementadas
@@ -130,12 +153,12 @@ test/
 3. **Performance**: Lazy loading e injeção sob demanda
 4. **Reuso de código**: Componentes compartilhados em `/core`
 
-## 📝 Como Adicionar uma Nova Feature
+## 📝 How to Add a New Feature
 
-1. **Criar estrutura de pastas**:
+1. **Create folder structure**:
 ```bash
 features/
-└── nova_feature/
+└── new_feature/
     ├── data/
     │   ├── models/
     │   ├── repositories/

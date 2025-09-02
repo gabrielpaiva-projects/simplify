@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../services/payment_service.dart';
-import '../models/payment_response.dart';
+import '../../data/services/payment_service.dart';
+import '../../data/models/payment_response.dart';
 
 class PixPaymentScreen extends StatefulWidget {
   final String userId;

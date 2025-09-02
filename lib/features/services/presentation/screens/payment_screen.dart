@@ -3,8 +3,8 @@ import 'package:flutter/services.dart';
 import 'dart:math' as math;
 import 'dart:convert';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../services/payment_service.dart';
-import '../../../../models/payment_response.dart';
+import '../../../payment/data/services/payment_service.dart';
+import '../../../payment/data/models/payment_response.dart';
 import '../../../../utils/card_validator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
