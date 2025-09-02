@@ -290,10 +290,19 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen>
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Procurando os melhores na sua região',
+                      'Você será notificado quando encontrarmos um profissional',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.orange[700],
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Você pode fechar essa tela',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.orange[600],
+                        fontStyle: FontStyle.italic,
                       ),
                     ),
                   ],
