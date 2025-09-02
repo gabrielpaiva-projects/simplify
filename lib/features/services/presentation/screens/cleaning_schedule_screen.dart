@@ -2015,12 +2015,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                       if (_currentPage < 2) {
                         _goToNextPage();
                       } else {
-                        // Página de pagamento
-                        if (_selectedPaymentMethod == 'pix') {
-                          _processPixPayment();
-                        } else {
-                          _confirmSchedule();
-                        }
+                        // Página de pagamento - sempre chama _confirmSchedule que já tem a lógica correta
+                        _confirmSchedule();
                       }
                     } : null,
                     borderRadius: BorderRadius.circular(12),
@@ -2615,20 +2611,9 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           _showErrorMessage('Erro: ${e.toString()}');
         }
       }
-    } else {
-      // For PIX, just navigate to confirmation after showing QR code
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PaymentConfirmationScreen(
-            serviceTitle: widget.serviceTitle,
-            totalAmount: _targetPrice,
-            selectedDate: _selectedDate ?? DateTime.now(),
-            selectedTime: _selectedTime ?? '',
-            paymentMethod: _selectedPaymentMethod,
-          ),
-        ),
-      );
+    } else if (_selectedPaymentMethod == 'pix') {
+      // For PIX payment, process the PIX first
+      _processPixPayment();
     }
   }
   
