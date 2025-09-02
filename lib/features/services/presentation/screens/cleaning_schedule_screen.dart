@@ -11,8 +11,8 @@ import '../../data/models/cleaning_pricing_model.dart';
 import '../../data/enums/cleaning_type.dart';
 import 'payment_confirmation_screen.dart';
 import 'pix_payment_screen.dart';
-import '../../../../services/payment_service.dart';
-import '../../../../models/payment_response.dart';
+import '../../../payment/data/services/payment_service.dart';
+import '../../../payment/data/models/payment_response.dart';
 import '../../../../utils/card_validator.dart';
 
 class CleaningScheduleScreen extends StatefulWidget {
