@@ -50,6 +50,9 @@ dependencies:
   # Permission handler
   permission_handler: ^11.3.0
   
+  # QR Code generator
+  qr_flutter: ^4.1.0
+  
   # State management
   provider: ^6.1.1
   

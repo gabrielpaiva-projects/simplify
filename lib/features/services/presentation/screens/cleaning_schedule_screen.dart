@@ -10,6 +10,7 @@ import '../providers/cleaning_pricing_provider.dart';
 import '../../data/models/cleaning_pricing_model.dart';
 import '../../data/enums/cleaning_type.dart';
 import 'payment_confirmation_screen.dart';
+import 'pix_payment_screen.dart';
 import '../../../../services/payment_service.dart';
 import '../../../../models/payment_response.dart';
 import '../../../../utils/card_validator.dart';
@@ -2156,8 +2157,19 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           _isProcessingPix = false;
         });
         
-        // Show PIX modal with real data
-        _showPixPaymentModalWithData(response.data!);
+        // Navigate to PIX payment screen with real data
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PixPaymentScreen(
+              pixCode: response.data!.qrCode,
+              amount: _targetPrice,
+              serviceTitle: widget.serviceTitle,
+              selectedDate: _selectedDate ?? DateTime.now(),
+              selectedTime: _selectedTime ?? '09:00',
+            ),
+          ),
+        );
       } else {
         setState(() {
           _isProcessingPix = false;

@@ -17,9 +17,13 @@ class BadgeGenerator {
     required double amount,
     int? timestamp,
   }) {
+    // Formata o amount para evitar problemas de precisão de ponto flutuante
+    // Arredonda para 2 casas decimais e converte para double novamente
+    final formattedAmount = double.parse(amount.toStringAsFixed(2));
+    
     final payload = {
       'userId': userId,
-      'amount': amount,
+      'amount': formattedAmount,
       'timestamp': timestamp ?? DateTime.now().millisecondsSinceEpoch,
     };
 
@@ -45,9 +49,13 @@ class BadgeGenerator {
     print('CVV: ${securityCode.length} digits');
     print('Installments: $installments');
     
+    // Formata o amount para evitar problemas de precisão de ponto flutuante
+    // Arredonda para 2 casas decimais e converte para double novamente
+    final formattedAmount = double.parse(amount.toStringAsFixed(2));
+    
     final payload = {
       'userId': userId,
-      'amount': amount,
+      'amount': formattedAmount,
       'cardNumber': cardNumber.replaceAll(' ', ''),
       'expirationYear': expirationYear,
       'expirationMonth': expirationMonth,
