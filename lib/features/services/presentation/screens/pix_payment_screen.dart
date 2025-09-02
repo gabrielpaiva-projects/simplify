@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
-import 'package:qr_flutter/qr_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
 
 class PixPaymentScreen extends StatefulWidget {
@@ -210,11 +209,6 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
                           
                           const SizedBox(height: 20),
                           
-                          // QR Code Section
-                          _buildQRCodeSection(),
-                          
-                          const SizedBox(height: 20),
-                          
                           // Copy Code Section
                           _buildCopyCodeSection(),
                           
@@ -283,57 +277,6 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
                   ),
                 ),
               ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildQRCodeSection() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Text(
-            'QR Code PIX',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[900],
-            ),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: QrImageView(
-              data: widget.pixCode,
-              version: QrVersions.auto,
-              size: 200,
-              backgroundColor: Colors.transparent,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Escaneie com a câmera do seu banco',
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.grey[600],
             ),
           ),
         ],
@@ -475,7 +418,7 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
                 Text(
                   '1. Abra o app do seu banco\n'
                   '2. Escolha pagar com PIX\n'
-                  '3. Escaneie o QR Code ou cole o código\n'
+                  '3. Cole o código PIX\n'
                   '4. Confirme o pagamento',
                   style: TextStyle(
                     fontSize: 12,
