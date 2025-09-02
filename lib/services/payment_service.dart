@@ -132,7 +132,7 @@ class PaymentService {
 
       // Detecta a bandeira do cartão
       final cardBrand = CardValidator.detectCardBrand(cardNumber);
-      print('Bandeira detectada: ${cardBrand.brand} (${cardBrand.paymentMethodId})');
+      print('Bandeira detectada: ${cardBrand.name} (${cardBrand.paymentMethodId})');
       
       // Gera a badge criptografada
       print('Gerando badge criptografada...');
