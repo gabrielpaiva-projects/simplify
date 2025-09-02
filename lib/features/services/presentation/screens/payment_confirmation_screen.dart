@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
+import 'dart:ui';
 import '../../../../core/constants/app_colors.dart';
 
 class PaymentConfirmationScreen extends StatefulWidget {
@@ -26,18 +27,16 @@ class PaymentConfirmationScreen extends StatefulWidget {
 class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen>
     with TickerProviderStateMixin {
   
-  late AnimationController _mainController;
-  late AnimationController _pulseController;
-  late AnimationController _progressController;
+  late AnimationController _checkController;
+  late AnimationController _contentController;
+  late AnimationController _searchingController;
   
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _slideAnimation;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _pulseAnimation;
-  late Animation<double> _progressAnimation;
+  late Animation<double> _checkAnimation;
+  late Animation<double> _contentFadeAnimation;
+  late Animation<double> _contentSlideAnimation;
+  late Animation<double> _searchingAnimation;
   
   late String _orderNumber;
-  int _currentStep = 1;
   
   @override
   void initState() {
@@ -48,290 +47,234 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen>
   }
   
   String _generateOrderNumber() {
-    final date = widget.selectedDate;
-    final time = widget.selectedTime.replaceAll(':', '');
-    return '${date.month.toString().padLeft(2, '0')}${date.day.toString().padLeft(2, '0')}$time';
+    // Gera número baseado na data e hora
+    final now = DateTime.now();
+    return '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
   }
   
   void _initializeAnimations() {
-    _mainController = AnimationController(
+    _checkController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+    
+    _contentController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
     
-    _pulseController = AnimationController(
+    _searchingController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
     );
     
-    _progressController = AnimationController(
-      duration: const Duration(seconds: 3),
-      vsync: this,
-    );
-    
-    _fadeAnimation = Tween<double>(
+    _checkAnimation = Tween<double>(
       begin: 0,
       end: 1,
     ).animate(CurvedAnimation(
-      parent: _mainController,
-      curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
+      parent: _checkController,
+      curve: Curves.elasticOut,
     ));
     
-    _slideAnimation = Tween<double>(
+    _contentFadeAnimation = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(
+      parent: _contentController,
+      curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
+    ));
+    
+    _contentSlideAnimation = Tween<double>(
       begin: 30,
       end: 0,
     ).animate(CurvedAnimation(
-      parent: _mainController,
-      curve: const Interval(0.1, 0.7, curve: Curves.easeOutCubic),
+      parent: _contentController,
+      curve: Curves.easeOutCubic,
     ));
     
-    _scaleAnimation = Tween<double>(
-      begin: 0.9,
-      end: 1,
-    ).animate(CurvedAnimation(
-      parent: _mainController,
-      curve: const Interval(0.0, 0.6, curve: Curves.easeOutBack),
-    ));
-    
-    _pulseAnimation = Tween<double>(
-      begin: 1,
-      end: 1.05,
-    ).animate(CurvedAnimation(
-      parent: _pulseController,
-      curve: Curves.easeInOut,
-    ));
-    
-    _progressAnimation = Tween<double>(
+    _searchingAnimation = Tween<double>(
       begin: 0,
       end: 1,
     ).animate(CurvedAnimation(
-      parent: _progressController,
-      curve: Curves.linear,
+      parent: _searchingController,
+      curve: Curves.easeInOut,
     ));
   }
   
-  void _startAnimations() {
-    _mainController.forward();
-    _pulseController.repeat(reverse: true);
-    _progressController.repeat();
+  void _startAnimations() async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    _checkController.forward();
+    await Future.delayed(const Duration(milliseconds: 400));
+    _contentController.forward();
+    _searchingController.repeat(reverse: true);
   }
   
   @override
   void dispose() {
-    _mainController.dispose();
-    _pulseController.dispose();
-    _progressController.dispose();
+    _checkController.dispose();
+    _contentController.dispose();
+    _searchingController.dispose();
     super.dispose();
   }
   
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFBFC),
-      body: AnimatedBuilder(
-        animation: Listenable.merge([
-          _mainController,
-          _pulseController,
-          _progressController,
-        ]),
-        builder: (context, child) {
-          return CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              // Modern App Bar
-              SliverAppBar(
-                expandedHeight: 140,
-                floating: false,
-                pinned: true,
-                backgroundColor: Colors.white,
-                elevation: 0,
-                leading: IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: Icon(Icons.arrow_back_ios_new_rounded, color: Colors.grey[700], size: 20),
-                ),
-                actions: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 16),
-                    child: Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryGreen.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          'Pedido #$_orderNumber',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.primaryGreen,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+      body: Stack(
+        children: [
+          // Gradient Background
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFF1A237E),
+                  const Color(0xFF3949AB),
                 ],
-                flexibleSpace: FlexibleSpaceBar(
-                  background: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.white,
-                          const Color(0xFFFAFBFC),
-                        ],
-                      ),
-                    ),
-                    child: SafeArea(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 56),
-                        child: FadeTransition(
-                          opacity: _fadeAnimation,
+              ),
+            ),
+          ),
+          
+          // Glass morphism overlay
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
+              child: Container(
+                color: Colors.white.withOpacity(0.95),
+              ),
+            ),
+          ),
+          
+          // Content
+          SafeArea(
+            child: Column(
+              children: [
+                // Custom Header
+                _buildHeader(),
+                
+                // Main Content
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
+                    child: AnimatedBuilder(
+                      animation: _contentController,
+                      builder: (context, child) {
+                        return FadeTransition(
+                          opacity: _contentFadeAnimation,
                           child: Transform.translate(
-                            offset: Offset(0, _slideAnimation.value),
+                            offset: Offset(0, _contentSlideAnimation.value),
                             child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                // Success Icon
-                                Transform.scale(
-                                  scale: _scaleAnimation.value,
-                                  child: Container(
-                                    width: 56,
-                                    height: 56,
-                                    decoration: BoxDecoration(
-                                      color: AppColors.primaryGreen,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.check_rounded,
-                                      color: Colors.white,
-                                      size: 32,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'Pagamento Confirmado',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.grey[900],
-                                  ),
-                                ),
+                                const SizedBox(height: 40),
+                                
+                                // Success Animation
+                                _buildSuccessAnimation(),
+                                
+                                const SizedBox(height: 32),
+                                
+                                // Title
+                                _buildTitle(),
+                                
+                                const SizedBox(height: 40),
+                                
+                                // Search Status Card
+                                _buildSearchStatusCard(),
+                                
+                                const SizedBox(height: 32),
+                                
+                                // Process Timeline
+                                _buildProcessTimeline(),
+                                
+                                const SizedBox(height: 32),
+                                
+                                // Payment Details
+                                _buildPaymentDetails(),
+                                
+                                const SizedBox(height: 32),
+                                
+                                // Info Cards
+                                _buildInfoCards(),
                               ],
                             ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
                   ),
                 ),
-              ),
-              
-              // Content
-              SliverToBoxAdapter(
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: Transform.translate(
-                    offset: Offset(0, _slideAnimation.value * 0.5),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Alert Card
-                          _buildAlertCard(),
-                          
-                          const SizedBox(height: 24),
-                          
-                          // Timeline
-                          _buildTimeline(),
-                          
-                          const SizedBox(height: 24),
-                          
-                          // Service Details
-                          _buildServiceDetails(),
-                          
-                          const SizedBox(height: 24),
-                          
-                          // Next Steps
-                          _buildNextSteps(),
-                          
-                          const SizedBox(height: 24),
-                          
-                          // Guarantee
-                          _buildGuarantee(),
-                          
-                          const SizedBox(height: 100),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
+              ],
+            ),
+          ),
+          
+          // Bottom CTA
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: _buildBottomCTA(),
+          ),
+        ],
       ),
-      bottomNavigationBar: _buildBottomBar(),
     );
   }
   
-  Widget _buildAlertCard() {
+  Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.blue.shade200,
-          width: 1,
-        ),
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          AnimatedBuilder(
-            animation: _pulseController,
-            builder: (context, child) {
-              return Transform.scale(
-                scale: _pulseAnimation.value,
-                child: Container(
-                  width: 40,
-                  height: 40,
+          // Back button
+          GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.arrow_back,
+                size: 20,
+                color: Color(0xFF1A237E),
+              ),
+            ),
+          ),
+          
+          // Order number
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A237E).withOpacity(0.08),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 6,
+                  height: 6,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: const Color(0xFF1A237E),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    Icons.search_rounded,
-                    color: Colors.blue.shade600,
-                    size: 22,
-                  ),
                 ),
-              );
-            },
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+                const SizedBox(width: 8),
                 Text(
-                  'Buscando profissional',
-                  style: TextStyle(
-                    fontSize: 15,
+                  'Pedido $_orderNumber',
+                  style: const TextStyle(
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: Colors.blue.shade900,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Estamos procurando o melhor profissional disponível para você',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.blue.shade700,
-                    height: 1.3,
+                    color: Color(0xFF1A237E),
                   ),
                 ),
               ],
@@ -342,74 +285,219 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen>
     );
   }
   
-  Widget _buildTimeline() {
+  Widget _buildSuccessAnimation() {
+    return AnimatedBuilder(
+      animation: _checkController,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _checkAnimation.value,
+          child: Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.primaryGreen.withOpacity(0.9),
+                  AppColors.primaryGreen,
+                ],
+              ),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primaryGreen.withOpacity(0.3),
+                  blurRadius: 30,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Icon(
+              Icons.check_rounded,
+              size: 50,
+              color: Colors.white,
+            ),
+          ),
+        );
+      },
+    );
+  }
+  
+  Widget _buildTitle() {
+    return Column(
+      children: [
+        const Text(
+          'Pagamento Confirmado!',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF1A237E),
+            letterSpacing: -0.5,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Agora vamos encontrar o profissional perfeito',
+          style: TextStyle(
+            fontSize: 15,
+            color: Colors.grey[600],
+          ),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildSearchStatusCard() {
+    return AnimatedBuilder(
+      animation: _searchingController,
+      builder: (context, child) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.orange.shade50,
+                Colors.orange.shade100.withOpacity(0.5),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Colors.orange.shade200,
+              width: 1,
+            ),
+          ),
+          child: Column(
+            children: [
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Animated circles
+                  Transform.scale(
+                    scale: 0.8 + (_searchingAnimation.value * 0.2),
+                    child: Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.orange.withOpacity(0.2),
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Transform.scale(
+                    scale: 0.9 + (_searchingAnimation.value * 0.1),
+                    child: Container(
+                      width: 45,
+                      height: 45,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.orange.withOpacity(0.2),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.person_search,
+                        color: Colors.orange[700],
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Procurando Profissionais',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.orange[900],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Estamos buscando os melhores profissionais\ndisponíveis na sua região',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.orange[700],
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+  
+  Widget _buildProcessTimeline() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: const Color(0xFF1A237E).withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(
-                Icons.timeline_rounded,
-                color: Colors.grey[700],
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Status do Processo',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey[900],
-                ),
-              ),
-            ],
+          const Text(
+            'Acompanhe o processo',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1A237E),
+            ),
           ),
           const SizedBox(height: 24),
           
-          // Step 1 - Completed
-          _buildTimelineStep(
-            stepNumber: 1,
-            title: 'Pagamento processado',
-            subtitle: 'Pagamento confirmado com sucesso',
-            status: 'completed',
+          _buildTimelineItem(
+            icon: Icons.payment,
+            title: 'Pagamento confirmado',
+            time: 'Agora',
+            isCompleted: true,
             isFirst: true,
           ),
           
-          // Step 2 - In Progress
-          _buildTimelineStep(
-            stepNumber: 2,
+          _buildTimelineConnector(isActive: true),
+          
+          _buildTimelineItem(
+            icon: Icons.search,
             title: 'Buscando profissionais',
-            subtitle: 'Procurando profissionais disponíveis na sua região',
-            status: 'in_progress',
+            time: 'Em andamento...',
+            isActive: true,
           ),
           
-          // Step 3 - Pending
-          _buildTimelineStep(
-            stepNumber: 3,
-            title: 'Confirmação do profissional',
-            subtitle: 'Profissional aceitará o serviço',
-            status: 'pending',
+          _buildTimelineConnector(isActive: false),
+          
+          _buildTimelineItem(
+            icon: Icons.person_check,
+            title: 'Profissional selecionado',
+            time: 'Em até 24 horas',
+            isCompleted: false,
           ),
           
-          // Step 4 - Pending
-          _buildTimelineStep(
-            stepNumber: 4,
-            title: 'Serviço agendado',
-            subtitle: 'Você receberá os dados do profissional',
-            status: 'pending',
+          _buildTimelineConnector(isActive: false),
+          
+          _buildTimelineItem(
+            icon: Icons.home_repair_service,
+            title: 'Serviço confirmado',
+            time: _formatDate(widget.selectedDate),
+            isCompleted: false,
             isLast: true,
           ),
         ],
@@ -417,238 +505,188 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen>
     );
   }
   
-  Widget _buildTimelineStep({
-    required int stepNumber,
+  Widget _buildTimelineItem({
+    required IconData icon,
     required String title,
-    required String subtitle,
-    required String status,
+    required String time,
+    bool isCompleted = false,
+    bool isActive = false,
     bool isFirst = false,
     bool isLast = false,
   }) {
-    final isCompleted = status == 'completed';
-    final isInProgress = status == 'in_progress';
-    final isPending = status == 'pending';
+    final color = isCompleted 
+        ? AppColors.primaryGreen 
+        : isActive 
+            ? Colors.orange 
+            : Colors.grey.shade300;
     
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Column(
-          children: [
-            // Step indicator
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: isCompleted 
-                    ? AppColors.primaryGreen 
-                    : isInProgress 
-                        ? Colors.blue.shade600
-                        : Colors.grey.shade200,
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: isCompleted
-                    ? const Icon(Icons.check, color: Colors.white, size: 18)
-                    : isInProgress
-                        ? SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation(Colors.white),
-                            ),
-                          )
-                        : Text(
-                            stepNumber.toString(),
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey.shade500,
-                            ),
-                          ),
-              ),
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: isCompleted || isActive 
+                ? color.withOpacity(0.1) 
+                : Colors.grey.shade50,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: color,
+              width: isActive ? 2 : 1.5,
             ),
-            // Connector line
-            if (!isLast)
-              Container(
-                width: 2,
-                height: 48,
-                margin: const EdgeInsets.symmetric(vertical: 4),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: isCompleted
-                        ? [AppColors.primaryGreen, AppColors.primaryGreen.withOpacity(0.3)]
-                        : isInProgress
-                            ? [Colors.blue.shade600, Colors.grey.shade300]
-                            : [Colors.grey.shade300, Colors.grey.shade300],
+          ),
+          child: isActive
+              ? Center(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation(color),
+                    ),
                   ),
+                )
+              : Icon(
+                  isCompleted ? Icons.check : icon,
+                  size: 20,
+                  color: color,
                 ),
-              ),
-          ],
         ),
         const SizedBox(width: 16),
         Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: isLast ? 0 : 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isCompleted || isInProgress 
-                        ? Colors.grey[900] 
-                        : Colors.grey[500],
-                  ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                  color: isCompleted || isActive 
+                      ? const Color(0xFF1A237E) 
+                      : Colors.grey.shade600,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isCompleted || isInProgress 
-                        ? Colors.grey[600] 
-                        : Colors.grey[400],
-                    height: 1.3,
-                  ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                time,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isActive 
+                      ? Colors.orange 
+                      : Colors.grey.shade500,
                 ),
-                if (isInProgress) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                    child: AnimatedBuilder(
-                      animation: _progressController,
-                      builder: (context, child) {
-                        return FractionallySizedBox(
-                          alignment: Alignment.centerLeft,
-                          widthFactor: _progressAnimation.value,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.blue.shade600,
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ],
     );
   }
   
-  Widget _buildServiceDetails() {
+  Widget _buildTimelineConnector({required bool isActive}) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.only(left: 21, top: 4, bottom: 4),
+      height: 30,
+      width: 2,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isActive 
+            ? AppColors.primaryGreen.withOpacity(0.3) 
+            : Colors.grey.shade200,
+      ),
+    );
+  }
+  
+  Widget _buildPaymentDetails() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF1A237E).withOpacity(0.05),
+            const Color(0xFF3949AB).withOpacity(0.03),
+          ],
+        ),
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(
+          color: const Color(0xFF1A237E).withOpacity(0.1),
+          width: 1,
+        ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Detalhes do Serviço',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[900],
-            ),
-          ),
-          const SizedBox(height: 20),
-          
-          Row(
-            children: [
-              Expanded(
-                child: _buildDetailCard(
-                  icon: Icons.cleaning_services_rounded,
-                  label: 'Serviço',
-                  value: widget.serviceTitle,
-                  color: Colors.purple,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildDetailCard(
-                  icon: Icons.calendar_today_rounded,
-                  label: 'Data',
-                  value: _formatShortDate(widget.selectedDate),
-                  color: Colors.blue,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _buildDetailCard(
-                  icon: Icons.access_time_rounded,
-                  label: 'Horário',
-                  value: widget.selectedTime,
-                  color: Colors.orange,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildDetailCard(
-                  icon: widget.paymentMethod == 'pix' ? Icons.pix : Icons.credit_card,
-                  label: 'Pagamento',
-                  value: widget.paymentMethod == 'pix' ? 'PIX' : 'Cartão',
-                  color: Colors.green,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: AppColors.primaryGreen.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppColors.primaryGreen.withOpacity(0.2),
-                width: 1,
+              color: Colors.white.withOpacity(0.7),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
               ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Total pago',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Total pago',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _formatCurrency(widget.totalAmount),
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1A237E),
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  _formatCurrency(widget.totalAmount),
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
                     color: AppColors.primaryGreen,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.check_circle,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        widget.paymentMethod == 'pix' ? 'PIX' : 'Cartão',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                _buildDetailRow('Serviço', widget.serviceTitle),
+                const SizedBox(height: 12),
+                _buildDetailRow('Data', _formatFullDate(widget.selectedDate)),
+                const SizedBox(height: 12),
+                _buildDetailRow('Horário', widget.selectedTime),
               ],
             ),
           ),
@@ -657,224 +695,211 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen>
     );
   }
   
-  Widget _buildDetailCard({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.grey[600],
-            ),
+  Widget _buildDetailRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            color: Colors.grey[600],
           ),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[900],
-            ),
-            overflow: TextOverflow.ellipsis,
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1A237E),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
   
-  Widget _buildNextSteps() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0F9FF),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+  Widget _buildInfoCards() {
+    return Column(
+      children: [
+        // Next steps card
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.blue.shade50,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
             children: [
               Icon(
-                Icons.info_outline_rounded,
+                Icons.info_outline,
                 color: Colors.blue.shade700,
-                size: 20,
+                size: 24,
               ),
-              const SizedBox(width: 8),
-              Text(
-                'Próximos passos',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.blue.shade900,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'O que acontece agora?',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.blue.shade900,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Você receberá o nome, foto e contato do profissional assim que ele aceitar o serviço.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.blue.shade700,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            'Em até 24 horas você receberá:',
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.blue.shade700,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 8),
-          _buildNextStep('Nome e foto do profissional'),
-          _buildNextStep('Número de telefone para contato'),
-          _buildNextStep('Confirmação do horário do serviço'),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildNextStep(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 6),
-      child: Row(
-        children: [
-          Container(
-            width: 4,
-            height: 4,
-            margin: const EdgeInsets.only(right: 8),
-            decoration: BoxDecoration(
-              color: Colors.blue.shade600,
-              shape: BoxShape.circle,
-            ),
-          ),
-          Text(
-            text,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.blue.shade700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildGuarantee() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Colors.green.shade50,
-            Colors.green.shade50.withOpacity(0.5),
-          ],
         ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.green.shade300,
-          width: 1,
+        
+        const SizedBox(height: 16),
+        
+        // Guarantee card
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.green.shade50,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.security,
+                color: Colors.green.shade700,
+                size: 24,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Garantia total',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.green.shade900,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Se não encontrarmos um profissional em 24h, seu pagamento será estornado automaticamente.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.green.shade700,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.shield_outlined,
-              color: Colors.green.shade700,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Garantia de reembolso',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.green.shade900,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Se não encontrarmos um profissional em 24h, seu dinheiro será devolvido automaticamente.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.green.shade700,
-                    height: 1.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+      ],
     );
   }
   
-  Widget _buildBottomBar() {
+  Widget _buildBottomCTA() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
           ),
         ],
       ),
       child: SafeArea(
         top: false,
-        child: SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: ElevatedButton(
-            onPressed: () {
-              HapticFeedback.lightImpact();
-              Navigator.of(context).popUntil((route) => route.isFirst);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryGreen,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+        child: Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () {
+                  // Track order
+                },
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  side: BorderSide(
+                    color: const Color(0xFF1A237E).withOpacity(0.2),
+                    width: 1.5,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Acompanhar',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1A237E),
+                  ),
+                ),
               ),
             ),
-            child: Text(
-              'Voltar ao início',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1A237E),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Voltar ao início',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
   }
   
-  String _formatShortDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}';
+  String _formatDate(DateTime date) {
+    final weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    return '${weekDays[date.weekday % 7]}, ${date.day}/${date.month.toString().padLeft(2, '0')}';
+  }
+  
+  String _formatFullDate(DateTime date) {
+    final months = [
+      'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+      'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
+    ];
+    return '${date.day} de ${months[date.month - 1]}';
   }
   
   String _formatCurrency(double value) {
