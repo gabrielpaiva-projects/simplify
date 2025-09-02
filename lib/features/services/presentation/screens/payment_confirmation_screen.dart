@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
-import 'dart:ui';
 import '../../../../core/constants/app_colors.dart';
 
 class PaymentConfirmationScreen extends StatefulWidget {
@@ -27,408 +26,277 @@ class PaymentConfirmationScreen extends StatefulWidget {
 class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen>
     with TickerProviderStateMixin {
   
-  late AnimationController _checkController;
-  late AnimationController _contentController;
-  late AnimationController _searchingController;
-  
-  late Animation<double> _checkAnimation;
-  late Animation<double> _contentFadeAnimation;
-  late Animation<double> _contentSlideAnimation;
-  late Animation<double> _searchingAnimation;
+  late AnimationController _mainController;
+  late AnimationController _searchController;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _slideAnimation;
+  late Animation<double> _searchAnimation;
   
   late String _orderNumber;
   
   @override
   void initState() {
     super.initState();
-    _orderNumber = _generateOrderNumber();
+    _orderNumber = DateTime.now().millisecondsSinceEpoch.toString().substring(6, 12);
     _initializeAnimations();
     _startAnimations();
   }
   
-  String _generateOrderNumber() {
-    // Gera número baseado na data e hora
-    final now = DateTime.now();
-    return '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
-  }
-  
   void _initializeAnimations() {
-    _checkController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
+    _mainController = AnimationController(
+      duration: const Duration(milliseconds: 600),
       vsync: this,
     );
     
-    _contentController = AnimationController(
-      duration: const Duration(milliseconds: 1000),
-      vsync: this,
-    );
-    
-    _searchingController = AnimationController(
+    _searchController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
     );
     
-    _checkAnimation = Tween<double>(
+    _fadeAnimation = Tween<double>(
       begin: 0,
       end: 1,
     ).animate(CurvedAnimation(
-      parent: _checkController,
-      curve: Curves.elasticOut,
+      parent: _mainController,
+      curve: Curves.easeOut,
     ));
     
-    _contentFadeAnimation = Tween<double>(
-      begin: 0,
-      end: 1,
-    ).animate(CurvedAnimation(
-      parent: _contentController,
-      curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
-    ));
-    
-    _contentSlideAnimation = Tween<double>(
-      begin: 30,
+    _slideAnimation = Tween<double>(
+      begin: 20,
       end: 0,
     ).animate(CurvedAnimation(
-      parent: _contentController,
+      parent: _mainController,
       curve: Curves.easeOutCubic,
     ));
     
-    _searchingAnimation = Tween<double>(
+    _searchAnimation = Tween<double>(
       begin: 0,
       end: 1,
     ).animate(CurvedAnimation(
-      parent: _searchingController,
+      parent: _searchController,
       curve: Curves.easeInOut,
     ));
   }
   
-  void _startAnimations() async {
-    await Future.delayed(const Duration(milliseconds: 200));
-    _checkController.forward();
-    await Future.delayed(const Duration(milliseconds: 400));
-    _contentController.forward();
-    _searchingController.repeat(reverse: true);
+  void _startAnimations() {
+    _mainController.forward();
+    _searchController.repeat(reverse: true);
   }
   
   @override
   void dispose() {
-    _checkController.dispose();
-    _contentController.dispose();
-    _searchingController.dispose();
+    _mainController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
   
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          // Gradient Background
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFF1A237E),
-                  const Color(0xFF3949AB),
-                ],
+      backgroundColor: const Color(0xFFFAFBFC),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          onPressed: () => Navigator.of(context).pop(),
+          icon: Icon(
+            Icons.close,
+            color: Colors.grey[700],
+          ),
+        ),
+        title: Text(
+          'Confirmação',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[900],
+          ),
+        ),
+        centerTitle: true,
+        actions: [
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: Text(
+                '#$_orderNumber',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ),
-          
-          // Glass morphism overlay
-          Positioned.fill(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
-              child: Container(
-                color: Colors.white.withOpacity(0.95),
-              ),
-            ),
-          ),
-          
-          // Content
-          SafeArea(
-            child: Column(
-              children: [
-                // Custom Header
-                _buildHeader(),
-                
-                // Main Content
-                Expanded(
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
-                    child: AnimatedBuilder(
-                      animation: _contentController,
-                      builder: (context, child) {
-                        return FadeTransition(
-                          opacity: _contentFadeAnimation,
-                          child: Transform.translate(
-                            offset: Offset(0, _contentSlideAnimation.value),
-                            child: Column(
-                              children: [
-                                const SizedBox(height: 40),
-                                
-                                // Success Animation
-                                _buildSuccessAnimation(),
-                                
-                                const SizedBox(height: 32),
-                                
-                                // Title
-                                _buildTitle(),
-                                
-                                const SizedBox(height: 40),
-                                
-                                // Search Status Card
-                                _buildSearchStatusCard(),
-                                
-                                const SizedBox(height: 32),
-                                
-                                // Process Timeline
-                                _buildProcessTimeline(),
-                                
-                                const SizedBox(height: 32),
-                                
-                                // Payment Details
-                                _buildPaymentDetails(),
-                                
-                                const SizedBox(height: 32),
-                                
-                                // Info Cards
-                                _buildInfoCards(),
-                              ],
+        ],
+      ),
+      body: AnimatedBuilder(
+        animation: _mainController,
+        builder: (context, child) {
+          return FadeTransition(
+            opacity: _fadeAnimation,
+            child: Transform.translate(
+              offset: Offset(0, _slideAnimation.value),
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    // Success Header
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 32),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Container(
+                            width: 72,
+                            height: 72,
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryGreen.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.check_rounded,
+                              size: 40,
+                              color: AppColors.primaryGreen,
                             ),
                           ),
-                        );
-                      },
+                          const SizedBox(height: 16),
+                          Text(
+                            'Pagamento Confirmado',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.grey[900],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Estamos procurando um profissional para você',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                    
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        children: [
+                          // Search Status
+                          _buildSearchStatus(),
+                          
+                          const SizedBox(height: 20),
+                          
+                          // Timeline
+                          _buildTimeline(),
+                          
+                          const SizedBox(height: 20),
+                          
+                          // Service Details
+                          _buildServiceDetails(),
+                          
+                          const SizedBox(height: 20),
+                          
+                          // Important Info
+                          _buildImportantInfo(),
+                          
+                          const SizedBox(height: 20),
+                          
+                          // Guarantee
+                          _buildGuarantee(),
+                          
+                          const SizedBox(height: 32),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
-          
-          // Bottom CTA
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: _buildBottomCTA(),
-          ),
-        ],
+          );
+        },
       ),
+      bottomNavigationBar: _buildBottomBar(),
     );
   }
   
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Back button
-          GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.arrow_back,
-                size: 20,
-                color: Color(0xFF1A237E),
-              ),
-            ),
-          ),
-          
-          // Order number
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1A237E).withOpacity(0.08),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1A237E),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Pedido $_orderNumber',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1A237E),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildSuccessAnimation() {
+  Widget _buildSearchStatus() {
     return AnimatedBuilder(
-      animation: _checkController,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _checkAnimation.value,
-          child: Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppColors.primaryGreen.withOpacity(0.9),
-                  AppColors.primaryGreen,
-                ],
-              ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primaryGreen.withOpacity(0.3),
-                  blurRadius: 30,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Icon(
-              Icons.check_rounded,
-              size: 50,
-              color: Colors.white,
-            ),
-          ),
-        );
-      },
-    );
-  }
-  
-  Widget _buildTitle() {
-    return Column(
-      children: [
-        const Text(
-          'Pagamento Confirmado!',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF1A237E),
-            letterSpacing: -0.5,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Agora vamos encontrar o profissional perfeito',
-          style: TextStyle(
-            fontSize: 15,
-            color: Colors.grey[600],
-          ),
-        ),
-      ],
-    );
-  }
-  
-  Widget _buildSearchStatusCard() {
-    return AnimatedBuilder(
-      animation: _searchingController,
+      animation: _searchController,
       builder: (context, child) {
         return Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.orange.shade50,
-                Colors.orange.shade100.withOpacity(0.5),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(20),
+            color: Colors.orange.shade50,
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: Colors.orange.shade200,
               width: 1,
             ),
           ),
-          child: Column(
+          child: Row(
             children: [
               Stack(
                 alignment: Alignment.center,
                 children: [
-                  // Animated circles
-                  Transform.scale(
-                    scale: 0.8 + (_searchingAnimation.value * 0.2),
-                    child: Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.orange.withOpacity(0.2),
-                          width: 2,
-                        ),
-                      ),
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.search,
+                      color: Colors.orange[700],
+                      size: 24,
                     ),
                   ),
-                  Transform.scale(
-                    scale: 0.9 + (_searchingAnimation.value * 0.1),
-                    child: Container(
-                      width: 45,
-                      height: 45,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.orange.withOpacity(0.2),
-                            blurRadius: 10,
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        Icons.person_search,
-                        color: Colors.orange[700],
-                        size: 24,
+                  SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation(
+                        Colors.orange[700]!.withOpacity(0.3),
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              Text(
-                'Procurando Profissionais',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.orange[900],
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Estamos buscando os melhores profissionais\ndisponíveis na sua região',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.orange[700],
-                  height: 1.4,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Buscando profissionais',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.orange[900],
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Procurando os melhores na sua região',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.orange[700],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -438,66 +306,64 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen>
     );
   }
   
-  Widget _buildProcessTimeline() {
+  Widget _buildTimeline() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1A237E).withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Acompanhe o processo',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF1A237E),
+              color: Colors.grey[900],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           
-          _buildTimelineItem(
-            icon: Icons.payment,
+          _buildTimelineStep(
+            number: '1',
             title: 'Pagamento confirmado',
-            time: 'Agora',
+            subtitle: 'Concluído',
             isCompleted: true,
             isFirst: true,
           ),
           
           _buildTimelineConnector(isActive: true),
           
-          _buildTimelineItem(
-            icon: Icons.search,
-            title: 'Buscando profissionais',
-            time: 'Em andamento...',
+          _buildTimelineStep(
+            number: '2',
+            title: 'Buscando profissional',
+            subtitle: 'Em andamento',
             isActive: true,
           ),
           
           _buildTimelineConnector(isActive: false),
           
-          _buildTimelineItem(
-            icon: Icons.person_add_alt_1_rounded,
-            title: 'Profissional selecionado',
-            time: 'Em até 24 horas',
-            isCompleted: false,
+          _buildTimelineStep(
+            number: '3',
+            title: 'Profissional confirmado',
+            subtitle: 'Aguardando',
           ),
           
           _buildTimelineConnector(isActive: false),
           
-          _buildTimelineItem(
-            icon: Icons.home_repair_service,
-            title: 'Serviço confirmado',
-            time: _formatDate(widget.selectedDate),
-            isCompleted: false,
+          _buildTimelineStep(
+            number: '4',
+            title: 'Serviço agendado',
+            subtitle: '${_formatDate(widget.selectedDate)} às ${widget.selectedTime}',
             isLast: true,
           ),
         ],
@@ -505,55 +371,51 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen>
     );
   }
   
-  Widget _buildTimelineItem({
-    required IconData icon,
+  Widget _buildTimelineStep({
+    required String number,
     required String title,
-    required String time,
+    required String subtitle,
     bool isCompleted = false,
     bool isActive = false,
     bool isFirst = false,
     bool isLast = false,
   }) {
-    final color = isCompleted 
-        ? AppColors.primaryGreen 
-        : isActive 
-            ? Colors.orange 
-            : Colors.grey.shade300;
-    
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
-          width: 44,
-          height: 44,
+          width: 32,
+          height: 32,
           decoration: BoxDecoration(
-            color: isCompleted || isActive 
-                ? color.withOpacity(0.1) 
-                : Colors.grey.shade50,
+            color: isCompleted 
+                ? AppColors.primaryGreen 
+                : isActive 
+                    ? Colors.orange 
+                    : Colors.grey[300],
             shape: BoxShape.circle,
-            border: Border.all(
-              color: color,
-              width: isActive ? 2 : 1.5,
-            ),
           ),
-          child: isActive
-              ? Center(
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation(color),
-                    ),
-                  ),
-                )
-              : Icon(
-                  isCompleted ? Icons.check : icon,
-                  size: 20,
-                  color: color,
-                ),
+          child: Center(
+            child: isCompleted
+                ? Icon(Icons.check, color: Colors.white, size: 18)
+                : isActive
+                    ? SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation(Colors.white),
+                        ),
+                      )
+                    : Text(
+                        number,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+          ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -562,20 +424,19 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen>
                 title,
                 style: TextStyle(
                   fontSize: 14,
-                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                  fontWeight: FontWeight.w500,
                   color: isCompleted || isActive 
-                      ? const Color(0xFF1A237E) 
-                      : Colors.grey.shade600,
+                      ? Colors.grey[900] 
+                      : Colors.grey[500],
                 ),
               ),
-              const SizedBox(height: 2),
               Text(
-                time,
+                subtitle,
                 style: TextStyle(
                   fontSize: 12,
                   color: isActive 
-                      ? Colors.orange 
-                      : Colors.grey.shade500,
+                      ? Colors.orange[600] 
+                      : Colors.grey[500],
                 ),
               ),
             ],
@@ -587,106 +448,97 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen>
   
   Widget _buildTimelineConnector({required bool isActive}) {
     return Container(
-      margin: const EdgeInsets.only(left: 21, top: 4, bottom: 4),
-      height: 30,
+      margin: const EdgeInsets.only(left: 15, top: 2, bottom: 2),
+      height: 24,
       width: 2,
-      decoration: BoxDecoration(
-        color: isActive 
-            ? AppColors.primaryGreen.withOpacity(0.3) 
-            : Colors.grey.shade200,
-      ),
+      color: isActive ? AppColors.primaryGreen : Colors.grey[300],
     );
   }
   
-  Widget _buildPaymentDetails() {
+  Widget _buildServiceDetails() {
     return Container(
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF1A237E).withOpacity(0.05),
-            const Color(0xFF3949AB).withOpacity(0.03),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFF1A237E).withOpacity(0.1),
-          width: 1,
-        ),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            'Detalhes do serviço',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[900],
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          _buildDetailRow(
+            icon: Icons.cleaning_services,
+            label: 'Serviço',
+            value: widget.serviceTitle,
+          ),
+          
+          const SizedBox(height: 12),
+          
+          _buildDetailRow(
+            icon: Icons.calendar_today,
+            label: 'Data',
+            value: _formatFullDate(widget.selectedDate),
+          ),
+          
+          const SizedBox(height: 12),
+          
+          _buildDetailRow(
+            icon: Icons.access_time,
+            label: 'Horário',
+            value: widget.selectedTime,
+          ),
+          
+          const SizedBox(height: 12),
+          
+          _buildDetailRow(
+            icon: widget.paymentMethod == 'pix' ? Icons.pix : Icons.credit_card,
+            label: 'Pagamento',
+            value: widget.paymentMethod == 'pix' ? 'PIX' : 'Cartão de crédito',
+          ),
+          
+          const SizedBox(height: 16),
+          
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.7),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
-              ),
+              color: AppColors.primaryGreen.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Total pago',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _formatCurrency(widget.totalAmount),
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1A237E),
-                      ),
-                    ),
-                  ],
+                Text(
+                  'Total pago',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[700],
+                  ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
+                Text(
+                  _formatCurrency(widget.totalAmount),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
                     color: AppColors.primaryGreen,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.check_circle,
-                        size: 16,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        widget.paymentMethod == 'pix' ? 'PIX' : 'Cartão',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                _buildDetailRow('Serviço', widget.serviceTitle),
-                const SizedBox(height: 12),
-                _buildDetailRow('Data', _formatFullDate(widget.selectedDate)),
-                const SizedBox(height: 12),
-                _buildDetailRow('Horário', widget.selectedTime),
               ],
             ),
           ),
@@ -695,114 +547,36 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen>
     );
   }
   
-  Widget _buildDetailRow(String label, String value) {
+  Widget _buildDetailRow({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            color: Colors.grey[600],
-          ),
+        Icon(
+          icon,
+          size: 18,
+          color: Colors.grey[500],
         ),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF1A237E),
-          ),
-        ),
-      ],
-    );
-  }
-  
-  Widget _buildInfoCards() {
-    return Column(
-      children: [
-        // Next steps card
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.blue.shade50,
-            borderRadius: BorderRadius.circular(16),
-          ),
+        const SizedBox(width: 12),
+        Expanded(
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(
-                Icons.info_outline,
-                color: Colors.blue.shade700,
-                size: 24,
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'O que acontece agora?',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.blue.shade900,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Você receberá o nome, foto e contato do profissional assim que ele aceitar o serviço.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.blue.shade700,
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey[600],
                 ),
               ),
-            ],
-          ),
-        ),
-        
-        const SizedBox(height: 16),
-        
-        // Guarantee card
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.green.shade50,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.security,
-                color: Colors.green.shade700,
-                size: 24,
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Garantia total',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.green.shade900,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Se não encontrarmos um profissional em 24h, seu pagamento será estornado automaticamente.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.green.shade700,
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey[900],
                 ),
               ),
             ],
@@ -812,94 +586,159 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen>
     );
   }
   
-  Widget _buildBottomCTA() {
+  Widget _buildImportantInfo() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.blue[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.blue[200]!,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.info_outline,
+            size: 20,
+            color: Colors.blue[700],
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Informações importantes',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.blue[900],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '• Você receberá o nome e contato do profissional\n'
+                  '• O profissional entrará em contato para confirmar\n'
+                  '• Tempo máximo de espera: 24 horas',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.blue[700],
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildGuarantee() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.primaryGreen.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.primaryGreen.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.verified_user,
+            size: 20,
+            color: AppColors.primaryGreen,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Garantia de reembolso',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[900],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Se não encontrarmos um profissional em 24h, seu pagamento será estornado automaticamente.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[700],
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildBottomBar() {
+    return Container(
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
-        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
           ),
         ],
       ),
       child: SafeArea(
         top: false,
-        child: Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () {
-                  // Track order
-                },
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  side: BorderSide(
-                    color: const Color(0xFF1A237E).withOpacity(0.2),
-                    width: 1.5,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Acompanhar',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1A237E),
-                  ),
-                ),
-              ),
+        child: ElevatedButton(
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primaryGreen,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1A237E),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Voltar ao início',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
+            elevation: 0,
+          ),
+          child: const Text(
+            'Voltar ao início',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
             ),
-          ],
+          ),
         ),
       ),
     );
   }
   
   String _formatDate(DateTime date) {
-    final weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-    return '${weekDays[date.weekday % 7]}, ${date.day}/${date.month.toString().padLeft(2, '0')}';
+    return '${date.day}/${date.month.toString().padLeft(2, '0')}';
   }
   
   String _formatFullDate(DateTime date) {
+    final weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
     final months = [
-      'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
-      'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
+      'jan', 'fev', 'mar', 'abr', 'mai', 'jun',
+      'jul', 'ago', 'set', 'out', 'nov', 'dez'
     ];
-    return '${date.day} de ${months[date.month - 1]}';
+    
+    return '${weekDays[date.weekday % 7]}, ${date.day} de ${months[date.month - 1]}';
   }
   
   String _formatCurrency(double value) {
