@@ -485,7 +485,7 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen>
           _buildTimelineConnector(isActive: false),
           
           _buildTimelineItem(
-            icon: Icons.person_check,
+            icon: Icons.person_add_alt_1_rounded,
             title: 'Profissional selecionado',
             time: 'Em até 24 horas',
             isCompleted: false,
