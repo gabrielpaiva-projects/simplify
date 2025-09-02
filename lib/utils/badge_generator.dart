@@ -37,6 +37,14 @@ class BadgeGenerator {
     int installments = 1,
     int? timestamp,
   }) {
+    print('=== BADGE GENERATOR - CARD ===');
+    print('UserId: $userId');
+    print('Amount: $amount');
+    print('Card: ${cardNumber.substring(0, 4)}****${cardNumber.substring(cardNumber.length - 4)}');
+    print('Expiry: $expirationMonth/$expirationYear');
+    print('CVV: ${securityCode.length} digits');
+    print('Installments: $installments');
+    
     final payload = {
       'userId': userId,
       'amount': amount,
@@ -47,8 +55,13 @@ class BadgeGenerator {
       'installments': installments,
       'timestamp': timestamp ?? DateTime.now().millisecondsSinceEpoch,
     };
+    
+    print('Payload to encrypt: ${jsonEncode(payload)}');
+    final encrypted = _encryptCryptoJSCompatible(jsonEncode(payload));
+    print('Badge encrypted successfully! Length: ${encrypted.length}');
+    print('==============================');
 
-    return _encryptCryptoJSCompatible(jsonEncode(payload));
+    return encrypted;
   }
 
   /// Implementação compatível com CryptoJS

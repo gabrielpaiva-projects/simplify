@@ -170,27 +170,48 @@ class CardValidator {
     required String cvv,
     String? cardHolderName,
   }) {
+    print('=== CARD VALIDATOR ===');
+    print('Card Number: ${cardNumber.substring(0, 4)}****${cardNumber.substring(cardNumber.length - 4)}');
+    print('Expiry: $expiryMonth/$expiryYear');
+    print('CVV: ${cvv.length} digits');
+    print('Card Holder: $cardHolderName');
+    
     final errors = <String, String?>{};
 
     // Valida número do cartão
     if (!validateCardNumber(cardNumber)) {
+      print('❌ Card number validation failed');
       errors['cardNumber'] = 'Número do cartão inválido';
+    } else {
+      print('✅ Card number is valid');
     }
 
     // Valida data de expiração
     if (!validateExpiryDate(expiryMonth, expiryYear)) {
+      print('❌ Expiry date validation failed');
       errors['expiry'] = 'Data de expiração inválida';
+    } else {
+      print('✅ Expiry date is valid');
     }
 
     // Valida CVV
     if (!validateCVV(cvv, cardNumber: cardNumber)) {
+      print('❌ CVV validation failed');
       errors['cvv'] = 'Código de segurança inválido';
+    } else {
+      print('✅ CVV is valid');
     }
 
     // Valida nome do titular (opcional)
     if (cardHolderName != null && cardHolderName.trim().isEmpty) {
+      print('❌ Card holder name is empty');
       errors['cardHolderName'] = 'Nome do titular é obrigatório';
+    } else if (cardHolderName != null) {
+      print('✅ Card holder name is valid');
     }
+    
+    print('Total errors: ${errors.length}');
+    print('======================');
 
     return errors;
   }
