@@ -99,6 +99,15 @@ class PaymentService {
     String description = 'Teste de pagamento com cartão',
   }) async {
     try {
+      print('=== DEBUG CARD PAYMENT SERVICE ===');
+      print('UserId: $userId');
+      print('Amount: $amount');
+      print('Card Number: ${cardNumber.substring(0, 4)}****${cardNumber.substring(cardNumber.length - 4)}');
+      print('Expiry: $expirationMonth/$expirationYear');
+      print('CVV Length: ${securityCode.length}');
+      print('Installments: $installments');
+      print('Description: $description');
+      
       // Valida o cartão antes de enviar
       final validationErrors = CardValidator.validateCard(
         cardNumber: cardNumber,
@@ -108,6 +117,10 @@ class PaymentService {
       );
 
       if (validationErrors.isNotEmpty) {
+        print('ERRO DE VALIDAÇÃO DO CARTÃO:');
+        validationErrors.forEach((key, value) {
+          print('  $key: $value');
+        });
         return ApiResponse(
           success: false,
           error: 'Dados do cartão inválidos',
@@ -115,10 +128,14 @@ class PaymentService {
         );
       }
 
+      print('Cartão validado com sucesso!');
+
       // Detecta a bandeira do cartão
       final cardBrand = CardValidator.detectCardBrand(cardNumber);
+      print('Bandeira detectada: ${cardBrand.name} (${cardBrand.paymentMethodId})');
       
       // Gera a badge criptografada
+      print('Gerando badge criptografada...');
       final badge = BadgeGenerator.generateCardBadge(
         userId: userId,
         amount: amount,
@@ -128,42 +145,66 @@ class PaymentService {
         securityCode: securityCode,
         installments: installments,
       );
+      print('Badge gerada com sucesso! Length: ${badge.length}');
 
       // Obtém a URL da API
       final apiUrl = await SecureConfig.getApiBaseUrl();
       final url = Uri.parse('$apiUrl/api/payments/card');
+      print('URL da API: $url');
 
       // Prepara o corpo da requisição
       final body = jsonEncode({
         'description': description,
         'paymentMethodId': cardBrand.paymentMethodId,
       });
+      
+      print('Body da requisição: $body');
+      print('Headers: Content-Type: application/json, badge: [ENCRYPTED]');
 
       // Faz a requisição
+      print('Enviando requisição POST...');
       final response = await http.post(
         url,
         headers: _getHeaders(badge),
         body: body,
       );
 
+      print('Response Status Code: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+
       // Processa a resposta
       if (response.statusCode == 200 || response.statusCode == 201) {
+        print('Resposta bem-sucedida!');
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-        return ApiResponse.fromJson(
+        final apiResponse = ApiResponse.fromJson(
           jsonData,
           (data) => CardPaymentResponse.fromJson(data),
         );
+        
+        if (apiResponse.data != null) {
+          print('Pagamento processado:');
+          print('  ID: ${apiResponse.data!.paymentId}');
+          print('  Status: ${apiResponse.data!.status}');
+          print('  Aprovado: ${apiResponse.data!.isApproved}');
+        }
+        
+        return apiResponse;
       } else {
         // Trata erros HTTP
+        print('ERRO HTTP: Status ${response.statusCode}');
         final errorData = jsonDecode(response.body) as Map<String, dynamic>;
+        print('Error Data: $errorData');
         return ApiResponse(
           success: false,
           error: errorData['error'] ?? 'Erro ao processar pagamento com cartão',
           message: errorData['message'],
         );
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       // Trata erros de rede ou parsing
+      print('EXCEÇÃO NO PAYMENT SERVICE:');
+      print('Error: ${e.toString()}');
+      print('Stack Trace: $stackTrace');
       return ApiResponse(
         success: false,
         error: 'Erro de conexão: ${e.toString()}',

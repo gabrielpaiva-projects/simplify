@@ -2015,12 +2015,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                       if (_currentPage < 2) {
                         _goToNextPage();
                       } else {
-                        // Página de pagamento
-                        if (_selectedPaymentMethod == 'pix') {
-                          _processPixPayment();
-                        } else {
-                          _confirmSchedule();
-                        }
+                        // Página de pagamento - sempre chama _confirmSchedule que já tem a lógica correta
+                        _confirmSchedule();
                       }
                     } : null,
                     borderRadius: BorderRadius.circular(12),
@@ -2543,11 +2539,18 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     
     // For credit card payment
     if (_selectedPaymentMethod == 'credit_card') {
+      print('=== INICIANDO PAGAMENTO COM CARTÃO ===');
+      
       // Validate card fields
       if (_cardNumberController.text.length < 16 ||
           _cardHolderController.text.isEmpty ||
           _expiryDateController.text.length < 5 ||
           _cvvController.text.length < 3) {
+        print('ERRO: Campos do cartão incompletos');
+        print('Número do cartão: ${_cardNumberController.text.length} caracteres');
+        print('Nome do titular: ${_cardHolderController.text.isEmpty ? "vazio" : "preenchido"}');
+        print('Validade: ${_expiryDateController.text.length} caracteres');
+        print('CVV: ${_cvvController.text.length} caracteres');
         _showErrorMessage('Por favor, preencha todos os campos do cartão');
         return;
       }
@@ -2560,15 +2563,31 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
         // Get current user
         final currentUser = FirebaseAuth.instance.currentUser;
         if (currentUser == null) {
+          print('ERRO: Usuário não autenticado');
           throw Exception('Usuário não autenticado');
         }
+        
+        print('Usuário autenticado: ${currentUser.uid}');
         
         // Extract expiry date parts
         final expiryParts = _expiryDateController.text.split('/');
         final expiryMonth = expiryParts[0];
         final expiryYear = '20${expiryParts[1]}'; // Convert YY to YYYY
         
+        // Log card data (masking sensitive info)
+        final maskedCardNumber = _cardNumberController.text.replaceAll(' ', '');
+        print('=== DADOS DO CARTÃO ===');
+        print('Número do cartão: ${maskedCardNumber.substring(0, 4)}****${maskedCardNumber.substring(maskedCardNumber.length - 4)}');
+        print('Nome do titular: ${_cardHolderController.text}');
+        print('Validade: $expiryMonth/$expiryYear');
+        print('CVV: ${_cvvController.text.length} dígitos');
+        print('Valor: R\$ $_targetPrice');
+        print('Parcelas: 1');
+        print('Descrição: Agendamento: ${widget.serviceTitle}');
+        print('=======================');
+        
         // Process card payment via API
+        print('Chamando PaymentService.processCardPayment()...');
         final response = await PaymentService.processCardPayment(
           userId: currentUser.uid,
           amount: _targetPrice,
@@ -2582,12 +2601,25 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
         
         if (!mounted) return;
         
+        print('=== RESPOSTA DA API ===');
+        print('Success: ${response.success}');
+        print('Error: ${response.error}');
+        print('Message: ${response.message}');
+        if (response.data != null) {
+          print('Payment ID: ${response.data!.paymentId}');
+          print('Status: ${response.data!.status}');
+          print('Status Detail: ${response.data!.statusDetail}');
+          print('Is Approved: ${response.data!.isApproved}');
+        }
+        print('=======================');
+        
         setState(() {
           _isProcessingPix = false;
         });
         
         if (response.success && response.data != null) {
           if (response.data!.isApproved) {
+            print('SUCESSO: Pagamento aprovado!');
             // Payment approved - navigate to confirmation
             Navigator.push(
               context,
@@ -2602,12 +2634,16 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
               ),
             );
           } else {
+            print('ERRO: Pagamento recusado - ${response.data!.statusDetail}');
             _showErrorMessage('Pagamento recusado: ${response.data!.statusDetail}');
           }
         } else {
+          print('ERRO: ${response.error ?? "Erro desconhecido"}');
           _showErrorMessage(response.error ?? 'Erro ao processar pagamento');
         }
       } catch (e) {
+        print('EXCEÇÃO CAPTURADA: ${e.toString()}');
+        print('Stack trace: ${StackTrace.current}');
         if (mounted) {
           setState(() {
             _isProcessingPix = false;
@@ -2615,20 +2651,9 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           _showErrorMessage('Erro: ${e.toString()}');
         }
       }
-    } else {
-      // For PIX, just navigate to confirmation after showing QR code
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PaymentConfirmationScreen(
-            serviceTitle: widget.serviceTitle,
-            totalAmount: _targetPrice,
-            selectedDate: _selectedDate ?? DateTime.now(),
-            selectedTime: _selectedTime ?? '',
-            paymentMethod: _selectedPaymentMethod,
-          ),
-        ),
-      );
+    } else if (_selectedPaymentMethod == 'pix') {
+      // For PIX payment, process the PIX first
+      _processPixPayment();
     }
   }
   

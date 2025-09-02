@@ -96,13 +96,27 @@ class CardValidator {
     
     if (cleaned.isEmpty) return CardBrand.unknown;
     
-    // Visa: começa com 4
-    if (cleaned.startsWith('4')) {
+    // Debug para cartão 5031
+    if (cleaned.startsWith('5031')) {
+      print('DEBUG: Detectando cartão 5031...');
+      print('  - É Elo 5041/5066/5067/5090? ${RegExp(r'^(5041|5066|5067|5090)').hasMatch(cleaned)}');
+      print('  - Matches 50XX? ${RegExp(r'^50[0-9]{2}').hasMatch(cleaned)}');
+      print('  - Matches 51-55? ${RegExp(r'^5[1-5]').hasMatch(cleaned)}');
+    }
+    
+    // Elo: vários ranges específicos (verificar primeiro para evitar conflito com Visa e Mastercard)
+    if (RegExp(r'^(4011|4312|4389|4514|4576|5041|5066|5067|5090|6277|6362|6363|6504|6505|6506|6507|6509|6516|6550)').hasMatch(cleaned)) {
+      return CardBrand.elo;
+    }
+    
+    // Visa: começa com 4 (exceto ranges Elo)
+    if (cleaned.startsWith('4') && !RegExp(r'^(4011|4312|4389|4514|4576)').hasMatch(cleaned)) {
       return CardBrand.visa;
     }
     
-    // Mastercard: começa com 51-55 ou 2221-2720
+    // Mastercard: 51-55, 50 (exceto Elo ranges), ou 2221-2720
     if (RegExp(r'^5[1-5]').hasMatch(cleaned) ||
+        RegExp(r'^50[0-9]{2}').hasMatch(cleaned) && !RegExp(r'^(5041|5066|5067|5090)').hasMatch(cleaned) ||
         RegExp(r'^2(22[1-9]|2[3-9][0-9]|[3-6][0-9]{2}|7[0-1][0-9]|720)').hasMatch(cleaned)) {
       return CardBrand.mastercard;
     }
@@ -110,11 +124,6 @@ class CardValidator {
     // American Express: começa com 34 ou 37
     if (cleaned.startsWith('34') || cleaned.startsWith('37')) {
       return CardBrand.amex;
-    }
-    
-    // Elo: vários ranges específicos
-    if (RegExp(r'^(4011|4312|4389|4514|4576|5041|5066|5067|5090|6277|6362|6363|6504|6505|6506|6507|6509|6516|6550)').hasMatch(cleaned)) {
-      return CardBrand.elo;
     }
     
     // Hipercard: começa com 6062
@@ -170,27 +179,48 @@ class CardValidator {
     required String cvv,
     String? cardHolderName,
   }) {
+    print('=== CARD VALIDATOR ===');
+    print('Card Number: ${cardNumber.substring(0, 4)}****${cardNumber.substring(cardNumber.length - 4)}');
+    print('Expiry: $expiryMonth/$expiryYear');
+    print('CVV: ${cvv.length} digits');
+    print('Card Holder: $cardHolderName');
+    
     final errors = <String, String?>{};
 
     // Valida número do cartão
     if (!validateCardNumber(cardNumber)) {
+      print('❌ Card number validation failed');
       errors['cardNumber'] = 'Número do cartão inválido';
+    } else {
+      print('✅ Card number is valid');
     }
 
     // Valida data de expiração
     if (!validateExpiryDate(expiryMonth, expiryYear)) {
+      print('❌ Expiry date validation failed');
       errors['expiry'] = 'Data de expiração inválida';
+    } else {
+      print('✅ Expiry date is valid');
     }
 
     // Valida CVV
     if (!validateCVV(cvv, cardNumber: cardNumber)) {
+      print('❌ CVV validation failed');
       errors['cvv'] = 'Código de segurança inválido';
+    } else {
+      print('✅ CVV is valid');
     }
 
     // Valida nome do titular (opcional)
     if (cardHolderName != null && cardHolderName.trim().isEmpty) {
+      print('❌ Card holder name is empty');
       errors['cardHolderName'] = 'Nome do titular é obrigatório';
+    } else if (cardHolderName != null) {
+      print('✅ Card holder name is valid');
     }
+    
+    print('Total errors: ${errors.length}');
+    print('======================');
 
     return errors;
   }
