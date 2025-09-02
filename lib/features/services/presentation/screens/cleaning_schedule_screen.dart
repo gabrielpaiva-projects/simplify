@@ -2165,8 +2165,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
               pixCode: response.data!.qrCode,
               amount: _targetPrice,
               serviceTitle: widget.serviceTitle,
-              selectedDate: _selectedDate,
-              selectedTime: _selectedTime,
+              selectedDate: _selectedDate ?? DateTime.now(),
+              selectedTime: _selectedTime ?? '09:00',
             ),
           ),
         );
