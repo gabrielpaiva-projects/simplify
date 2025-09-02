@@ -10,7 +10,13 @@ import '../utils/logger_service.dart';
 import '../../features/auth/data/services/cep_service.dart';
 import '../../features/auth/data/services/firebase_auth_service.dart';
 import '../../features/auth/data/repositories/auth_repository.dart';
+import '../../features/auth/domain/repositories/auth_repository_interface.dart';
+import '../../features/auth/domain/usecases/sign_in_usecase.dart';
+import '../../features/auth/domain/usecases/sign_up_usecase.dart';
+import '../../features/auth/domain/usecases/sign_out_usecase.dart';
+import '../../features/auth/domain/usecases/get_current_user_usecase.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
+import '../errors/error_handler.dart';
 
 final sl = GetIt.instance;
 
@@ -67,11 +73,40 @@ void _initAuth() {
     ),
   );
   
+  // Domain repositories
+  sl.registerLazySingleton<AuthRepositoryInterface>(
+    () => AuthRepositoryImpl(
+      authService: sl(),
+    ),
+  );
+  
+  // Use cases
+  sl.registerLazySingleton<SignInUseCase>(
+    () => SignInUseCase(sl()),
+  );
+  
+  sl.registerLazySingleton<SignUpUseCase>(
+    () => SignUpUseCase(sl()),
+  );
+  
+  sl.registerLazySingleton<SignOutUseCase>(
+    () => SignOutUseCase(sl()),
+  );
+  
+  sl.registerLazySingleton<GetCurrentUserUseCase>(
+    () => GetCurrentUserUseCase(sl()),
+  );
+  
   // Providers
   sl.registerFactory<AuthProvider>(
     () => AuthProvider(
       authRepository: sl(),
     ),
+  );
+  
+  // Error handler
+  sl.registerLazySingleton<ErrorHandler>(
+    () => ErrorHandler(sl()),
   );
 }
 
