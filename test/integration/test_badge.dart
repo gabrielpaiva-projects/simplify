@@ -1,4 +1,4 @@
-import 'utils/badge_generator.dart';
+import '../../lib/utils/badge_generator.dart';
 import 'dart:convert';
 
 void main() {

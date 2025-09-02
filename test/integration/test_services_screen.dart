@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'features/services/presentation/screens/services_screen.dart';
+import '../../lib/features/services/presentation/screens/services_screen.dart';
 
 void main() {
   runApp(const TestServicesApp());

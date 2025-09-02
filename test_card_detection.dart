@@ -1,5 +1,5 @@
 import 'lib/utils/card_validator.dart';
-import 'lib/models/badge_models.dart';
+import 'lib/features/badge/data/models/badge_models.dart';
 
 void main() {
   // Testa a detecção de bandeiras
