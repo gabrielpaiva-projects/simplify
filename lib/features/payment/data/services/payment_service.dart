@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/payment_response.dart';
-import '../models/badge_models.dart';
-import '../utils/badge_generator.dart';
-import '../utils/card_validator.dart';
-import '../utils/secure_config.dart';
+import '../../../badge/data/models/badge_models.dart';
+import '../../../../utils/badge_generator.dart';
+import '../../../../utils/card_validator.dart';
+import '../../../../utils/secure_config.dart';
 
 /// Serviço principal para processar pagamentos
 class PaymentService {

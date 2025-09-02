@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../services/payment_service.dart';
-import '../models/payment_response.dart';
+import '../../data/services/payment_service.dart';
+import '../../data/models/payment_response.dart';
 import '../widgets/credit_card_form.dart';
 
 class CardPaymentScreen extends StatefulWidget {

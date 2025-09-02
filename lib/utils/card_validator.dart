@@ -1,4 +1,4 @@
-import '../models/badge_models.dart';
+import '../features/badge/data/models/badge_models.dart';
 
 /// Classe para validação de cartões de crédito
 class CardValidator {

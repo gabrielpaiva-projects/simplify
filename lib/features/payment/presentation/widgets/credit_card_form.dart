@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../utils/card_validator.dart';
-import '../models/badge_models.dart';
+import '../../../../utils/card_validator.dart';
+import '../../../badge/data/models/badge_models.dart';
 
 class CreditCardForm extends StatefulWidget {
   final Function(Map<String, String>) onSubmit;
