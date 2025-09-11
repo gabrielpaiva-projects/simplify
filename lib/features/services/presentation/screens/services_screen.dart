@@ -204,6 +204,69 @@ class _ServicesScreenState extends State<ServicesScreen>
     }
   }
 
+  void _handleLogout() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Sair da conta',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: const Text(
+            'Tem certeza de que deseja sair da sua conta?',
+            style: TextStyle(fontSize: 16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Cancelar',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context); // Fecha o diálogo
+                
+                // Executa o logout
+                final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                await authProvider.signOut();
+                
+                // Navega para a tela de login
+                if (mounted) {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/login',
+                    (route) => false,
+                  );
+                }
+              },
+              child: Text(
+                'Sair',
+                style: TextStyle(
+                  color: Colors.red[600],
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _showMoreOptions() {
     HapticFeedback.mediumImpact();
     
@@ -274,20 +337,11 @@ class _ServicesScreenState extends State<ServicesScreen>
                   children: [
                     _buildMenuOption(
                       icon: Icons.person_outline,
-                      title: 'Meu Perfil',
-                      subtitle: 'Gerencie suas informações',
+                      title: 'Perfil',
+                      subtitle: 'Gerencie suas informações pessoais',
                       onTap: () {
                         Navigator.pop(context);
                         // TODO: Navegar para perfil
-                      },
-                    ),
-                    _buildMenuOption(
-                      icon: Icons.history,
-                      title: 'Histórico de Serviços',
-                      subtitle: 'Veja seus serviços anteriores',
-                      onTap: () {
-                        Navigator.pop(context);
-                        // TODO: Navegar para histórico
                       },
                     ),
                     _buildMenuOption(
@@ -296,43 +350,16 @@ class _ServicesScreenState extends State<ServicesScreen>
                       subtitle: 'Gerencie seus agendamentos',
                       onTap: () {
                         Navigator.pop(context);
-                        // TODO: Navegar para agendamentos
-                      },
-                    ),
-                    _buildMenuOption(
-                      icon: Icons.star_outline,
-                      title: 'Favoritos',
-                      subtitle: 'Seus serviços favoritos',
-                      onTap: () {
-                        Navigator.pop(context);
-                        // TODO: Navegar para favoritos
-                      },
-                    ),
-                    _buildMenuOption(
-                      icon: Icons.payment,
-                      title: 'Formas de Pagamento',
-                      subtitle: 'Gerencie seus cartões',
-                      onTap: () {
-                        Navigator.pop(context);
-                        // TODO: Navegar para pagamentos
+                        Navigator.pushNamed(context, '/appointments');
                       },
                     ),
                     _buildMenuOption(
                       icon: Icons.help_outline,
                       title: 'Ajuda e Suporte',
-                      subtitle: 'Tire suas dúvidas',
+                      subtitle: 'Tire suas dúvidas e obtenha ajuda',
                       onTap: () {
                         Navigator.pop(context);
                         // TODO: Navegar para ajuda
-                      },
-                    ),
-                    _buildMenuOption(
-                      icon: Icons.settings_outlined,
-                      title: 'Configurações',
-                      subtitle: 'Preferências do app',
-                      onTap: () {
-                        Navigator.pop(context);
-                        // TODO: Navegar para configurações
                       },
                     ),
                     const SizedBox(height: 16),
@@ -344,7 +371,7 @@ class _ServicesScreenState extends State<ServicesScreen>
                       isDestructive: true,
                       onTap: () {
                         Navigator.pop(context);
-                        // TODO: Implementar logout
+                        _handleLogout();
                       },
                     ),
                   ],
