@@ -34,7 +34,7 @@ class PixPaymentResponse {
   final String qrCodeBase64;
   final String qrCode;
   final String ticketUrl;
-  final int paymentId;
+  final String paymentId; // Alterado de int para String
   final String status;
 
   PixPaymentResponse({
@@ -54,7 +54,7 @@ class PixPaymentResponse {
       qrCodeBase64: json['qrCodeBase64'] as String,
       qrCode: json['qrCode'] as String,
       ticketUrl: json['ticketUrl'] as String,
-      paymentId: json['paymentId'] as int,
+      paymentId: json['paymentId'] as String, // Alterado de int para String
       status: json['status'] as String,
     );
   }
@@ -78,25 +78,22 @@ class PixPaymentResponse {
 class CardPaymentResponse {
   final String status;
   final String statusDetail;
-  final int paymentId;
+  final String paymentId; // Alterado de int para String
   final double amount;
-  final String? dateApproved;
 
   CardPaymentResponse({
     required this.status,
     required this.statusDetail,
     required this.paymentId,
     required this.amount,
-    this.dateApproved,
   });
 
   factory CardPaymentResponse.fromJson(Map<String, dynamic> json) {
     return CardPaymentResponse(
       status: json['status'] as String,
       statusDetail: json['statusDetail'] as String,
-      paymentId: json['paymentId'] as int,
+      paymentId: json['paymentId'] as String, // Alterado de int para String
       amount: (json['amount'] as num).toDouble(),
-      dateApproved: json['dateApproved'] as String?,
     );
   }
 
@@ -109,7 +106,6 @@ class CardPaymentResponse {
         'statusDetail': statusDetail,
         'paymentId': paymentId,
         'amount': amount,
-        'dateApproved': dateApproved,
       };
 }
 

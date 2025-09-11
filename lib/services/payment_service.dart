@@ -214,7 +214,7 @@ class PaymentService {
 
   /// Verifica o status de um pagamento
   static Future<ApiResponse<Map<String, dynamic>>> checkPaymentStatus({
-    required int paymentId,
+    required String paymentId,
   }) async {
     try {
       final apiUrl = await SecureConfig.getApiBaseUrl();
@@ -248,7 +248,7 @@ class PaymentService {
 
   /// Cancela um pagamento
   static Future<ApiResponse<Map<String, dynamic>>> cancelPayment({
-    required int paymentId,
+    required String paymentId,
   }) async {
     try {
       final apiUrl = await SecureConfig.getApiBaseUrl();
@@ -282,7 +282,7 @@ class PaymentService {
 
   /// Processa um reembolso
   static Future<ApiResponse<Map<String, dynamic>>> refundPayment({
-    required int paymentId,
+    required String paymentId,
     double? amount,
   }) async {
     try {
