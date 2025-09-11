@@ -23,60 +23,46 @@ class PixPaymentScreen extends StatefulWidget {
   State<PixPaymentScreen> createState() => _PixPaymentScreenState();
 }
 
-class _PixPaymentScreenState extends State<PixPaymentScreen>
+class _PixPaymentScreenState extends State<PixPaymentScreen> 
     with SingleTickerProviderStateMixin {
   
-  late AnimationController _animationController;
+  late AnimationController _controller;
   late Animation<double> _fadeAnimation;
-  late Animation<double> _slideAnimation;
   
   bool _codeCopied = false;
-  Timer? _expirationTimer;
-  int _minutesRemaining = 30;
-  int _secondsRemaining = 0;
-  late String _orderNumber;
+  Timer? _timer;
+  int _minutes = 30;
+  int _seconds = 0;
   
   @override
   void initState() {
     super.initState();
-    _orderNumber = DateTime.now().millisecondsSinceEpoch.toString().substring(6, 12);
-    _initializeAnimations();
-    _startExpirationTimer();
-  }
-  
-  void _initializeAnimations() {
-    _animationController = AnimationController(
+    
+    _controller = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
     
     _fadeAnimation = Tween<double>(
-      begin: 0,
-      end: 1,
+      begin: 0.0,
+      end: 1.0,
     ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOut,
+      parent: _controller,
+      curve: Curves.easeIn,
     ));
     
-    _slideAnimation = Tween<double>(
-      begin: 20,
-      end: 0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
-    
-    _animationController.forward();
+    _controller.forward();
+    _startTimer();
   }
   
-  void _startExpirationTimer() {
-    _expirationTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
-        if (_secondsRemaining > 0) {
-          _secondsRemaining--;
-        } else if (_minutesRemaining > 0) {
-          _minutesRemaining--;
-          _secondsRemaining = 59;
+        if (_seconds > 0) {
+          _seconds--;
+        } else if (_minutes > 0) {
+          _minutes--;
+          _seconds = 59;
         } else {
           timer.cancel();
         }
@@ -84,10 +70,29 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
     });
   }
   
-  void _copyToClipboard() {
-    Clipboard.setData(ClipboardData(text: widget.pixCode));
+  void _copyPixCode() async {
+    await Clipboard.setData(ClipboardData(text: widget.pixCode));
     HapticFeedback.lightImpact();
+    
     setState(() => _codeCopied = true);
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Row(
+          children: [
+            Icon(Icons.check, color: Colors.white),
+            SizedBox(width: 8),
+            Text('Código copiado!'),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+    );
+    
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) setState(() => _codeCopied = false);
     });
@@ -95,480 +100,476 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
   
   @override
   void dispose() {
-    _animationController.dispose();
-    _expirationTimer?.cancel();
+    _controller.dispose();
+    _timer?.cancel();
     super.dispose();
   }
   
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFBFC),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.of(context).pop(),
-          icon: Icon(
-            Icons.close,
-            color: Colors.grey[700],
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF166F53),
+              Color(0xFF0F4C3A),
+            ],
           ),
         ),
-        title: Text(
-          'Pagamento PIX',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey[900],
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: Text(
-                '#$_orderNumber',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: AnimatedBuilder(
-        animation: _animationController,
-        builder: (context, child) {
-          return FadeTransition(
+        child: SafeArea(
+          child: FadeTransition(
             opacity: _fadeAnimation,
-            child: Transform.translate(
-              offset: Offset(0, _slideAnimation.value),
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    // PIX Header
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 32),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.03),
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          Container(
-                            width: 72,
-                            height: 72,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF32BCAD).withOpacity(0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.pix,
-                              size: 40,
-                              color: Color(0xFF32BCAD),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Pague com PIX',
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.grey[900],
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'R\$ ${widget.amount.toStringAsFixed(2).replaceAll('.', ',')}',
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.primaryGreen,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    
-                    Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        children: [
-                          // Timer Status
-                          _buildTimerStatus(),
-                          
-                          const SizedBox(height: 20),
-                          
-                          // Copy Code Section
-                          _buildCopyCodeSection(),
-                          
-                          const SizedBox(height: 20),
-                          
-                          // Instructions
-                          _buildInstructions(),
-                          
-                          const SizedBox(height: 20),
-                          
-                          // Service Info
-                          _buildServiceInfo(),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-      bottomNavigationBar: _buildBottomBar(),
-    );
-  }
-  
-  Widget _buildTimerStatus() {
-    final isUrgent = _minutesRemaining < 5;
-    
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isUrgent ? Colors.orange.shade50 : Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isUrgent ? Colors.orange.shade200 : Colors.blue.shade200,
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.timer_outlined,
-            size: 20,
-            color: isUrgent ? Colors.orange[700] : Colors.blue[700],
-          ),
-          const SizedBox(width: 12),
-          Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Tempo para pagamento',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isUrgent ? Colors.orange[900] : Colors.blue[900],
+                // Header
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(
+                            Icons.arrow_back,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      const Expanded(
+                        child: Text(
+                          'Pagamento PIX',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 48),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Este código expira em ${_minutesRemaining.toString().padLeft(2, '0')}:${_secondsRemaining.toString().padLeft(2, '0')}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isUrgent ? Colors.orange[700] : Colors.blue[700],
+                
+                // Conteúdo principal
+                Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 20),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(30),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        // Valor e info
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(30),
+                          child: Column(
+                            children: [
+                              // Handle
+                              Container(
+                                width: 40,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[300],
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                              
+                              const SizedBox(height: 30),
+                              
+                              // PIX icon
+                              Container(
+                                width: 70,
+                                height: 70,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF32BCAD),
+                                  borderRadius: BorderRadius.circular(35),
+                                ),
+                                child: const Icon(
+                                  Icons.pix,
+                                  color: Colors.white,
+                                  size: 35,
+                                ),
+                              ),
+                              
+                              const SizedBox(height: 20),
+                              
+                              // Valor
+                              Text(
+                                'R\$ ${widget.amount.toStringAsFixed(2).replaceAll('.', ',')}',
+                                style: const TextStyle(
+                                  fontSize: 40,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              
+                              const SizedBox(height: 8),
+                              
+                              Text(
+                                widget.serviceTitle,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              
+                              const SizedBox(height: 25),
+                              
+                              // Timer
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _minutes < 5 
+                                    ? Colors.red[100] 
+                                    : Colors.orange[100],
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.timer,
+                                      size: 16,
+                                      color: _minutes < 5 
+                                        ? Colors.red[600] 
+                                        : Colors.orange[600],
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      '${_minutes.toString().padLeft(2, '0')}:${_seconds.toString().padLeft(2, '0')}',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: _minutes < 5 
+                                          ? Colors.red[700] 
+                                          : Colors.orange[700],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        
+                        // Código PIX
+                        Expanded(
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 20),
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[50],
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Código PIX',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                
+                                const SizedBox(height: 15),
+                                
+                                // Código
+                                Expanded(
+                                  child: Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.all(15),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: Colors.grey[300]!,
+                                      ),
+                                    ),
+                                    child: SingleChildScrollView(
+                                      child: Text(
+                                        widget.pixCode,
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontFamily: 'monospace',
+                                          height: 1.4,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                
+                                const SizedBox(height: 15),
+                                
+                                // Botão copiar
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 50,
+                                  child: ElevatedButton(
+                                    onPressed: _copyPixCode,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: _codeCopied 
+                                        ? Colors.green 
+                                        : const Color(0xFF166F53),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          _codeCopied ? Icons.check : Icons.copy,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          _codeCopied ? 'Copiado!' : 'Copiar código',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 20),
+                        
+                        // Instruções
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 20),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.blue[50],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                color: Colors.blue[600],
+                                size: 20,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Cole este código no seu app de banco na opção PIX > Copia e Cola',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.blue[700],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        
+                        // Botão principal
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(20),
+                          child: ElevatedButton(
+                            onPressed: () => _showConfirmation(),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF166F53),
+                              minimumSize: const Size(double.infinity, 55),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'Já realizei o pagamento',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
   
-  Widget _buildCopyCodeSection() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: _codeCopied ? AppColors.primaryGreen : Colors.grey[300]!,
-          width: _codeCopied ? 2 : 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: _codeCopied 
-                ? AppColors.primaryGreen.withOpacity(0.1)
-                : Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+  void _showConfirmation() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.content_copy,
-                size: 20,
-                color: Colors.grey[700],
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(25),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
               ),
-              const SizedBox(width: 8),
-              Text(
-                'PIX Copia e Cola',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey[900],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              borderRadius: BorderRadius.circular(8),
             ),
-            child: Text(
-              widget.pixCode,
+            
+            const SizedBox(height: 20),
+            
+            const Icon(
+              Icons.help_outline,
+              size: 50,
+              color: Colors.orange,
+            ),
+            
+            const SizedBox(height: 15),
+            
+            const Text(
+              'Confirmar pagamento',
               style: TextStyle(
-                fontSize: 11,
-                fontFamily: 'monospace',
-                color: Colors.grey[700],
-                height: 1.5,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            
+            const SizedBox(height: 10),
+            
+            const Text(
+              'Você já fez o pagamento via PIX?',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.black54,
               ),
               textAlign: TextAlign.center,
             ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _copyToClipboard,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _codeCopied 
-                    ? AppColors.primaryGreen 
-                    : Colors.grey[800],
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                elevation: 0,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    _codeCopied ? Icons.check : Icons.copy,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _codeCopied ? 'Copiado!' : 'Copiar código',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildInstructions() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.blue[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.blue[200]!,
-          width: 1,
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            Icons.info_outline,
-            size: 20,
-            color: Colors.blue[700],
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            
+            const SizedBox(height: 25),
+            
+            Row(
               children: [
-                Text(
-                  'Como pagar',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.blue[900],
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text('Cancelar'),
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  '1. Abra o app do seu banco\n'
-                  '2. Escolha pagar com PIX\n'
-                  '3. Cole o código PIX\n'
-                  '4. Confirme o pagamento',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.blue[700],
-                    height: 1.5,
+                const SizedBox(width: 15),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _showSuccess();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF166F53),
+                      minimumSize: const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text(
+                      'Sim, já paguei',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildServiceInfo() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          _buildInfoRow('Serviço', widget.serviceTitle),
-          const SizedBox(height: 12),
-          _buildInfoRow('Data', _formatDate(widget.selectedDate)),
-          const SizedBox(height: 12),
-          _buildInfoRow('Horário', widget.selectedTime),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildInfoRow(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            color: Colors.grey[600],
-          ),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: Colors.grey[900],
-          ),
-        ),
-      ],
-    );
-  }
-  
-  Widget _buildBottomBar() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: ElevatedButton(
-          onPressed: () {
-            HapticFeedback.lightImpact();
-            _showVerificationDialog();
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primaryGreen,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            elevation: 0,
-          ),
-          child: const Text(
-            'Já fiz o pagamento',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+            
+            const SizedBox(height: 10),
+          ],
         ),
       ),
     );
   }
   
-  void _showVerificationDialog() {
+  void _showSuccess() {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => Dialog(
+      builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(15),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation(AppColors.primaryGreen),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.check_circle,
+              color: Colors.green,
+              size: 60,
+            ),
+            const SizedBox(height: 15),
+            const Text(
+              'Sucesso!',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
               ),
-              const SizedBox(height: 24),
-              Text(
-                'Verificando pagamento...',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey[900],
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Pagamento confirmado.\nSeu agendamento foi realizado!',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF166F53),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'Continuar',
+                  style: TextStyle(color: Colors.white),
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Aguarde alguns instantes',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
-    
-    Future.delayed(const Duration(seconds: 2), () {
-      Navigator.of(context).pop();
-      // Navigate to confirmation
-    });
-  }
-  
-  String _formatDate(DateTime date) {
-    final weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-    final months = [
-      'jan', 'fev', 'mar', 'abr', 'mai', 'jun',
-      'jul', 'ago', 'set', 'out', 'nov', 'dez'
-    ];
-    
-    return '${weekDays[date.weekday % 7]}, ${date.day} de ${months[date.month - 1]}';
   }
 }
