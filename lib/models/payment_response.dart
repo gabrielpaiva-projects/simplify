@@ -97,9 +97,12 @@ class CardPaymentResponse {
     );
   }
 
-  bool get isApproved => status.toLowerCase() == 'approved';
+  bool get isConfirmed => status.toLowerCase() == 'confirmed';
   bool get isPending => status.toLowerCase() == 'pending';
   bool get isRejected => status.toLowerCase() == 'rejected';
+  
+  // Manter compatibilidade com código existente
+  bool get isApproved => isConfirmed;
 
   Map<String, dynamic> toJson() => {
         'status': status,
