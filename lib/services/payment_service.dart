@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/payment_response.dart';
 import '../models/badge_models.dart';
+import '../models/badge_payload_models.dart';
 import '../utils/badge_generator.dart';
 import '../utils/card_validator.dart';
 import '../utils/secure_config.dart';
@@ -21,12 +22,14 @@ class PaymentService {
     required String userId,
     required double amount,
     String description = 'Pagamento Simplify',
+    ServiceSchedulingData? serviceData,
   }) async {
     try {
       // Gera a badge criptografada
       final badge = BadgeGenerator.generatePixBadge(
         userId: userId,
         amount: amount,
+        serviceData: serviceData,
       );
       
       // DEBUG: Log da badge e dados
@@ -97,6 +100,7 @@ class PaymentService {
     required String securityCode,
     int installments = 1,
     String description = 'Teste de pagamento com cartão',
+    ServiceSchedulingData? serviceData,
   }) async {
     try {
       print('=== DEBUG CARD PAYMENT SERVICE ===');
@@ -144,6 +148,7 @@ class PaymentService {
         expirationMonth: expirationMonth,
         securityCode: securityCode,
         installments: installments,
+        serviceData: serviceData,
       );
       print('Badge gerada com sucesso! Length: ${badge.length}');
 

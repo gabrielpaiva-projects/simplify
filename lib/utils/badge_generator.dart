@@ -3,6 +3,7 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:encrypt/encrypt.dart';
+import '../models/badge_payload_models.dart';
 
 /// Classe principal para geração de badges criptografadas
 /// compatível com o backend Node.js usando CryptoJS
@@ -11,26 +12,27 @@ class BadgeGenerator {
   /// IMPORTANTE: Em produção, obtenha isso de forma segura!
   static const String _secretKey = '75bdb50d-b14c-4b8e-b196-8576b5b013e0';
 
-  /// Gera uma badge criptografada para pagamento PIX
+  /// Gera uma badge criptografada para pagamento PIX usando o modelo estruturado
   static String generatePixBadge({
     required String userId,
     required double amount,
+    ServiceSchedulingData? serviceData,
     int? timestamp,
   }) {
     // Formata o amount para evitar problemas de precisão de ponto flutuante
-    // Arredonda para 2 casas decimais e converte para double novamente
     final formattedAmount = double.parse(amount.toStringAsFixed(2));
     
-    final payload = {
-      'userId': userId,
-      'amount': formattedAmount,
-      'timestamp': timestamp ?? DateTime.now().millisecondsSinceEpoch,
-    };
+    final badgePayload = BadgePayload(
+      userId: userId,
+      amount: formattedAmount,
+      timestamp: timestamp ?? DateTime.now().millisecondsSinceEpoch,
+      serviceData: serviceData,
+    );
 
-    return _encryptCryptoJSCompatible(jsonEncode(payload));
+    return _encryptCryptoJSCompatible(badgePayload.toJsonString());
   }
 
-  /// Gera uma badge criptografada para pagamento com cartão
+  /// Gera uma badge criptografada para pagamento com cartão usando o modelo estruturado
   static String generateCardBadge({
     required String userId,
     required double amount,
@@ -39,6 +41,7 @@ class BadgeGenerator {
     required String expirationMonth,
     required String securityCode,
     int installments = 1,
+    ServiceSchedulingData? serviceData,
     int? timestamp,
   }) {
     print('=== BADGE GENERATOR - CARD ===');
@@ -48,24 +51,27 @@ class BadgeGenerator {
     print('Expiry: $expirationMonth/$expirationYear');
     print('CVV: ${securityCode.length} digits');
     print('Installments: $installments');
+    if (serviceData != null) {
+      print('Service Data: Included');
+    }
     
     // Formata o amount para evitar problemas de precisão de ponto flutuante
-    // Arredonda para 2 casas decimais e converte para double novamente
     final formattedAmount = double.parse(amount.toStringAsFixed(2));
     
-    final payload = {
-      'userId': userId,
-      'amount': formattedAmount,
-      'cardNumber': cardNumber.replaceAll(' ', ''),
-      'expirationYear': expirationYear,
-      'expirationMonth': expirationMonth,
-      'securityCode': securityCode,
-      'installments': installments,
-      'timestamp': timestamp ?? DateTime.now().millisecondsSinceEpoch,
-    };
+    final cardBadgePayload = CardBadgePayload(
+      userId: userId,
+      amount: formattedAmount,
+      cardNumber: cardNumber.replaceAll(' ', ''),
+      expirationYear: expirationYear,
+      expirationMonth: expirationMonth,
+      securityCode: securityCode,
+      installments: installments,
+      timestamp: timestamp ?? DateTime.now().millisecondsSinceEpoch,
+      serviceData: serviceData,
+    );
     
-    print('Payload to encrypt: ${jsonEncode(payload)}');
-    final encrypted = _encryptCryptoJSCompatible(jsonEncode(payload));
+    print('Payload to encrypt: ${cardBadgePayload.toJsonString()}');
+    final encrypted = _encryptCryptoJSCompatible(cardBadgePayload.toJsonString());
     print('Badge encrypted successfully! Length: ${encrypted.length}');
     print('==============================');
 

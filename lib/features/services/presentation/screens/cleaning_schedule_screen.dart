@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../providers/cleaning_pricing_provider.dart';
 import '../../data/models/cleaning_pricing_model.dart';
@@ -13,7 +14,9 @@ import 'payment_confirmation_screen.dart';
 import 'pix_payment_screen.dart';
 import '../../../../services/payment_service.dart';
 import '../../../../models/payment_response.dart';
+import '../../../../models/badge_payload_models.dart';
 import '../../../../utils/card_validator.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 class CleaningScheduleScreen extends StatefulWidget {
   final String serviceTitle;
@@ -2127,6 +2130,90 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     return formatter.format(value);
   }
 
+  // Método auxiliar para obter dados do usuário do Firestore
+  Future<Map<String, dynamic>> _getUserData() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      throw Exception('Usuário não autenticado');
+    }
+
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUser.uid)
+        .get();
+
+    if (!userDoc.exists) {
+      throw Exception('Dados do usuário não encontrados');
+    }
+
+    return userDoc.data()!;
+  }
+
+  // Método para preparar os dados completos do agendamento usando o modelo estruturado
+  Future<ServiceSchedulingData> _prepareBookingData() async {
+    final userData = await _getUserData();
+    
+    // Formatar a data selecionada
+    final selectedDateTime = _selectedDate ?? DateTime.now();
+    final formattedDate = selectedDateTime.toIso8601String();
+    
+    // Obter valores reais do provider de preços
+    final productsPrice = _includeProducts ? _pricingProvider.getProductsPrice() : 0.0;
+    final petsPrice = _includePets ? _pricingProvider.getPetsPrice() : 0.0;
+    
+    // Preparar serviços extras com valores do Firestore
+    final servicosExtras = ServicosExtras(
+      produtosInclusos: _includeProducts,
+      produtosValor: productsPrice,
+      temPets: _includePets,
+      petsValor: petsPrice,
+    );
+    
+    // Preparar endereço do usuário
+    final endereco = Endereco(
+      rua: userData['street'] ?? '',
+      numero: userData['number'] ?? '',
+      complemento: userData['complement'],
+      cidade: userData['city'] ?? '',
+      estado: userData['state'] ?? '',
+      cep: userData['cep'] ?? '',
+    );
+    
+    // Mapear tipo de limpeza
+    TipoLimpeza tipoLimpeza = TipoLimpeza.padrao;
+    if (widget.cleaningType == CleaningType.heavy) {
+      tipoLimpeza = TipoLimpeza.pesada;
+    }
+    
+    // Mapear tipo de imóvel
+    TipoImovel tipoImovel;
+    switch (_selectedResidence) {
+      case 'studio':
+        tipoImovel = TipoImovel.studio;
+        break;
+      case 'apartment':
+        tipoImovel = TipoImovel.apartamento;
+        break;
+      case 'house':
+        tipoImovel = TipoImovel.casa;
+        break;
+      default:
+        tipoImovel = TipoImovel.apartamento;
+    }
+    
+    return ServiceSchedulingData(
+      idCliente: 'service_${DateTime.now().millisecondsSinceEpoch}',
+      tipoLimpeza: tipoLimpeza,
+      quantidadeComodos: _rooms,
+      quantidadeBanheiros: _bathrooms,
+      servicosExtras: servicosExtras,
+      tipoImovel: tipoImovel,
+      data: formattedDate,
+      horario: _selectedTime ?? '09:00',
+      endereco: endereco,
+    );
+  }
+
   void _processPixPayment() async {
     HapticFeedback.mediumImpact();
 
@@ -2141,11 +2228,15 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
         throw Exception('Usuário não autenticado');
       }
 
+      // Preparar dados completos do agendamento
+      final serviceData = await _prepareBookingData();
+
       // Process PIX payment via API
       final response = await PaymentService.processPixPayment(
         userId: currentUser.uid,
         amount: _targetPrice,
         description: 'Agendamento: ${widget.serviceTitle}',
+        serviceData: serviceData,
       );
 
       if (!mounted) return;
@@ -2598,6 +2689,9 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
         print('Descrição: Agendamento: ${widget.serviceTitle}');
         print('=======================');
         
+        // Preparar dados completos do agendamento
+        final serviceData = await _prepareBookingData();
+        
         // Process card payment via API
         print('Chamando PaymentService.processCardPayment()...');
         final response = await PaymentService.processCardPayment(
@@ -2609,6 +2703,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           securityCode: _cvvController.text,
           installments: 1,
           description: 'Agendamento: ${widget.serviceTitle}',
+          serviceData: serviceData,
         );
         
         if (!mounted) return;
