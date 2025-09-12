@@ -4,6 +4,7 @@ import 'package:add_2_calendar/add_2_calendar.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../models/appointment_model.dart';
 import '../../../../services/appointment_service.dart';
+import '../../../../services/professional_service.dart';
 
 // Função global para gerar URLs do Google Maps com logs
 String getGoogleMapsUrl(String address) {
@@ -25,7 +26,7 @@ String getGoogleMapsUrl(String address) {
   return url;
 }
 
-class AppointmentDetailsScreen extends StatelessWidget {
+class AppointmentDetailsScreen extends StatefulWidget {
   final AppointmentModel appointment;
   
   const AppointmentDetailsScreen({
@@ -34,9 +35,89 @@ class AppointmentDetailsScreen extends StatelessWidget {
   });
 
   @override
+  State<AppointmentDetailsScreen> createState() => _AppointmentDetailsScreenState();
+}
+
+class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
+  final ProfessionalService _professionalService = ProfessionalService();
+  final AppointmentService _appointmentService = AppointmentService();
+  ProfessionalData? _professional;
+  bool _loadingProfessional = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfessionalData();
+  }
+
+  Future<void> _loadProfessionalData() async {
+    print('🔍 [APPOINTMENT_DETAILS] Status: ${widget.appointment.paymentStatus}');
+    print('🔍 [APPOINTMENT_DETAILS] ProfissionalId: ${widget.appointment.profissionalId}');
+    
+    // Para agendamentos RECEIVED (PIX) ou CONFIRMED (CARTÃO), buscar dados do profissional
+    if (widget.appointment.paymentStatus == 'RECEIVED' || widget.appointment.paymentStatus == 'CONFIRMED') {
+      if (widget.appointment.profissionalId != null && widget.appointment.profissionalId!.isNotEmpty) {
+        print('🔍 [APPOINTMENT_DETAILS] Carregando dados do profissional: ${widget.appointment.profissionalId}');
+        
+        setState(() {
+          _loadingProfessional = true;
+        });
+
+        try {
+          final professional = await _professionalService.getProfessionalById(widget.appointment.profissionalId!);
+          print('🔍 [APPOINTMENT_DETAILS] Profissional encontrado: ${professional?.displayName}');
+          
+          if (mounted) {
+            setState(() {
+              _professional = professional;
+              _loadingProfessional = false;
+            });
+          }
+        } catch (e) {
+          print('❌ [APPOINTMENT_DETAILS] Erro ao carregar profissional: $e');
+          if (mounted) {
+            setState(() {
+              _loadingProfessional = false;
+            });
+          }
+        }
+      } else {
+        print('🔍 [APPOINTMENT_DETAILS] Agendamento pago sem profissionalId - Buscando profissional');
+      }
+    } else {
+      print('🔍 [APPOINTMENT_DETAILS] Status não é RECEIVED/CONFIRMED - não buscar profissional');
+    }
+  }
+
+  String get _statusText {
+    // Para agendamentos RECEIVED (PIX) ou CONFIRMED (CARTÃO)
+    if (widget.appointment.paymentStatus == 'RECEIVED' || widget.appointment.paymentStatus == 'CONFIRMED') {
+      if (widget.appointment.profissionalId == null || (widget.appointment.profissionalId?.isEmpty ?? true)) {
+        return 'Buscando profissional';
+      } else {
+        return 'Confirmado';
+      }
+    }
+    
+    // Para outros status, usar o padrão
+    return widget.appointment.paymentStatusDisplayName;
+  }
+
+  Color get _statusColor {
+    if (widget.appointment.paymentStatus == 'RECEIVED' || widget.appointment.paymentStatus == 'CONFIRMED') {
+      if (widget.appointment.profissionalId == null || (widget.appointment.profissionalId?.isEmpty ?? true)) {
+        return Colors.orange;
+      } else {
+        return Colors.green;
+      }
+    }
+    return AppColors.primaryGreen;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isUpcoming = appointment.isUpcoming;
-    final bool isCancelled = appointment.paymentStatus.toUpperCase() == 'CANCELLED';
+    final isUpcoming = widget.appointment.isUpcoming;
+    final bool isCancelled = widget.appointment.paymentStatus.toUpperCase() == 'CANCELLED';
     
     return Scaffold(
       backgroundColor: Colors.white,
@@ -75,7 +156,7 @@ class AppointmentDetailsScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          appointment.formattedAmount,
+                          widget.appointment.formattedAmount,
                           style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
@@ -87,7 +168,7 @@ class AppointmentDetailsScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          appointment.displayName,
+                          widget.appointment.displayName,
                           style: const TextStyle(
                             fontSize: 12,
                             color: Color(0xFF6B6B6B),
@@ -100,15 +181,15 @@ class AppointmentDetailsScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: _getStatusColor(appointment.status, Theme.of(context)).withOpacity(0.1),
+                      color: _statusColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      appointment.status,
+                      _statusText,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: _getStatusColor(appointment.status, Theme.of(context)),
+                        color: _statusColor,
                       ),
                     ),
                   ),
@@ -143,11 +224,11 @@ class AppointmentDetailsScreen extends StatelessWidget {
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(20),
                                 child: Image.network(
-                                  getGoogleMapsUrl(appointment.endereco.fullAddress),
+                                  getGoogleMapsUrl(widget.appointment.endereco.fullAddress),
                                   fit: BoxFit.cover,
                                   loadingBuilder: (context, child, loadingProgress) {
                                     if (loadingProgress == null) {
-                                      print('🗺️ [MAP] Mapa carregado com sucesso para: ${appointment.endereco.fullAddress}');
+                                      print('🗺️ [MAP] Mapa carregado com sucesso para: ${widget.appointment.endereco.fullAddress}');
                                       return child;
                                     }
                                     
@@ -169,7 +250,7 @@ class AppointmentDetailsScreen extends StatelessWidget {
                                     );
                                   },
                                   errorBuilder: (context, error, stackTrace) {
-                                    print('❌ [MAP] Erro ao carregar mapa para: ${appointment.endereco.fullAddress}');
+                                    print('❌ [MAP] Erro ao carregar mapa para: ${widget.appointment.endereco.fullAddress}');
                                     print('❌ [MAP] Erro: $error');
                                     if (stackTrace != null) {
                                       print('❌ [MAP] StackTrace: $stackTrace');
@@ -233,7 +314,7 @@ class AppointmentDetailsScreen extends StatelessWidget {
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: Text(
-                                        appointment.endereco.fullAddress,
+                                        widget.appointment.endereco.fullAddress,
                                         style: const TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w600,
@@ -259,7 +340,7 @@ class AppointmentDetailsScreen extends StatelessWidget {
                           Expanded(
                             child: _CleanInfoCard(
                               title: 'Data',
-                              value: appointment.formattedDate,
+                              value: widget.appointment.formattedDate,
                               icon: Icons.calendar_today_outlined,
                             ),
                           ),
@@ -267,7 +348,7 @@ class AppointmentDetailsScreen extends StatelessWidget {
                           Expanded(
                             child: _CleanInfoCard(
                               title: 'Horário',
-                              value: appointment.horario,
+                              value: widget.appointment.horario,
                               icon: Icons.access_time_outlined,
                             ),
                           ),
@@ -278,9 +359,18 @@ class AppointmentDetailsScreen extends StatelessWidget {
                       
                       _CleanInfoCard(
                         title: 'Tipo de Imóvel',
-                        value: appointment.propertyTypeDisplayName,
+                        value: widget.appointment.propertyTypeDisplayName,
                         icon: Icons.home_outlined,
                       ),
+
+                      // Seção do profissional (se disponível)
+                      if (widget.appointment.profissionalId != null && (widget.appointment.profissionalId?.isNotEmpty ?? false)) ...[
+                        const SizedBox(height: 24),
+                        _ProfessionalSection(
+                          professional: _professional,
+                          loading: _loadingProfessional,
+                        ),
+                      ],
                       
                       if (isUpcoming && !isCancelled) ...[
                         const SizedBox(height: 40),
@@ -393,8 +483,8 @@ class AppointmentDetailsScreen extends StatelessWidget {
       ),
     );
 
-    final service = AppointmentService();
-    final success = await service.cancelAppointment(appointment.id);
+    final service = _appointmentService;
+    final success = await service.cancelAppointment(widget.appointment.id);
 
     if (context.mounted) {
       Navigator.pop(context); // fecha progresso
@@ -419,8 +509,8 @@ class AppointmentDetailsScreen extends StatelessWidget {
 
   void _addToCalendar(BuildContext context) async {
     try {
-      final DateTime appointmentDate = DateTime.parse(appointment.data);
-      final List<String> timeParts = appointment.horario.split(':');
+      final DateTime appointmentDate = DateTime.parse(widget.appointment.data);
+      final List<String> timeParts = widget.appointment.horario.split(':');
       final DateTime startTime = DateTime(
         appointmentDate.year,
         appointmentDate.month,
@@ -430,12 +520,12 @@ class AppointmentDetailsScreen extends StatelessWidget {
       );
       
       final Event event = Event(
-        title: '${appointment.displayName} - Simplify',
+        title: '${widget.appointment.displayName} - Simplify',
         description: 'Serviço agendado\n'
-                    'Endereço: ${appointment.endereco.fullAddress}\n'
-                    'Valor: ${appointment.formattedAmount}\n'
-                    'Tipo: ${appointment.propertyTypeDisplayName}',
-        location: appointment.endereco.fullAddress,
+                    'Endereço: ${widget.appointment.endereco.fullAddress}\n'
+                    'Valor: ${widget.appointment.formattedAmount}\n'
+                    'Tipo: ${widget.appointment.propertyTypeDisplayName}',
+        location: widget.appointment.endereco.fullAddress,
         startDate: startTime,
         endDate: startTime.add(const Duration(hours: 2)),
         allDay: false,
@@ -514,6 +604,209 @@ class _CleanInfoCard extends StatelessWidget {
               color: Color(0xFF1A1A1A),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfessionalSection extends StatelessWidget {
+  final ProfessionalData? professional;
+  final bool loading;
+  
+  const _ProfessionalSection({
+    required this.professional,
+    required this.loading,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F9FA),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFE5E7EB),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.person_outline,
+                size: 20,
+                color: Colors.grey[600],
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Profissional',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[800],
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 16),
+          
+          if (loading)
+            const Row(
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 12),
+                Text('Carregando dados do profissional...'),
+              ],
+            )
+          else if (professional != null)
+            Row(
+              children: [
+                // Avatar do profissional
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen,
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  child: professional!.photoUrl != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(25),
+                          child: Image.network(
+                            professional!.photoUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Center(
+                                child: Text(
+                                  professional!.initials,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        )
+                      : Center(
+                          child: Text(
+                            professional!.initials,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                        ),
+                ),
+                
+                const SizedBox(width: 16),
+                
+                // Dados do profissional
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              professional!.displayName,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF1A1A1A),
+                              ),
+                            ),
+                          ),
+                          if (professional!.isVerified)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.blue,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.verified,
+                                    size: 12,
+                                    color: Colors.white,
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Verificado',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                      
+                      const SizedBox(height: 4),
+                      
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.star,
+                            size: 16,
+                            color: Colors.amber[700],
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            (professional!.rating ?? 0.0).toStringAsFixed(1),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF6B7280),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Icon(
+                            Icons.work_outline,
+                            size: 16,
+                            color: Colors.grey[600],
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${professional!.totalJobs} serviços',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF6B7280),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            )
+          else
+            const Text(
+              'Dados do profissional não disponíveis',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
+              ),
+            ),
         ],
       ),
     );

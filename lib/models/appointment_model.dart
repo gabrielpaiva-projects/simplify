@@ -10,6 +10,7 @@ class AppointmentModel {
   final String paymentId;
   final String paymentStatus;
   final String paymentType;
+  final String? profissionalId;
   final int quantidadeBanheiros;
   final int quantidadeComodos;
   final ServicosExtrasModel servicosExtras;
@@ -32,6 +33,7 @@ class AppointmentModel {
     required this.paymentId,
     required this.paymentStatus,
     required this.paymentType,
+    this.profissionalId,
     required this.quantidadeBanheiros,
     required this.quantidadeComodos,
     required this.servicosExtras,
@@ -56,6 +58,7 @@ class AppointmentModel {
       paymentId: data['paymentId'] ?? '',
       paymentStatus: data['paymentStatus'] ?? '',
       paymentType: data['paymentType'] ?? '',
+      profissionalId: data['profissionalId']?.toString(),
       quantidadeBanheiros: data['quantidadeBanheiros'] ?? 0,
       quantidadeComodos: data['quantidadeComodos'] ?? 0,
       servicosExtras: ServicosExtrasModel.fromMap(data['servicosExtras'] ?? {}),
@@ -80,6 +83,7 @@ class AppointmentModel {
       'paymentId': paymentId,
       'paymentStatus': paymentStatus,
       'paymentType': paymentType,
+      'profissionalId': profissionalId,
       'quantidadeBanheiros': quantidadeBanheiros,
       'quantidadeComodos': quantidadeComodos,
       'servicosExtras': servicosExtras.toMap(),
