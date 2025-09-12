@@ -14,7 +14,7 @@ class PaymentPixService {
     }
 
     return _firestore
-        .collection('pagamentosPix')
+        .collection('pagamentos')
         .where('userId', isEqualTo: currentUser.uid)
         .snapshots()
         .map((snapshot) {
@@ -46,7 +46,7 @@ class PaymentPixService {
   Future<PaymentPixModel?> getPixPaymentById(String paymentId) async {
     try {
       final doc = await _firestore
-          .collection('pagamentosPix')
+          .collection('pagamentos')
           .doc(paymentId)
           .get();
 
@@ -67,7 +67,7 @@ class PaymentPixService {
 
     try {
       final snapshot = await _firestore
-          .collection('pagamentosPix')
+          .collection('pagamentos')
           .where('userId', isEqualTo: currentUser.uid)
           .where('lastWebhookEvent', isEqualTo: 'PAYMENT_CREATED')
           .where('status', isEqualTo: 'PENDING')
@@ -88,7 +88,7 @@ class PaymentPixService {
     }
 
     return _firestore
-        .collection('pagamentosPix')
+        .collection('pagamentos')
         .where('userId', isEqualTo: currentUser.uid)
         .snapshots()
         .map((snapshot) {
@@ -108,6 +108,54 @@ class PaymentPixService {
       });
       
       return payments;
+    });
+  }
+
+  /// Busca pagamentos PIX confirmados com data futura (para aba Próximos)
+  Stream<List<PaymentPixModel>> getUpcomingPixPayments() {
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) {
+      return Stream.value([]);
+    }
+
+    return _firestore
+        .collection('pagamentos')
+        .where('userId', isEqualTo: currentUser.uid)
+        .where('status', isEqualTo: 'PAYMENT_RECEIVED')
+        .snapshots()
+        .map((snapshot) {
+      final now = DateTime.now();
+      final upcomingPayments = <PaymentPixModel>[];
+      
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final paymentModel = PaymentPixModel.fromFirestore(data, doc.id);
+        
+        try {
+          // Verificar se tem data de serviço e se é futura
+          if (paymentModel.serviceData.data.isNotEmpty) {
+            final serviceDate = DateTime.parse(paymentModel.serviceData.data);
+            if (serviceDate.isAfter(now)) {
+              upcomingPayments.add(paymentModel);
+            }
+          }
+        } catch (e) {
+          // Data inválida, ignora o documento
+        }
+      }
+      
+      // Ordenar por data de serviço (próximo primeiro)
+      upcomingPayments.sort((a, b) {
+        try {
+          final dateA = DateTime.parse(a.serviceData.data);
+          final dateB = DateTime.parse(b.serviceData.data);
+          return dateA.compareTo(dateB);
+        } catch (e) {
+          return 0;
+        }
+      });
+      
+      return upcomingPayments;
     });
   }
 }

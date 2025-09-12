@@ -10,6 +10,7 @@ import '../../../../models/appointment_model.dart';
 import '../../../../models/payment_pix_model.dart';
 import '../../../../services/appointment_service.dart';
 import '../../../../services/payment_pix_service.dart';
+import '../../../../services/unified_payment_service.dart';
 
 // Função global para gerar URLs do Google Maps com logs
 String getGoogleMapsUrl(String address) {
@@ -46,6 +47,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
   
   final AppointmentService _appointmentService = AppointmentService();
   final PaymentPixService _paymentPixService = PaymentPixService();
+  final UnifiedPaymentService _unifiedPaymentService = UnifiedPaymentService();
 
   @override
   void initState() {
@@ -69,6 +71,9 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
     ));
     
     _fadeController.forward();
+    
+    // Debug das collections
+    _unifiedPaymentService.debugAllCollections();
   }
 
   @override
@@ -110,15 +115,15 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
       switch (index) {
         case 0:
           // Contador de pagamentos pendentes
-          final payments = await _paymentPixService.getPendingPixPayments().first;
+          final payments = await _unifiedPaymentService.getPendingPayments().first;
           return payments.length;
         case 1:
-          // Contador de agendamentos próximos
-          final appointments = await _appointmentService.getUpcomingAppointments().first;
-          return appointments.length;
+          // Contador de pagamentos confirmados com data futura
+          final upcomingPayments = await _unifiedPaymentService.getUpcomingPayments().first;
+          return upcomingPayments.length;
         case 2:
           // Contador de histórico
-          final history = await _appointmentService.getAppointmentHistory().first;
+          final history = await _unifiedPaymentService.getPaymentHistory().first;
           return history.length;
         default:
           return 0;
@@ -345,22 +350,32 @@ class _PendingPaymentsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final paymentService = PaymentPixService();
+    final unifiedService = UnifiedPaymentService();
     
-    return StreamBuilder<List<PaymentPixModel>>(
-      stream: paymentService.getPendingPixPayments(),
+    print('🔍 [DEBUG] _PendingPaymentsTab: Iniciando build');
+    
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: unifiedService.getPendingPayments(),
       builder: (context, snapshot) {
+        print('🔍 [DEBUG] _PendingPaymentsTab: ConnectionState: ${snapshot.connectionState}');
+        print('🔍 [DEBUG] _PendingPaymentsTab: HasError: ${snapshot.hasError}');
+        print('🔍 [DEBUG] _PendingPaymentsTab: Data length: ${snapshot.data?.length ?? 0}');
+        
         if (snapshot.connectionState == ConnectionState.waiting) {
+          print('🔍 [DEBUG] _PendingPaymentsTab: Mostrando loading');
           return const _LoadingWidget();
         }
 
         if (snapshot.hasError) {
+          print('🔍 [DEBUG] _PendingPaymentsTab: Erro: ${snapshot.error}');
           return const _ErrorWidget(message: 'Erro ao carregar pagamentos');
         }
 
-        final List<PaymentPixModel> payments = snapshot.data ?? [];
+        final List<Map<String, dynamic>> paymentsData = snapshot.data ?? [];
+        print('🔍 [DEBUG] _PendingPaymentsTab: Processando ${paymentsData.length} pagamentos');
 
-        if (payments.isEmpty) {
+        if (paymentsData.isEmpty) {
+          print('🔍 [DEBUG] _PendingPaymentsTab: Mostrando empty widget');
           return const _EmptyWidget(
             icon: Icons.payment_outlined,
             title: 'Nenhum pagamento pendente',
@@ -368,14 +383,30 @@ class _PendingPaymentsTab extends StatelessWidget {
           );
         }
 
+        print('🔍 [DEBUG] _PendingPaymentsTab: Mostrando ListView com ${paymentsData.length} itens');
         return ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: payments.length,
+          itemCount: paymentsData.length,
           itemBuilder: (context, index) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _PaymentCard(payment: payments[index]),
-            );
+            final paymentData = paymentsData[index];
+            print('🔍 [DEBUG] _PendingPaymentsTab: Processando item $index: ${paymentData['id']}');
+            
+            final paymentPix = unifiedService.toPaymentPixModel(paymentData);
+            print('🔍 [DEBUG] _PendingPaymentsTab: PaymentPix convertido: ${paymentPix != null}');
+            
+            if (paymentPix != null) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _PaymentCard(payment: paymentPix),
+              );
+            } else {
+              // Se não conseguir converter para PaymentPixModel, mostrar dados brutos
+              print('🔍 [DEBUG] _PendingPaymentsTab: Mostrando RawDataCard para ${paymentData['id']}');
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _RawDataCard(data: paymentData),
+              );
+            }
           },
         );
       },
@@ -388,22 +419,32 @@ class _UpcomingAppointmentsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final appointmentService = AppointmentService();
+    final unifiedService = UnifiedPaymentService();
     
-    return StreamBuilder<List<AppointmentModel>>(
-      stream: appointmentService.getUpcomingAppointments(),
+    print('🔍 [DEBUG] _UpcomingAppointmentsTab: Iniciando build');
+    
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: unifiedService.getUpcomingPayments(),
       builder: (context, snapshot) {
+        print('🔍 [DEBUG] _UpcomingAppointmentsTab: ConnectionState: ${snapshot.connectionState}');
+        print('🔍 [DEBUG] _UpcomingAppointmentsTab: HasError: ${snapshot.hasError}');
+        print('🔍 [DEBUG] _UpcomingAppointmentsTab: Data length: ${snapshot.data?.length ?? 0}');
+        
         if (snapshot.connectionState == ConnectionState.waiting) {
+          print('🔍 [DEBUG] _UpcomingAppointmentsTab: Mostrando loading');
           return const _LoadingWidget();
         }
 
         if (snapshot.hasError) {
-          return const _ErrorWidget(message: 'Erro ao carregar agendamentos');
+          print('🔍 [DEBUG] _UpcomingAppointmentsTab: Erro: ${snapshot.error}');
+          return const _ErrorWidget(message: 'Erro ao carregar dados');
         }
 
-        final List<AppointmentModel> appointments = snapshot.data ?? [];
+        final List<Map<String, dynamic>> paymentsData = snapshot.data ?? [];
+        print('🔍 [DEBUG] _UpcomingAppointmentsTab: Processando ${paymentsData.length} pagamentos');
 
-        if (appointments.isEmpty) {
+        if (paymentsData.isEmpty) {
+          print('🔍 [DEBUG] _UpcomingAppointmentsTab: Mostrando empty widget');
           return const _EmptyWidget(
             icon: Icons.calendar_today_outlined,
             title: 'Nenhum agendamento próximo',
@@ -411,21 +452,25 @@ class _UpcomingAppointmentsTab extends StatelessWidget {
           );
         }
 
+        print('🔍 [DEBUG] _UpcomingAppointmentsTab: Mostrando ListView com ${paymentsData.length} itens');
         return ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: appointments.length,
+          itemCount: paymentsData.length,
           itemBuilder: (context, index) {
-            final a = appointments[index];
+            final paymentData = paymentsData[index];
+            print('🔍 [DEBUG] _UpcomingAppointmentsTab: Processando item $index: ${paymentData['id']}');
+            
             final bool showHeader = index == 0 ||
-              appointments[index - 1].formattedDate != a.formattedDate;
+              _getFormattedDate(paymentsData[index - 1]) != _getFormattedDate(paymentData);
+            
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (showHeader)
-                    _DateHeader(label: a.formattedDate),
-                  _AppointmentCard(appointment: a),
+                    _DateHeader(label: _getFormattedDate(paymentData)),
+                  _buildPaymentCard(paymentData, unifiedService),
                 ],
               ),
             );
@@ -434,6 +479,41 @@ class _UpcomingAppointmentsTab extends StatelessWidget {
       },
     );
   }
+
+  String _getFormattedDate(Map<String, dynamic> data) {
+    try {
+      String? serviceDate;
+      
+      // Para collection services, a data está no campo 'data'
+      if (data['data'] != null) {
+        serviceDate = data['data'].toString();
+      } else if (data['serviceData'] != null && data['serviceData']['data'] != null) {
+        serviceDate = data['serviceData']['data'].toString();
+      }
+      
+      if (serviceDate != null && serviceDate.isNotEmpty) {
+        final DateTime dateTime = DateTime.parse(serviceDate);
+        return '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year}';
+      }
+    } catch (e) {
+      // Ignorar erro
+    }
+    return 'Data não informada';
+  }
+
+  Widget _buildPaymentCard(Map<String, dynamic> data, UnifiedPaymentService service) {
+    // Para collection services, sempre tentar converter para AppointmentModel primeiro
+    final appointment = service.toAppointmentModel(data);
+    final paymentPix = service.toPaymentPixModel(data);
+    
+    if (appointment != null) {
+      return _AppointmentCard(appointment: appointment);
+    } else if (paymentPix != null) {
+      return _PaymentCard(payment: paymentPix);
+    } else {
+      return _RawDataCard(data: data);
+    }
+  }
 }
 
 class _HistoryAppointmentsTab extends StatelessWidget {
@@ -441,22 +521,32 @@ class _HistoryAppointmentsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final appointmentService = AppointmentService();
+    final unifiedService = UnifiedPaymentService();
     
-    return StreamBuilder<List<AppointmentModel>>(
-      stream: appointmentService.getAppointmentHistory(),
+    print('🔍 [DEBUG] _HistoryAppointmentsTab: Iniciando build');
+    
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: unifiedService.getPaymentHistory(),
       builder: (context, snapshot) {
+        print('🔍 [DEBUG] _HistoryAppointmentsTab: ConnectionState: ${snapshot.connectionState}');
+        print('🔍 [DEBUG] _HistoryAppointmentsTab: HasError: ${snapshot.hasError}');
+        print('🔍 [DEBUG] _HistoryAppointmentsTab: Data length: ${snapshot.data?.length ?? 0}');
+        
         if (snapshot.connectionState == ConnectionState.waiting) {
+          print('🔍 [DEBUG] _HistoryAppointmentsTab: Mostrando loading');
           return const _LoadingWidget();
         }
 
         if (snapshot.hasError) {
+          print('🔍 [DEBUG] _HistoryAppointmentsTab: Erro: ${snapshot.error}');
           return const _ErrorWidget(message: 'Erro ao carregar histórico');
         }
 
-        final List<AppointmentModel> appointments = snapshot.data ?? [];
+        final List<Map<String, dynamic>> paymentsData = snapshot.data ?? [];
+        print('🔍 [DEBUG] _HistoryAppointmentsTab: Processando ${paymentsData.length} pagamentos');
 
-        if (appointments.isEmpty) {
+        if (paymentsData.isEmpty) {
+          print('🔍 [DEBUG] _HistoryAppointmentsTab: Mostrando empty widget');
           return const _EmptyWidget(
             icon: Icons.history_outlined,
             title: 'Nenhum histórico encontrado',
@@ -464,21 +554,25 @@ class _HistoryAppointmentsTab extends StatelessWidget {
           );
         }
 
+        print('🔍 [DEBUG] _HistoryAppointmentsTab: Mostrando ListView com ${paymentsData.length} itens');
         return ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: appointments.length,
+          itemCount: paymentsData.length,
           itemBuilder: (context, index) {
-            final a = appointments[index];
+            final paymentData = paymentsData[index];
+            print('🔍 [DEBUG] _HistoryAppointmentsTab: Processando item $index: ${paymentData['id']}');
+            
             final bool showHeader = index == 0 ||
-              appointments[index - 1].formattedDate != a.formattedDate;
+              _getFormattedDate(paymentsData[index - 1]) != _getFormattedDate(paymentData);
+            
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (showHeader)
-                    _DateHeader(label: a.formattedDate),
-                  _AppointmentCard(appointment: a),
+                    _DateHeader(label: _getFormattedDate(paymentData)),
+                  _buildPaymentCard(paymentData, unifiedService),
                 ],
               ),
             );
@@ -486,6 +580,41 @@ class _HistoryAppointmentsTab extends StatelessWidget {
         );
       },
     );
+  }
+
+  String _getFormattedDate(Map<String, dynamic> data) {
+    try {
+      String? serviceDate;
+      
+      // Para collection services, a data está no campo 'data'
+      if (data['data'] != null) {
+        serviceDate = data['data'].toString();
+      } else if (data['serviceData'] != null && data['serviceData']['data'] != null) {
+        serviceDate = data['serviceData']['data'].toString();
+      }
+      
+      if (serviceDate != null && serviceDate.isNotEmpty) {
+        final DateTime dateTime = DateTime.parse(serviceDate);
+        return '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year}';
+      }
+    } catch (e) {
+      // Ignorar erro
+    }
+    return 'Data não informada';
+  }
+
+  Widget _buildPaymentCard(Map<String, dynamic> data, UnifiedPaymentService service) {
+    // Para collection services, sempre tentar converter para AppointmentModel primeiro
+    final appointment = service.toAppointmentModel(data);
+    final paymentPix = service.toPaymentPixModel(data);
+    
+    if (appointment != null) {
+      return _AppointmentCard(appointment: appointment);
+    } else if (paymentPix != null) {
+      return _PaymentCard(payment: paymentPix);
+    } else {
+      return _RawDataCard(data: data);
+    }
   }
 }
 
@@ -1270,6 +1399,122 @@ class _ErrorWidget extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _RawDataCard extends StatelessWidget {
+  final Map<String, dynamic> data;
+  
+  const _RawDataCard({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: Colors.grey[100]!, width: 1),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.info_outline_rounded,
+                  size: 20,
+                  color: Colors.orange,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Dados do Pagamento',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1A1A1A),
+                    letterSpacing: -0.2,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Colors.orange.withOpacity(0.5),
+                    width: 1,
+                  ),
+                ),
+                child: const Text(
+                  'Debug',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.orange,
+                    letterSpacing: 0.1,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Status: ${data['status'] ?? 'N/A'}',
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1A1A1A),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'ID: ${data['id'] ?? 'N/A'}',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[600],
+            ),
+          ),
+          if (data['amount'] != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Valor: R\$ ${data['amount']}',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1A1A1A),
+              ),
+            ),
+          ],
+          if (data['data'] != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Data: ${data['data']}',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

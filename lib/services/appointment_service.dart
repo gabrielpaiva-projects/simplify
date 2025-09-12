@@ -14,7 +14,7 @@ class AppointmentService {
     }
     
     return _firestore
-        .collection('services')
+        .collection('pagamentos')
         .where('userId', isEqualTo: currentUser.uid)
         .snapshots()
         .map((snapshot) {
@@ -45,7 +45,7 @@ class AppointmentService {
     }
 
     return _firestore
-        .collection('services')
+        .collection('pagamentos')
         .where('userId', isEqualTo: currentUser.uid)
         .snapshots()
         .map((snapshot) {
@@ -89,7 +89,7 @@ class AppointmentService {
     }
 
     return _firestore
-        .collection('services')
+        .collection('pagamentos')
         .where('userId', isEqualTo: currentUser.uid)
         .snapshots()
         .map((snapshot) {
@@ -129,7 +129,7 @@ class AppointmentService {
   Future<AppointmentModel?> getAppointmentById(String appointmentId) async {
     try {
       final doc = await _firestore
-          .collection('services')
+          .collection('pagamentos')
           .doc(appointmentId)
           .get();
 
@@ -147,7 +147,7 @@ class AppointmentService {
   Future<bool> cancelAppointment(String appointmentId) async {
     try {
       await _firestore
-          .collection('services')
+          .collection('pagamentos')
           .doc(appointmentId)
           .update({
         'paymentStatus': 'CANCELLED',
@@ -167,7 +167,7 @@ class AppointmentService {
 
     try {
       final snapshot = await _firestore
-          .collection('services')
+          .collection('pagamentos')
           .where('userId', isEqualTo: currentUser.uid)
           .get();
       
@@ -186,7 +186,7 @@ class AppointmentService {
     }
 
     return _firestore
-        .collection('services')
+        .collection('pagamentos')
         .where('userId', isEqualTo: currentUser.uid)
         .where('paymentStatus', isEqualTo: status)
         .orderBy('data', descending: true)
