@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -8,6 +9,26 @@ import '../../../../models/appointment_model.dart';
 import '../../../../models/payment_pix_model.dart';
 import '../../../../services/appointment_service.dart';
 import '../../../../services/payment_pix_service.dart';
+
+// Função global para gerar URLs do Google Maps com logs
+String getGoogleMapsUrl(String address) {
+  final encodedAddress = Uri.encodeComponent(address);
+  final url = 'https://maps.googleapis.com/maps/api/staticmap?'
+      'center=$encodedAddress&'
+      'zoom=16&'
+      'size=400x200&'
+      'maptype=roadmap&'
+      'markers=color:green%7C$encodedAddress&'
+      'style=feature:poi%7Cvisibility:off&'
+      'style=feature:transit%7Cvisibility:off&'
+      'key=AIzaSyBRg_0vHtd-kB2lHQ_y1w0oIV0ChdIcBlw';
+  
+  print('🗺️ [MAP] Gerando URL do mapa para: $address');
+  print('🗺️ [MAP] Endereço codificado: $encodedAddress');
+  print('🗺️ [MAP] URL gerada: $url');
+  
+  return url;
+}
 
 class AppointmentsScreen extends StatefulWidget {
   const AppointmentsScreen({super.key});
@@ -670,6 +691,10 @@ class _PaymentCard extends StatelessWidget {
   }
 
   void _showPaymentDetails(BuildContext context) {
+    print('📱 [MODAL] Abrindo modal de detalhes de pagamento');
+    print('📱 [MODAL] Endereço: ${payment.shortAddress}');
+    print('📱 [MODAL] Valor: ${payment.formattedAmount}');
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -962,6 +987,11 @@ class _AppointmentCard extends StatelessWidget {
   }
 
   void _showAppointmentDetails(BuildContext context) {
+    print('📱 [MODAL] Abrindo modal de detalhes de agendamento');
+    print('📱 [MODAL] Endereço: ${appointment.endereco.fullAddress}');
+    print('📱 [MODAL] Valor: ${appointment.formattedAmount}');
+    print('📱 [MODAL] Data: ${appointment.formattedDate}');
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -978,134 +1008,307 @@ class _PaymentDetailsModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
     return Container(
+      height: MediaQuery.of(context).size.height * 0.9,
       decoration: const BoxDecoration(
-        color: Colors.transparent,
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
-      child: FractionallySizedBox(
-        heightFactor: 0.9,
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      child: Column(
+        children: [
+          // Handle minimalista
+          Container(
+            margin: const EdgeInsets.only(top: 12, bottom: 8),
+            width: 36,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Handle
-                    Center(
-                      child: Container(
-                        width: 48,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300],
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
+          
+          // Header clean
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+            child: Row(
+              children: [
+                Text(
+                  payment.formattedAmount,
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1A1A1A),
+                    letterSpacing: -1,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: payment.isExpired ? Colors.red[50] : Colors.orange[50],
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    payment.isExpired ? 'Expirado' : 'Pendente',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: payment.isExpired ? Colors.red[700] : Colors.orange[700],
                     ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Detalhes do Pagamento',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF1A1A1A),
-                        letterSpacing: -0.2,
-                      ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Subtítulo
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+            child: Row(
+              children: [
+                Text(
+                  payment.serviceTypeDisplayName,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Conteúdo scrollável
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Localização com mapa real
+                  Container(
+                    width: double.infinity,
+                    height: 140,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8F9FA),
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    const SizedBox(height: 16),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryGreen.withOpacity(0.06),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.primaryGreen.withOpacity(0.3)),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            payment.formattedAmount,
-                            style: TextStyle(
-                              fontSize: 36,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.primaryGreen,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            payment.serviceTypeDisplayName,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    _DetailRow(icon: Icons.location_on, label: 'Endereço', value: payment.shortAddress),
-                    _DetailRow(icon: Icons.calendar_today, label: 'Data', value: payment.formattedDate),
-                    _DetailRow(icon: Icons.info, label: 'Status', value: payment.status),
-                    if (!payment.isExpired && payment.qrCode.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                                Clipboard.setData(ClipboardData(text: payment.qrCode));
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Código PIX copiado!'),
-                                    behavior: SnackBarBehavior.floating,
+                    child: Stack(
+                      children: [
+                        // Mapa real do Google Maps
+                        Positioned.fill(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Image.network(
+                              getGoogleMapsUrl(payment.shortAddress),
+                              fit: BoxFit.cover,
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) {
+                                  print('🗺️ [MAP] Mapa carregado com sucesso para: ${payment.shortAddress}');
+                                  return child;
+                                }
+                                
+                                final progress = loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                    : null;
+                                
+                                print('🗺️ [MAP] Carregando mapa... ${progress != null ? '${(progress * 100).toInt()}%' : 'indefinido'}');
+                                
+                                return Container(
+                                  color: const Color(0xFFF8F9FA),
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: AppColors.primaryGreen,
+                                      strokeWidth: 2,
+                                      value: progress,
+                                    ),
                                   ),
                                 );
                               },
-                              icon: const Icon(Icons.copy_rounded, size: 18),
-                              label: const Text('Copiar PIX'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primaryGreen,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                              errorBuilder: (context, error, stackTrace) {
+                                print('❌ [MAP] Erro ao carregar mapa para: ${payment.shortAddress}');
+                                print('❌ [MAP] Erro: $error');
+                                if (stackTrace != null) {
+                                  print('❌ [MAP] StackTrace: $stackTrace');
+                                }
+                                
+                                return Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8F9FA),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.map_outlined,
+                                          color: Colors.grey[400],
+                                          size: 32,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Mapa indisponível',
+                                          style: TextStyle(
+                                            color: Colors.grey[500],
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                        // Endereço overlay
+                        Positioned(
+                          bottom: 12,
+                          left: 12,
+                          right: 12,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.95),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.location_on_rounded,
+                                  color: AppColors.primaryGreen,
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    payment.shortAddress,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF1A1A1A),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 32),
+                  
+                  // Informações em grid
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _CleanInfoCard(
+                          title: 'Data',
+                          value: payment.formattedDate,
+                          icon: Icons.calendar_today_outlined,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _CleanInfoCard(
+                          title: 'Status',
+                          value: payment.status,
+                          icon: Icons.info_outlined,
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  if (!payment.isExpired && payment.qrCode.isNotEmpty) ...[
+                    const SizedBox(height: 40),
+                    
+                    // Botões clean
+                    Column(
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Clipboard.setData(ClipboardData(text: payment.qrCode));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text('Código PIX copiado!'),
+                                  behavior: SnackBarBehavior.floating,
+                                  backgroundColor: AppColors.primaryGreen,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.copy_rounded, size: 22),
+                            label: const Text(
+                              'Copiar código PIX',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryGreen,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 10),
-                          OutlinedButton.icon(
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: OutlinedButton.icon(
                             onPressed: () => _showQRCode(context),
-                            icon: const Icon(Icons.qr_code_2_rounded, size: 18),
-                            label: const Text('Ver QR'),
+                            icon: const Icon(Icons.qr_code_2_outlined, size: 22),
+                            label: const Text(
+                              'Mostrar QR Code',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.primaryGreen,
-                              side: BorderSide(color: AppColors.primaryGreen),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
+                              foregroundColor: const Color(0xFF1A1A1A),
+                              side: const BorderSide(color: Color(0xFFE5E7EB)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
                             ),
                           ),
-                        ],
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
                   ],
-                ),
+                  
+                  const SizedBox(height: 32),
+                ],
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
+
 
   void _showQRCode(BuildContext context) {
     Navigator.pop(context);
@@ -1162,126 +1365,330 @@ class _AppointmentDetailsModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final isUpcoming = appointment.isUpcoming;
     final bool isCancelled = appointment.paymentStatus.toUpperCase() == 'CANCELLED';
     
     return Container(
-      decoration: const BoxDecoration(color: Colors.transparent),
-      child: FractionallySizedBox(
-        heightFactor: 0.85,
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      height: MediaQuery.of(context).size.height * 0.9,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      child: Column(
+        children: [
+          // Handle minimalista
+          Container(
+            margin: const EdgeInsets.only(top: 12, bottom: 8),
+            width: 36,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 48,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300],
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
+          
+          // Header clean
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+            child: Row(
+              children: [
+                Text(
+                  appointment.formattedAmount,
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1A1A1A),
+                    letterSpacing: -1,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _getStatusColor(appointment.status, Theme.of(context)).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    appointment.status,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: _getStatusColor(appointment.status, Theme.of(context)),
                     ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Detalhes do Agendamento',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF1A1A1A),
-                        letterSpacing: -0.2,
-                      ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Subtítulo
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+            child: Row(
+              children: [
+                Text(
+                  appointment.displayName,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Conteúdo scrollável
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Localização com mapa real
+                  Container(
+                    width: double.infinity,
+                    height: 140,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8F9FA),
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    const SizedBox(height: 16),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryGreen.withOpacity(0.06),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.primaryGreen.withOpacity(0.3)),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            appointment.formattedAmount,
-                            style: TextStyle(
-                              fontSize: 36,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.primaryGreen,
-                              letterSpacing: -0.5,
+                    child: Stack(
+                      children: [
+                        // Mapa real do Google Maps
+                        Positioned.fill(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Image.network(
+                              getGoogleMapsUrl(appointment.endereco.fullAddress),
+                              fit: BoxFit.cover,
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) {
+                                  print('🗺️ [MAP] Mapa carregado com sucesso para: ${appointment.endereco.fullAddress}');
+                                  return child;
+                                }
+                                
+                                final progress = loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                    : null;
+                                
+                                print('🗺️ [MAP] Carregando mapa... ${progress != null ? '${(progress * 100).toInt()}%' : 'indefinido'}');
+                                
+                                return Container(
+                                  color: const Color(0xFFF8F9FA),
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: AppColors.primaryGreen,
+                                      strokeWidth: 2,
+                                      value: progress,
+                                    ),
+                                  ),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                print('❌ [MAP] Erro ao carregar mapa para: ${appointment.endereco.fullAddress}');
+                                print('❌ [MAP] Erro: $error');
+                                if (stackTrace != null) {
+                                  print('❌ [MAP] StackTrace: $stackTrace');
+                                }
+                                
+                                return Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8F9FA),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.map_outlined,
+                                          color: Colors.grey[400],
+                                          size: 32,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Mapa indisponível',
+                                          style: TextStyle(
+                                            color: Colors.grey[500],
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            appointment.displayName,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500,
+                        ),
+                        // Endereço overlay
+                        Positioned(
+                          bottom: 12,
+                          left: 12,
+                          right: 12,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.95),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.location_on_rounded,
+                                  color: AppColors.primaryGreen,
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    appointment.endereco.fullAddress,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF1A1A1A),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    _DetailRow(icon: Icons.location_on, label: 'Endereço', value: appointment.endereco.fullAddress),
-                    _DetailRow(icon: Icons.calendar_today, label: 'Data', value: appointment.formattedDate),
-                    _DetailRow(icon: Icons.access_time, label: 'Horário', value: appointment.horario),
-                    _DetailRow(icon: Icons.home, label: 'Tipo', value: appointment.propertyTypeDisplayName),
-                    _DetailRow(icon: Icons.info, label: 'Status', value: appointment.status),
-                    if (isUpcoming && !isCancelled) ...[
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () => _addToCalendar(context),
-                          icon: const Icon(Icons.calendar_today_rounded, size: 18),
-                          label: const Text('Adicionar ao Calendário'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryGreen,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
+                  ),
+                  
+                  const SizedBox(height: 32),
+                  
+                  // Informações em grid
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _CleanInfoCard(
+                          title: 'Data',
+                          value: appointment.formattedDate,
+                          icon: Icons.calendar_today_outlined,
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: () => _confirmAndCancel(context),
-                          icon: const Icon(Icons.cancel_outlined, size: 18),
-                          label: const Text('Cancelar agendamento'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.red[700],
-                            side: BorderSide(color: Colors.red[400]!),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _CleanInfoCard(
+                          title: 'Horário',
+                          value: appointment.horario,
+                          icon: Icons.access_time_outlined,
                         ),
                       ),
                     ],
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  _CleanInfoCard(
+                    title: 'Tipo de Imóvel',
+                    value: appointment.propertyTypeDisplayName,
+                    icon: Icons.home_outlined,
+                  ),
+                  
+                  if (isUpcoming && !isCancelled) ...[
+                    const SizedBox(height: 40),
+                    
+                    // Botões clean
+                    Column(
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: ElevatedButton.icon(
+                            onPressed: () => _addToCalendar(context),
+                            icon: const Icon(Icons.calendar_today_outlined, size: 22),
+                            label: const Text(
+                              'Adicionar ao calendário',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryGreen,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: OutlinedButton.icon(
+                            onPressed: () => _confirmAndCancel(context),
+                            icon: const Icon(Icons.cancel_outlined, size: 22),
+                            label: const Text(
+                              'Cancelar agendamento',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.red[600],
+                              side: const BorderSide(color: Color(0xFFE5E7EB)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
-                ),
+                  
+                  const SizedBox(height: 32),
+                ],
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
+  }
+  
+  IconData _getServiceIcon(String tipoLimpeza) {
+    switch (tipoLimpeza.toLowerCase()) {
+      case 'padrao':
+        return Icons.cleaning_services;
+      case 'pesada':
+        return Icons.home_work;
+      case 'passadoria':
+        return Icons.iron;
+      default:
+        return Icons.room_service;
+    }
+  }
+
+  Color _getStatusColor(String status, ThemeData theme) {
+    switch (status.toLowerCase()) {
+      case 'confirmado':
+        return Colors.green;
+      case 'pendente':
+        return Colors.orange;
+      case 'cancelado':
+        return theme.colorScheme.error;
+      default:
+        return theme.colorScheme.primary;
+    }
   }
 
   Future<void> _confirmAndCancel(BuildContext context) async {
@@ -1384,6 +1791,131 @@ class _AppointmentDetailsModal extends StatelessWidget {
         );
       }
     }
+  }
+}
+
+class _CleanInfoCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+  
+  const _CleanInfoCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F9FA),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFE5E7EB),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            icon,
+            size: 20,
+            color: Colors.grey[600],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1A1A1A),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ModernDetailCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
+  final Color color;
+  
+  const _ModernDetailCard({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              size: 18,
+              color: color,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1A1A1A),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
