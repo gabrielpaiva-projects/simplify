@@ -84,6 +84,7 @@ dependencies:
   firebase_core: ^3.8.0
   firebase_auth: ^5.3.3
   cloud_firestore: ^5.5.0
+  firebase_messaging: ^15.1.5
   intl: ^0.20.2
   
   # Payment and encryption

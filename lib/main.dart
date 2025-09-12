@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'core/routes/app_routes.dart';
@@ -8,6 +9,7 @@ import 'core/config/app_config.dart';
 import 'core/di/injection_container.dart' as di;
 import 'features/splash/presentation/screens/splash_screen.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
+import 'services/firebase_messaging_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,11 +19,18 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   
+  // Configure Firebase Messaging background handler
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  
   // Configure environment
   AppConfig.setEnvironment(Environment.development);
   
   // Initialize dependencies
   await di.init();
+  
+  // Initialize Firebase Messaging Service
+  final messagingService = di.sl<FirebaseMessagingService>();
+  await messagingService.initialize();
   
   runApp(const MyApp());
 }

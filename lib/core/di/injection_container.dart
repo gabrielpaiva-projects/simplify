@@ -11,6 +11,7 @@ import '../../features/auth/data/services/cep_service.dart';
 import '../../features/auth/data/services/firebase_auth_service.dart';
 import '../../features/auth/data/repositories/auth_repository.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
+import '../../services/firebase_messaging_service.dart';
 
 final sl = GetIt.instance;
 
@@ -42,6 +43,11 @@ void _initCore() {
   // Logger
   sl.registerLazySingleton<LoggerService>(
     () => LoggerService(sl()),
+  );
+  
+  // Firebase Messaging
+  sl.registerLazySingleton<FirebaseMessagingService>(
+    () => FirebaseMessagingService(),
   );
 }
 

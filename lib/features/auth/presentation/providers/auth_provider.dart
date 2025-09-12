@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../data/models/user_model.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../../../core/di/injection_container.dart' as di;
+import '../../../../services/firebase_messaging_service.dart';
 
 enum AuthStatus {
   initial,
@@ -13,9 +15,11 @@ enum AuthStatus {
 
 class AuthProvider extends ChangeNotifier {
   final AuthRepository _authRepository;
+  late final FirebaseMessagingService _messagingService;
 
   AuthProvider({required AuthRepository authRepository})
       : _authRepository = authRepository {
+    _messagingService = di.sl<FirebaseMessagingService>();
     _init();
   }
 
@@ -47,6 +51,9 @@ class AuthProvider extends ChangeNotifier {
       _user = user;
       if (user != null) {
         await _loadUserData();
+        // Reinicializar o FCM service quando o usuário fizer login
+        // para garantir que o token seja salvo com o novo usuário
+        await _messagingService.initialize();
         _status = AuthStatus.authenticated;
       } else {
         _status = AuthStatus.unauthenticated;
@@ -112,6 +119,8 @@ class AuthProvider extends ChangeNotifier {
       // Carregar dados do usuário imediatamente após o login
       if (_user != null) {
         await _loadUserData();
+        // Limpar tokens antigos e garantir que o token atual esteja salvo
+        await _messagingService.cleanupOldTokens();
       }
       
       _setLoading(false);
@@ -178,6 +187,9 @@ class AuthProvider extends ChangeNotifier {
   Future<void> signOut() async {
     _setLoading(true);
     _clearError();
+
+    // Invalidar token FCM antes do logout
+    await _messagingService.invalidateToken();
 
     final result = await _authRepository.signOut();
 
