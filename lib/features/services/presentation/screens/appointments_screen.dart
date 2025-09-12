@@ -56,6 +56,56 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
     super.dispose();
   }
 
+  // Métodos auxiliares para a tab bar
+  IconData _getTabIcon(int index) {
+    switch (index) {
+      case 0:
+        return Icons.payment_rounded;
+      case 1:
+        return Icons.schedule_rounded;
+      case 2:
+        return Icons.history_rounded;
+      default:
+        return Icons.circle;
+    }
+  }
+
+  String _getTabTitle(int index) {
+    switch (index) {
+      case 0:
+        return 'Pendentes';
+      case 1:
+        return 'Próximos';
+      case 2:
+        return 'Histórico';
+      default:
+        return '';
+    }
+  }
+
+  Future<int> _getTabCount(int index) async {
+    try {
+      switch (index) {
+        case 0:
+          // Contador de pagamentos pendentes
+          final payments = await _paymentPixService.getPendingPixPayments().first;
+          return payments.length;
+        case 1:
+          // Contador de agendamentos próximos
+          final appointments = await _appointmentService.getUpcomingAppointments().first;
+          return appointments.length;
+        case 2:
+          // Contador de histórico
+          final history = await _appointmentService.getAppointmentHistory().first;
+          return history.length;
+        default:
+          return 0;
+      }
+    } catch (e) {
+      return 0;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -69,7 +119,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
             children: [
               // Header customizado
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -124,68 +174,117 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
                 ),
               ),
 
-              // Segmented control custom (abas) + contadores
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+              // Tab bar premium e elegante
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 24),
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8F9FA),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFFE9ECEF),
+                    width: 1,
                   ),
-                  padding: const EdgeInsets.all(6),
-                  child: Row(
-                    children: [
-                      for (int i = 0; i < 3; i++)
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () => _tabController.animateTo(i),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              decoration: BoxDecoration(
-                                color: _tabController.index == i
-                                    ? AppColors.primaryGreen.withOpacity(0.12)
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    i == 0 ? 'Pendentes' : i == 1 ? 'Próximos' : 'Histórico',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
-                                      color: _tabController.index == i
-                                          ? AppColors.primaryGreen
-                                          : Colors.grey[600],
-                                    ),
+                ),
+                child: Row(
+                  children: [
+                    for (int i = 0; i < 3; i++)
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => _tabController.animateTo(i),
+                          child: Container(
+                            margin: const EdgeInsets.all(2),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(
+                                    _tabController.index == i ? 0.04 : 0.0
                                   ),
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: _tabController.index == i
-                                          ? AppColors.primaryGreen.withOpacity(0.18)
-                                          : Colors.grey[100],
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Text(
-                                      i == 0 ? 'PIX' : i == 1 ? 'UP' : 'HIS',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w700,
-                                        color: _tabController.index == i
-                                            ? AppColors.primaryGreen
-                                            : Colors.grey[600],
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(
+                                    _tabController.index == i ? 0.02 : 0.0
+                                  ),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 250),
+                              curve: Curves.easeInOutCubic,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      AnimatedDefaultTextStyle(
+                                        duration: const Duration(milliseconds: 250),
+                                        curve: Curves.easeInOutCubic,
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: _tabController.index == i 
+                                              ? FontWeight.w600 
+                                              : FontWeight.w500,
+                                          color: _tabController.index == i
+                                              ? const Color(0xFF1A1A1A)
+                                              : const Color(0xFF6B7280),
+                                          letterSpacing: -0.2,
+                                        ),
+                                        child: Text(_getTabTitle(i)),
                                       ),
+                                      FutureBuilder<int>(
+                                        future: _getTabCount(i),
+                                        builder: (context, snapshot) {
+                                          final count = snapshot.data ?? 0;
+                                          if (count == 0) return const SizedBox.shrink();
+                                          
+                                          return AnimatedContainer(
+                                            duration: const Duration(milliseconds: 250),
+                                            curve: Curves.easeInOutCubic,
+                                            margin: const EdgeInsets.only(left: 6),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 6,
+                                              vertical: 2,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: _tabController.index == i
+                                                  ? AppColors.primaryGreen
+                                                  : const Color(0xFFE5E7EB),
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: AnimatedDefaultTextStyle(
+                                              duration: const Duration(milliseconds: 250),
+                                              curve: Curves.easeInOutCubic,
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                                color: _tabController.index == i
+                                                    ? Colors.white
+                                                    : const Color(0xFF6B7280),
+                                              ),
+                                              child: Text(count.toString()),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  AnimatedContainer(
+                                    duration: const Duration(milliseconds: 250),
+                                    curve: Curves.easeInOutCubic,
+                                    height: 2,
+                                    width: _tabController.index == i ? 24 : 0,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primaryGreen,
+                                      borderRadius: BorderRadius.circular(1),
                                     ),
                                   ),
                                 ],
@@ -193,8 +292,8 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
                             ),
                           ),
                         ),
-                    ],
-                  ),
+                      ),
+                  ],
                 ),
               ),
 
