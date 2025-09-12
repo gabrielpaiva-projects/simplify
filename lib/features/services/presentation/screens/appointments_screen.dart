@@ -71,6 +71,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Container(
                       width: 44,
@@ -93,23 +94,37 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
                     ),
                     const SizedBox(width: 12),
                     const Expanded(
-                      child: Text(
-                        'Agendamentos',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1A1A1A),
-                          letterSpacing: -0.5,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Meus agendamentos',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1A1A1A),
+                              letterSpacing: -0.5,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Acompanhe seus serviços e pagamentos',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF6B6B6B),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
 
-              // Segmented control custom (abas)
+              // Segmented control custom (abas) + contadores
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Container(
@@ -140,16 +155,40 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: Text(
-                                i == 0 ? 'Pendentes' : i == 1 ? 'Próximos' : 'Histórico',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: _tabController.index == i
-                                      ? AppColors.primaryGreen
-                                      : Colors.grey[600],
-                                ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    i == 0 ? 'Pendentes' : i == 1 ? 'Próximos' : 'Histórico',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: _tabController.index == i
+                                          ? AppColors.primaryGreen
+                                          : Colors.grey[600],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: _tabController.index == i
+                                          ? AppColors.primaryGreen.withOpacity(0.18)
+                                          : Colors.grey[100],
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(
+                                      i == 0 ? 'PIX' : i == 1 ? 'UP' : 'HIS',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: _tabController.index == i
+                                            ? AppColors.primaryGreen
+                                            : Colors.grey[600],
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
@@ -161,7 +200,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
 
               const SizedBox(height: 12),
 
-              // Conteúdo
+              // Conteúdo com fundo sutil
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
@@ -1026,6 +1065,7 @@ class _AppointmentDetailsModal extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isUpcoming = appointment.isUpcoming;
+    final bool isCancelled = appointment.paymentStatus.toUpperCase() == 'CANCELLED';
     
     return Container(
       decoration: const BoxDecoration(color: Colors.transparent),
@@ -1102,7 +1142,7 @@ class _AppointmentDetailsModal extends StatelessWidget {
                     _DetailRow(icon: Icons.access_time, label: 'Horário', value: appointment.horario),
                     _DetailRow(icon: Icons.home, label: 'Tipo', value: appointment.propertyTypeDisplayName),
                     _DetailRow(icon: Icons.info, label: 'Status', value: appointment.status),
-                    if (isUpcoming) ...[
+                    if (isUpcoming && !isCancelled) ...[
                       const SizedBox(height: 16),
                       SizedBox(
                         width: double.infinity,
@@ -1119,6 +1159,21 @@ class _AppointmentDetailsModal extends StatelessWidget {
                           ),
                         ),
                       ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () => _confirmAndCancel(context),
+                          icon: const Icon(Icons.cancel_outlined, size: 18),
+                          label: const Text('Cancelar agendamento'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.red[700],
+                            side: BorderSide(color: Colors.red[400]!),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                        ),
+                      ),
                     ],
                   ],
                 ),
@@ -1128,6 +1183,60 @@ class _AppointmentDetailsModal extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmAndCancel(BuildContext context) async {
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cancelar agendamento'),
+        content: const Text('Tem certeza que deseja cancelar este agendamento?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Não'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Sim, cancelar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    // Mostra progresso
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    final service = AppointmentService();
+    final success = await service.cancelAppointment(appointment.id);
+
+    if (context.mounted) {
+      Navigator.pop(context); // fecha progresso
+      if (success) {
+        Navigator.pop(context); // fecha modal de detalhes
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Agendamento cancelado com sucesso.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Não foi possível cancelar. Tente novamente.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   void _addToCalendar(BuildContext context) async {
