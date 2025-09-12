@@ -39,8 +39,9 @@ class AppointmentDetailsScreen extends StatelessWidget {
     final bool isCancelled = appointment.paymentStatus.toUpperCase() == 'CANCELLED';
     
     return Scaffold(
-      backgroundColor: AppColors.iceWhite,
+      backgroundColor: Colors.white,
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
             // Header customizado
@@ -123,7 +124,7 @@ class AppointmentDetailsScreen extends StatelessWidget {
                   borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                 ),
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
+                  padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + MediaQuery.of(context).padding.bottom),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

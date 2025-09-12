@@ -40,23 +40,13 @@ class PaymentPixModel {
   });
 
   factory PaymentPixModel.fromFirestore(Map<String, dynamic> data, String documentId) {
-    print('🏭 DEBUG MODEL: Criando PaymentPixModel a partir do Firestore...');
-    print('📄 DEBUG MODEL: Document ID: $documentId');
-    print('📊 DEBUG MODEL: Dados recebidos: ${data.keys.toList()}');
-    
-    // Verificações extras de segurança
+    // Verificações de segurança
     final serviceDataMap = data['serviceData'];
-    print('🔍 DEBUG MODEL: ServiceData presente: ${serviceDataMap != null}');
     
     final amount = (data['amount'] is num) ? (data['amount'] as num).toDouble() : 0.0;
     final status = (data['status'] ?? '').toString();
     final lastWebhookEvent = (data['lastWebhookEvent'] ?? '').toString();
     final qrCode = (data['qrCode'] ?? '').toString();
-    
-    print('💰 DEBUG MODEL: Amount: $amount');
-    print('📊 DEBUG MODEL: Status: $status');
-    print('🔔 DEBUG MODEL: LastWebhookEvent: $lastWebhookEvent');
-    print('🔗 DEBUG MODEL: QrCode presente: ${qrCode.isNotEmpty}');
     
     final model = PaymentPixModel(
       id: documentId ?? '',
@@ -81,9 +71,6 @@ class PaymentPixModel {
       userName: (data['userName'] ?? '').toString(),
     );
     
-    print('✅ DEBUG MODEL: PaymentPixModel criado com sucesso!');
-    print('🎯 DEBUG MODEL: isPending: ${model.isPending}');
-    print('⏰ DEBUG MODEL: isExpired: ${model.isExpired}');
     
     return model;
   }
@@ -117,7 +104,9 @@ class PaymentPixModel {
   }
 
   bool get isPending {
-    return lastWebhookEvent == 'PAYMENT_CREATED' && status == 'PENDING';
+    // Considera pendente se o status for PENDING, independente do lastWebhookEvent
+    // Isso cobre casos onde o lastWebhookEvent pode estar vazio ou diferente
+    return status == 'PENDING';
   }
 
   bool get isExpired {
@@ -145,6 +134,14 @@ class PaymentPixModel {
     try {
       if (serviceData.endereco.rua.isEmpty) return 'Endereço não informado';
       return '${serviceData.endereco.rua}, ${serviceData.endereco.numero}';
+    } catch (e) {
+      return 'Endereço não informado';
+    }
+  }
+
+  String get fullAddress {
+    try {
+      return serviceData.endereco.fullAddress;
     } catch (e) {
       return 'Endereço não informado';
     }
@@ -250,6 +247,11 @@ class EnderecoPixModel {
     if (rua.isEmpty) return numero;
     if (numero.isEmpty) return rua;
     return '$rua, $numero';
+  }
+
+  String get fullAddress {
+    if (rua.isEmpty && numero.isEmpty) return 'Endereço não informado';
+    return '$rua, $numero - $cidade, $estado - CEP: $cep';
   }
 }
 

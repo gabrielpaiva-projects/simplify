@@ -550,13 +550,13 @@ class _PaymentCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        payment.shortAddress,
+                        payment.fullAddress,
                         style: TextStyle(
                           fontSize: 13,
                           color: Colors.grey[600],
                           fontWeight: FontWeight.w400,
                         ),
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
@@ -693,7 +693,7 @@ class _PaymentCard extends StatelessWidget {
 
   void _showPaymentDetails(BuildContext context) {
     print('📱 [NAVIGATION] Navegando para tela de detalhes de pagamento');
-    print('📱 [NAVIGATION] Endereço: ${payment.shortAddress}');
+    print('📱 [NAVIGATION] Endereço: ${payment.fullAddress}');
     print('📱 [NAVIGATION] Valor: ${payment.formattedAmount}');
     
     Navigator.pushNamed(
@@ -1288,40 +1288,118 @@ class _EmptyWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: 64,
-              color: theme.colorScheme.outline,
+            // Container com gradiente sutil para o ícone
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.primaryGreen.withOpacity(0.1),
+                    AppColors.primaryGreen.withOpacity(0.05),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(60),
+                border: Border.all(
+                  color: AppColors.primaryGreen.withOpacity(0.2),
+                  width: 2,
+                ),
+              ),
+              child: Icon(
+                icon,
+                size: 48,
+                color: AppColors.primaryGreen.withOpacity(0.8),
+              ),
             ),
-            const SizedBox(height: 16),
+            
+            const SizedBox(height: 32),
+            
+            // Título com estilo moderno
             Text(
               title,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w600,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1A1A1A),
+                letterSpacing: -0.5,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            
+            const SizedBox(height: 12),
+            
+            // Subtítulo com cor mais suave
             Text(
               subtitle,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                color: Colors.grey[600],
+                height: 1.4,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
-            OutlinedButton.icon(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.add),
-              label: const Text('Agendar serviço'),
+            
+            const SizedBox(height: 40),
+            
+            // Botão moderno e atraente
+            Container(
+              width: double.infinity,
+              height: 56,
+              margin: const EdgeInsets.symmetric(horizontal: 32),
+              child: ElevatedButton.icon(
+                onPressed: () => Navigator.pop(context),
+                icon: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.add_rounded,
+                    size: 20,
+                    color: Colors.white,
+                  ),
+                ),
+                label: const Text(
+                  'Agendar novo serviço',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryGreen,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shadowColor: AppColors.primaryGreen.withOpacity(0.3),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Texto adicional sutil
+            Text(
+              'Seus itens aparecerão aqui quando disponíveis',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[500],
+                fontWeight: FontWeight.w400,
+              ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),

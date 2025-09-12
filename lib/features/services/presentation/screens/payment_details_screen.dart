@@ -121,7 +121,7 @@ class PaymentDetailsScreen extends StatelessWidget {
                   borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                 ),
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
+                  padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + MediaQuery.of(context).padding.bottom),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -140,11 +140,11 @@ class PaymentDetailsScreen extends StatelessWidget {
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(20),
                                 child: Image.network(
-                                  getGoogleMapsUrl(payment.shortAddress),
+                                  getGoogleMapsUrl(payment.fullAddress),
                                   fit: BoxFit.cover,
                                   loadingBuilder: (context, child, loadingProgress) {
                                     if (loadingProgress == null) {
-                                      print('🗺️ [MAP] Mapa carregado com sucesso para: ${payment.shortAddress}');
+                                      print('🗺️ [MAP] Mapa carregado com sucesso para: ${payment.fullAddress}');
                                       return child;
                                     }
                                     
@@ -166,7 +166,7 @@ class PaymentDetailsScreen extends StatelessWidget {
                                     );
                                   },
                                   errorBuilder: (context, error, stackTrace) {
-                                    print('❌ [MAP] Erro ao carregar mapa para: ${payment.shortAddress}');
+                                    print('❌ [MAP] Erro ao carregar mapa para: ${payment.fullAddress}');
                                     print('❌ [MAP] Erro: $error');
                                     if (stackTrace != null) {
                                       print('❌ [MAP] StackTrace: $stackTrace');
@@ -230,7 +230,7 @@ class PaymentDetailsScreen extends StatelessWidget {
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: Text(
-                                        payment.shortAddress,
+                                        payment.fullAddress,
                                         style: const TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w600,

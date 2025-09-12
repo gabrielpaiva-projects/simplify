@@ -16,16 +16,19 @@ class PaymentPixService {
     return _firestore
         .collection('pagamentosPix')
         .where('userId', isEqualTo: currentUser.uid)
-        .where('lastWebhookEvent', isEqualTo: 'PAYMENT_CREATED')
-        .where('status', isEqualTo: 'PENDING')
         .snapshots()
         .map((snapshot) {
-      final payments = snapshot.docs.map((doc) {
+      final allPayments = snapshot.docs.map((doc) {
         return PaymentPixModel.fromFirestore(doc.data(), doc.id);
       }).toList();
       
+      // Filtrar pagamentos pendentes
+      final pendingPayments = allPayments.where((payment) {
+        return payment.isPending && !payment.isExpired;
+      }).toList();
+      
       // Ordenar por data de criação (mais recente primeiro)
-      payments.sort((a, b) {
+      pendingPayments.sort((a, b) {
         try {
           final dateA = DateTime.parse(a.createdAt);
           final dateB = DateTime.parse(b.createdAt);
@@ -35,7 +38,7 @@ class PaymentPixService {
         }
       });
       
-      return payments;
+      return pendingPayments;
     });
   }
 
