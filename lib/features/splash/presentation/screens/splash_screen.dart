@@ -7,6 +7,7 @@ import '../../../auth/presentation/screens/login_screen.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../auth/data/models/user_model.dart';
 import '../../../services/presentation/screens/services_screen.dart';
+import '../../../professional/presentation/screens/professional_home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -125,13 +126,11 @@ class _SplashScreenState extends State<SplashScreen>
       // Aguarda carregar os dados do usuário
       await Future.delayed(const Duration(milliseconds: 500));
       
-      // Por enquanto, vamos direcionar todos para a tela de serviços
-      // No futuro, pode-se adicionar lógica para diferentes tipos de usuário
+      // Direcionar para a tela correta baseado no tipo de usuário
       if (authProvider.userType == UserType.client) {
         targetScreen = const ServicesScreen();
       } else if (authProvider.userType == UserType.professional) {
-        // TODO: Implementar tela do profissional
-        targetScreen = const ServicesScreen(); // Por enquanto vai para serviços
+        targetScreen = const ProfessionalHomeScreen();
       } else {
         // Se não conseguiu determinar o tipo, vai para login
         targetScreen = const LoginScreen();

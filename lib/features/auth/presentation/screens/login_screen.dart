@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/routes/app_routes.dart';
 import '../widgets/modern_profile_selection_sheet.dart';
 import 'modern_client_registration.dart';
 import 'modern_professional_registration.dart';
@@ -221,12 +222,9 @@ class _LoginScreenState extends State<LoginScreen>
               ),
             );
           } else if (userType == UserType.professional) {
-            // TODO: Implementar tela do profissional
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Tela do profissional em desenvolvimento'),
-                backgroundColor: Colors.orange,
-              ),
+            Navigator.pushReplacementNamed(
+              context,
+              AppRoutes.professionalHome,
             );
           } else if (userType == UserType.admin) {
             // TODO: Implementar tela do admin

@@ -5,6 +5,7 @@ import '../../features/services/presentation/screens/services_screen.dart';
 import '../../features/services/presentation/screens/appointments_screen.dart';
 import '../../features/services/presentation/screens/payment_details_screen.dart';
 import '../../features/services/presentation/screens/appointment_details_screen.dart';
+import '../../features/professional/presentation/screens/professional_home_screen.dart';
 import '../../models/payment_pix_model.dart';
 import '../../models/appointment_model.dart';
 
@@ -13,6 +14,7 @@ class AppRoutes {
   static const String login = '/login';
   static const String home = '/home';
   static const String services = '/services';
+  static const String professionalHome = '/professional-home';
   static const String appointments = '/appointments';
   static const String paymentDetails = '/payment-details';
   static const String appointmentDetails = '/appointment-details';
@@ -34,6 +36,12 @@ class AppRoutes {
       case services:
         return MaterialPageRoute(
           builder: (_) => const ServicesScreen(),
+          settings: settings,
+        );
+      
+      case professionalHome:
+        return MaterialPageRoute(
+          builder: (_) => const ProfessionalHomeScreen(),
           settings: settings,
         );
       
