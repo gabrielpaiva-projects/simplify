@@ -9,13 +9,23 @@ Este documento descreve a integração completa do Firebase Cloud Messaging (FCM
 - ✅ Invalidação de tokens no logout
 - ✅ Limpeza automática de tokens antigos
 - ✅ Suporte a notificações em foreground, background e quando o app está fechado
+- ✅ **Badge de notificação overlay** - Notificações em foreground aparecem como badge no topo da tela
+- ✅ **Navegação automática** - Tap no badge navega para a tela apropriada baseada no tipo
+- ✅ **Animações suaves** - Entrada e saída com animações fluidas
+- ✅ **Auto-dismiss** - Badges desaparecem automaticamente após 4 segundos
 - ✅ Subscrição/desinscrição de tópicos
 
 ## 🏗️ Arquitetura
 
-### Serviço Principal
+### Serviços Principais
 - **`FirebaseMessagingService`**: Singleton que gerencia toda a funcionalidade do FCM
-- **Localização**: `lib/services/firebase_messaging_service.dart`
+  - **Localização**: `lib/services/firebase_messaging_service.dart`
+- **`NotificationOverlayService`**: Gerencia badges de notificação como overlay global
+  - **Localização**: `lib/services/notification_overlay_service.dart`
+
+### Widgets de UI
+- **`NotificationBadge`**: Widget do badge de notificação com animações
+  - **Localização**: `lib/widgets/notification_badge.dart`
 
 ### Integração com Autenticação
 - Tokens são automaticamente salvos/invalidados conforme o estado de autenticação
@@ -73,6 +83,51 @@ firebase_messaging: ^15.1.5
 - Tokens são marcados como `isActive: false` no logout
 - Tokens antigos (>30 dias) são automaticamente removidos
 
+## 🎯 Sistema de Badge de Notificação
+
+### Funcionamento
+Quando o app recebe uma notificação em **foreground**, automaticamente:
+
+1. **Badge Overlay**: Aparece um badge animado na parte superior da tela
+2. **Sobrepõe Qualquer Tela**: Funciona independente da tela atual
+3. **Auto-dismiss**: Desaparece automaticamente após 4 segundos
+4. **Interativo**: Tap no badge executa ação baseada no tipo da notificação
+5. **Dismissível**: Botão X permite fechar manualmente
+
+### Tipos de Notificação Suportados
+
+| Tipo | Ícone | Cor | Ação no Tap |
+|------|-------|-----|-------------|
+| `payment_confirmed` | 💳 | Verde | Navegar para detalhes do pagamento |
+| `appointment_reminder` | 📅 | Azul | Navegar para agendamentos |
+| `service_completed` | ✅ | Roxo | Navegar para histórico de serviços |
+| `new_message` | 💬 | Laranja | Navegar para mensagens |
+| Outros | 🔔 | Azul | Mostrar detalhes em dialog |
+
+### Exemplo de Payload
+```json
+{
+  "notification": {
+    "title": "✅ Pagamento Confirmado!",
+    "body": "Seu pagamento de R$ 323,10 via PIX foi confirmado com sucesso."
+  },
+  "data": {
+    "type": "payment_confirmed",
+    "paymentType": "pix",
+    "amount": "323.1",
+    "userId": "M7KQRlO5ADZCQ3EbpljTeaatPhJ3",
+    "timestamp": "2025-09-12T23:46:46.805Z"
+  }
+}
+```
+
+### Customização
+Para adicionar novos tipos de notificação, edite:
+
+1. **`NotificationBadge._getNotificationIcon()`** - Adicionar ícone
+2. **`NotificationBadge._getNotificationColor()`** - Adicionar cor
+3. **`NotificationOverlayService._handleNotificationTap()`** - Adicionar ação
+
 ## 🚀 Como Usar
 
 ### 1. Inicialização Automática
@@ -101,11 +156,26 @@ await messagingService.unsubscribeFromTopic('promotions');
 await messagingService.cleanupOldTokens();
 ```
 
+### 5. Mostrando Badge de Notificação Manualmente
+```dart
+final overlayService = di.sl<NotificationOverlayService>();
+final message = RemoteMessage(/* ... */);
+overlayService.showNotificationBadge(message);
+```
+
+### 6. Removendo Badge Ativo
+```dart
+final overlayService = di.sl<NotificationOverlayService>();
+overlayService.forceRemoveOverlay();
+```
+
 ## 🧪 Testando a Integração
 
 ### Tela de Teste
 Use a tela `TestFCMScreen` (`lib/test_fcm_integration.dart`) para:
 - Visualizar o token atual
+- **Simular diferentes tipos de notificação** (payment, appointment, service, message)
+- Testar badges de notificação em tempo real
 - Testar subscrição/desinscrição de tópicos
 - Limpar tokens antigos
 - Atualizar token manualmente
@@ -230,15 +300,20 @@ if (userType == 'professional') {
 
 - [x] ✅ Dependência `firebase_messaging` adicionada
 - [x] ✅ Serviço `FirebaseMessagingService` criado
+- [x] ✅ **Serviço `NotificationOverlayService` criado**
+- [x] ✅ **Widget `NotificationBadge` criado com animações**
 - [x] ✅ Integração com sistema de DI (GetIt)
 - [x] ✅ Inicialização no `main.dart`
 - [x] ✅ Integração com `AuthProvider`
 - [x] ✅ Configuração Android (permissões + recursos)
 - [x] ✅ Handler para mensagens em background
+- [x] ✅ **Sistema de badge overlay para notificações em foreground**
+- [x] ✅ **Navegação automática baseada no tipo de notificação**
+- [x] ✅ **Auto-dismiss e animações suaves**
 - [x] ✅ Salvamento automático na collection `tokens`
 - [x] ✅ Invalidação no logout
 - [x] ✅ Limpeza de tokens antigos
-- [x] ✅ Tela de teste criada
+- [x] ✅ **Tela de teste com simulações de notificação**
 - [x] ✅ Documentação completa
 
 ## 🚀 Próximos Passos Sugeridos

@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
+import '../core/di/injection_container.dart' as di;
+import 'notification_overlay_service.dart';
 
 class FirebaseMessagingService {
   static final FirebaseMessagingService _instance = FirebaseMessagingService._internal();
@@ -15,10 +17,14 @@ class FirebaseMessagingService {
   final Logger _logger = Logger();
 
   String? _currentToken;
+  NotificationOverlayService? _overlayService;
 
   /// Inicializar o serviço de mensagens
   Future<void> initialize() async {
     try {
+      // Inicializar referência ao serviço de overlay
+      _overlayService = di.sl<NotificationOverlayService>();
+      
       // Solicitar permissões para notificações
       await _requestPermissions();
       
@@ -150,11 +156,26 @@ class FirebaseMessagingService {
   void _handleMessage(RemoteMessage message) {
     _logger.i('Handling message: ${message.notification?.title}');
     
-    // Aqui você pode implementar a lógica específica para tratar diferentes tipos de notificação
-    // Por exemplo, navegar para diferentes telas baseado no tipo da mensagem
-    
     if (message.data.isNotEmpty) {
       _logger.i('Message data: ${message.data}');
+    }
+    
+    // Mostrar badge de notificação quando o app estiver em foreground
+    if (_overlayService != null) {
+      if (_overlayService!.isReady) {
+        _overlayService!.showNotificationBadge(message);
+      } else {
+        // Aguardar um pouco para garantir que o contexto esteja disponível
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (_overlayService!.isReady) {
+            _overlayService!.showNotificationBadge(message);
+          } else {
+            _logger.w('Overlay service context not ready after delay');
+          }
+        });
+      }
+    } else {
+      _logger.w('Overlay service not initialized, cannot show notification badge');
     }
   }
 

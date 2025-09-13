@@ -12,6 +12,7 @@ import '../../features/auth/data/services/firebase_auth_service.dart';
 import '../../features/auth/data/repositories/auth_repository.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../services/firebase_messaging_service.dart';
+import '../../services/notification_overlay_service.dart';
 
 final sl = GetIt.instance;
 
@@ -48,6 +49,11 @@ void _initCore() {
   // Firebase Messaging
   sl.registerLazySingleton<FirebaseMessagingService>(
     () => FirebaseMessagingService(),
+  );
+  
+  // Notification Overlay
+  sl.registerLazySingleton<NotificationOverlayService>(
+    () => NotificationOverlayService(),
   );
 }
 

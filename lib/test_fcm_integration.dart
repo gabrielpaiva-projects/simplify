@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'services/firebase_messaging_service.dart';
+import 'services/notification_overlay_service.dart';
 import 'core/di/injection_container.dart' as di;
 
 /// Tela de teste para demonstrar a integração com Firebase Cloud Messaging
@@ -12,6 +14,7 @@ class TestFCMScreen extends StatefulWidget {
 
 class _TestFCMScreenState extends State<TestFCMScreen> {
   late final FirebaseMessagingService _messagingService;
+  late final NotificationOverlayService _overlayService;
   String? _currentToken;
   bool _isLoading = false;
 
@@ -19,6 +22,7 @@ class _TestFCMScreenState extends State<TestFCMScreen> {
   void initState() {
     super.initState();
     _messagingService = di.sl<FirebaseMessagingService>();
+    _overlayService = di.sl<NotificationOverlayService>();
     _loadCurrentToken();
   }
 
@@ -149,6 +153,79 @@ class _TestFCMScreenState extends State<TestFCMScreen> {
     }
   }
 
+  void _simulatePaymentNotification() {
+    // Simular notificação de pagamento confirmado com o payload fornecido
+    final message = RemoteMessage(
+      notification: const RemoteNotification(
+        title: '✅ Pagamento Confirmado!',
+        body: 'Seu pagamento de R\$ 323,10 via PIX foi confirmado com sucesso.',
+      ),
+      data: {
+        'type': 'payment_confirmed',
+        'paymentType': 'pix',
+        'amount': '323.1',
+        'userId': 'M7KQRlO5ADZCQ3EbpljTeaatPhJ3',
+        'timestamp': '2025-09-12T23:46:46.805Z',
+      },
+    );
+
+    _overlayService.showNotificationBadge(message);
+  }
+
+  void _simulateAppointmentNotification() {
+    final message = RemoteMessage(
+      notification: const RemoteNotification(
+        title: '📅 Lembrete de Agendamento',
+        body: 'Seu serviço de limpeza está agendado para amanhã às 14:00.',
+      ),
+      data: {
+        'type': 'appointment_reminder',
+        'appointmentId': 'apt_123',
+        'serviceType': 'cleaning',
+        'scheduledTime': '2025-09-13T14:00:00.000Z',
+        'userId': 'M7KQRlO5ADZCQ3EbpljTeaatPhJ3',
+      },
+    );
+
+    _overlayService.showNotificationBadge(message);
+  }
+
+  void _simulateServiceCompletedNotification() {
+    final message = RemoteMessage(
+      notification: const RemoteNotification(
+        title: '🎉 Serviço Concluído!',
+        body: 'Sua limpeza foi finalizada com sucesso. Avalie nosso serviço!',
+      ),
+      data: {
+        'type': 'service_completed',
+        'serviceId': 'srv_456',
+        'professionalId': 'prof_789',
+        'userId': 'M7KQRlO5ADZCQ3EbpljTeaatPhJ3',
+        'completedAt': '2025-09-12T16:30:00.000Z',
+      },
+    );
+
+    _overlayService.showNotificationBadge(message);
+  }
+
+  void _simulateMessageNotification() {
+    final message = RemoteMessage(
+      notification: const RemoteNotification(
+        title: '💬 Nova Mensagem',
+        body: 'Você recebeu uma nova mensagem do profissional.',
+      ),
+      data: {
+        'type': 'new_message',
+        'messageId': 'msg_321',
+        'senderId': 'prof_789',
+        'userId': 'M7KQRlO5ADZCQ3EbpljTeaatPhJ3',
+        'timestamp': '2025-09-12T23:50:00.000Z',
+      },
+    );
+
+    _overlayService.showNotificationBadge(message);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -197,7 +274,59 @@ class _TestFCMScreenState extends State<TestFCMScreen> {
             ),
             const SizedBox(height: 20),
             const Text(
-              'Ações Disponíveis:',
+              'Simulações de Notificação:',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: _simulatePaymentNotification,
+              icon: const Icon(Icons.payment),
+              label: const Text('Simular Pagamento Confirmado'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              onPressed: _simulateAppointmentNotification,
+              icon: const Icon(Icons.schedule),
+              label: const Text('Simular Lembrete de Agendamento'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              onPressed: _simulateServiceCompletedNotification,
+              icon: const Icon(Icons.check_circle),
+              label: const Text('Simular Serviço Concluído'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.purple,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              onPressed: _simulateMessageNotification,
+              icon: const Icon(Icons.message),
+              label: const Text('Simular Nova Mensagem'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Ações de FCM:',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -279,7 +408,9 @@ class _TestFCMScreenState extends State<TestFCMScreen> {
                       '• O token é salvo automaticamente na collection "tokens" do Firestore\n'
                       '• O token é atualizado sempre que o usuário abre o app\n'
                       '• Tokens são invalidados quando o usuário faz logout\n'
-                      '• Use o Firebase Console para enviar notificações de teste',
+                      '• Notificações em foreground aparecem como badge no topo da tela\n'
+                      '• Use os botões de simulação para testar diferentes tipos de notificação\n'
+                      '• Use o Firebase Console para enviar notificações de teste reais',
                       style: TextStyle(fontSize: 12),
                     ),
                   ],
