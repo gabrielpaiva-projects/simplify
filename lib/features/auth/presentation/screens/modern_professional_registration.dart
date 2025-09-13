@@ -15,7 +15,7 @@ import '../widgets/terms_and_conditions_step.dart';
 import '../widgets/face_capture_step.dart';
 import '../providers/auth_provider.dart';
 import 'professional_analysis_screen.dart';
-import '../../../../services/face_verification_service.dart';
+import '../../../../services/simple_face_verification_service.dart';
 import '../../../../services/firebase_storage_service.dart';
 
 class ModernProfessionalRegistration extends StatefulWidget {
@@ -239,8 +239,8 @@ class _ModernProfessionalRegistrationState
     );
 
     try {
-      // Verificar a foto usando ML Kit
-      final result = await FaceVerificationService.verifyFace(_profilePhoto!);
+      // Verificar a foto usando serviço simplificado
+      final result = await SimpleFaceVerificationService.verifyFace(_profilePhoto!);
       
       // Fechar dialog
       if (mounted) Navigator.of(context).pop();
