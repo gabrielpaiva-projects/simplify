@@ -94,6 +94,15 @@ dependencies:
   
   # Calendar integration
   add_2_calendar: ^3.0.1
+  
+  # Firebase Storage for file uploads
+  firebase_storage: ^12.3.7
+  
+  # Camera functionality
+  camera: ^0.11.0+2
+  
+  # Google ML Kit for face detection
+  google_mlkit_face_detection: ^0.11.1
 
 dev_dependencies:
   flutter_test:
