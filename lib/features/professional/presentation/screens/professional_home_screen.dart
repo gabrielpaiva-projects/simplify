@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shimmer_animation/shimmer_animation.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../../../services/professional_available_services_service.dart';
@@ -40,7 +41,10 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
       ProfessionalAvailableServicesService();
   
   late AnimationController _animationController;
-  late AnimationController _pulseController;
+  
+  // Filtro de distância
+  double _selectedDistance = 10.0; // km
+  final List<double> _distanceOptions = [5.0, 10.0, 15.0, 25.0, 50.0];
 
   @override
   void initState() {
@@ -49,19 +53,13 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
-    _pulseController = AnimationController(
-      duration: const Duration(milliseconds: 2000),
-      vsync: this,
-    );
     
     _animationController.forward();
-    _pulseController.repeat();
   }
 
   @override
   void dispose() {
     _animationController.dispose();
-    _pulseController.dispose();
     super.dispose();
   }
 
@@ -118,7 +116,7 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
           Container(
             width: 44,
             height: 44,
-            decoration: BoxDecoration(
+      decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -128,14 +126,14 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                 ],
               ),
               borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(
+        boxShadow: [
+          BoxShadow(
                   color: AppColors.primaryGreen.withOpacity(0.25),
                   blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
             child: const Icon(
               Icons.person,
               color: Colors.white,
@@ -145,9 +143,9 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
           const SizedBox(width: 16),
           // Título e status
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
                 Text(
                   'Simplify Pro',
                   style: TextStyle(
@@ -241,8 +239,8 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Saudação elegante
-                  Consumer<AuthProvider>(
-                    builder: (context, authProvider, child) {
+          Consumer<AuthProvider>(
+            builder: (context, authProvider, child) {
                       final userName = authProvider.userData?['fullName']?.split(' ')[0] ?? 'Profissional';
                       return RichText(
                         text: TextSpan(
@@ -263,16 +261,16 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                             ),
                             const TextSpan(text: '! 👋'),
                           ],
-                        ),
-                      );
-                    },
-                  ),
+                ),
+              );
+            },
+          ),
                   const SizedBox(height: 12),
                   // Subtítulo moderno
                   Text(
                     'Encontre os melhores serviços próximos a você',
-                    style: TextStyle(
-                      fontSize: 16,
+            style: TextStyle(
+              fontSize: 16,
                       color: const Color(0xFF64748B),
                       fontWeight: FontWeight.w500,
                       letterSpacing: -0.2,
@@ -280,93 +278,102 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                   ),
                   const SizedBox(height: 24),
                   // Estatística inline elegante
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          AppColors.primaryGreen.withOpacity(0.08),
-                          AppColors.primaryGreen.withOpacity(0.04),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: AppColors.primaryGreen.withOpacity(0.12),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryGreen.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            Icons.work_outline,
-                            color: AppColors.primaryGreen,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Serviços disponíveis hoje',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: const Color(0xFF64748B),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'Atualizado agora',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.primaryGreen,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                  StreamBuilder<List<ServiceWithDistance>>(
+                    stream: _servicesService.getAvailableServicesWithDistance(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return _buildShimmerCard();
+                      }
+                      
+                      final allServices = snapshot.data ?? [];
+                      // Filtrar por distância para mostrar a contagem correta
+                      final filteredCount = allServices
+                          .where((service) => service.distance <= _selectedDistance)
+                          .length;
+                      
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              AppColors.primaryGreen.withOpacity(0.08),
+                              AppColors.primaryGreen.withOpacity(0.04),
                             ],
                           ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.04),
-                                blurRadius: 4,
-                                offset: const Offset(0, 1),
-                              ),
-                            ],
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: AppColors.primaryGreen.withOpacity(0.12),
+                            width: 1,
                           ),
-                          child: StreamBuilder<List<ServiceWithDistance>>(
-                            stream: _servicesService.getAvailableServicesWithDistance(),
-                            builder: (context, snapshot) {
-                              final count = snapshot.data?.length ?? 0;
-                              return Text(
-                                '$count',
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryGreen.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                Icons.work_outline,
+                                color: AppColors.primaryGreen,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Serviços disponíveis hoje',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: const Color(0xFF64748B),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Atualizado agora',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.primaryGreen,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(8),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.04),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 1),
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                '$filteredCount',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.primaryGreen,
                                 ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
+            ),
+          ),
+        ],
+      ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -374,6 +381,101 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
           ),
         );
       },
+    );
+  }
+
+  Widget _buildDistanceSelector() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.tune,
+                size: 18,
+                color: const Color(0xFF64748B),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Filtrar por distância',
+            style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF64748B),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Chips de distância
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: _distanceOptions.map((distance) {
+                final isSelected = _selectedDistance == distance;
+                return Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedDistance = distance;
+                      });
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: isSelected 
+                            ? AppColors.primaryGreen 
+                            : const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected 
+                              ? AppColors.primaryGreen 
+                              : const Color(0xFFE2E8F0),
+                          width: 1.5,
+                        ),
+                        boxShadow: isSelected ? [
+                          BoxShadow(
+                            color: AppColors.primaryGreen.withOpacity(0.25),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ] : null,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (isSelected) ...[
+                            Icon(
+                              Icons.location_on,
+                              size: 14,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 4),
+                          ],
+                          Text(
+                            '${distance.toInt()} km',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: isSelected 
+                                  ? Colors.white 
+                                  : const Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -388,6 +490,9 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
             child: Column(
               children: [
                 const SizedBox(height: 8),
+                // Seletor de distância
+                _buildDistanceSelector(),
+                const SizedBox(height: 20),
                 // Section header elegante
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -410,7 +515,7 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          'Ao vivo',
+                          'Até ${_selectedDistance.toInt()} km',
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -435,7 +540,12 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
           return _buildErrorState(snapshot.error.toString());
         }
 
-        final servicesWithDistance = snapshot.data ?? [];
+                        final allServices = snapshot.data ?? [];
+                        
+                        // Filtrar por distância
+                        final servicesWithDistance = allServices
+                            .where((service) => service.distance <= _selectedDistance)
+                            .toList();
 
         if (servicesWithDistance.isEmpty) {
           return _buildEmptyState();
@@ -461,9 +571,9 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                                     bottom: 16,
                                   ),
                                     child: ModernServiceCard(
-                                      service: serviceWithDistance.service,
-                                      distance: serviceWithDistance.distance,
-                                      onAccept: () => _handleAcceptService(serviceWithDistance.service),
+                service: serviceWithDistance.service,
+                distance: serviceWithDistance.distance,
+                onAccept: () => _handleAcceptService(serviceWithDistance.service),
                                       onViewDetails: () => _showServiceDetails(context, serviceWithDistance.service, serviceWithDistance.distance),
                                     ),
                                 ),
@@ -602,78 +712,231 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
     );
   }
 
+  Widget _buildShimmerCard() {
+    return Shimmer(
+      duration: const Duration(seconds: 2),
+      color: AppColors.primaryGreen,
+      colorOpacity: 0.3,
+      enabled: true,
+      direction: const ShimmerDirection.fromLTRB(),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.primaryGreen.withOpacity(0.15),
+              AppColors.primaryGreen.withOpacity(0.08),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColors.primaryGreen.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            // Shimmer do ícone
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.primaryGreen.withOpacity(0.25),
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            const SizedBox(width: 16),
+            // Shimmer do texto
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 14,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryGreen.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    height: 10,
+                    width: 100,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryGreen.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Shimmer do contador
+            Container(
+              width: 40,
+              height: 28,
+              decoration: BoxDecoration(
+                color: AppColors.primaryGreen.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildEmptyState() {
     return Container(
-      margin: const EdgeInsets.all(20),
-      padding: const EdgeInsets.all(40),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
+      margin: const EdgeInsets.all(24),
       child: Column(
         children: [
+          const SizedBox(height: 40),
+          // Ilustração moderna
           Container(
-            width: 120,
-            height: 120,
+            width: 140,
+            height: 140,
             decoration: BoxDecoration(
-              color: AppColors.lightGrey.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(60),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.primaryGreen.withOpacity(0.1),
+                  AppColors.primaryGreen.withOpacity(0.05),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(70),
+              border: Border.all(
+                color: AppColors.primaryGreen.withOpacity(0.15),
+                width: 2,
+              ),
             ),
-            child: Icon(
-              Icons.work_outline_rounded,
-              size: 60,
-              color: AppColors.secondaryText.withOpacity(0.7),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'Nenhum serviço disponível',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: AppColors.deepBlack,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Não há serviços disponíveis no momento.\nVerifique novamente em alguns minutos.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
-              color: AppColors.secondaryText,
-              height: 1.6,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Círculos decorativos
+                Positioned(
+                  top: 20,
+                  right: 20,
+                  child: Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryGreen.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 25,
+                  left: 25,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryGreen.withOpacity(0.4),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+                // Ícone principal
+          Icon(
+                  Icons.search_outlined,
+                  size: 48,
+                  color: AppColors.primaryGreen.withOpacity(0.7),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 32),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-            onPressed: () => setState(() {}),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primaryGreen,
-                side: BorderSide(color: AppColors.primaryGreen, width: 2),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              child: const Text(
-                'Atualizar Lista',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+          // Texto principal
+          Text(
+            'Nenhum serviço encontrado',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: AppColors.deepBlack,
+              letterSpacing: -0.5,
             ),
           ),
+          const SizedBox(height: 12),
+          // Subtexto
+          Text(
+            'Não encontramos serviços disponíveis nesta\ndistância. Tente expandir o raio de busca.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              color: const Color(0xFF64748B),
+              height: 1.5,
+              letterSpacing: -0.2,
+            ),
+          ),
+          const SizedBox(height: 32),
+          // Sugestões
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildEmptyStateAction(
+                icon: Icons.refresh,
+                label: 'Atualizar',
+                onTap: () => setState(() {}),
+              ),
+              _buildEmptyStateAction(
+                icon: Icons.tune,
+                label: 'Filtros',
+                onTap: () {
+                  // Scroll para o seletor de distância
+                  setState(() {
+                    _selectedDistance = 25.0;
+                  });
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 40),
         ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyStateAction({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: const Color(0xFFE2E8F0),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: const Color(0xFF64748B),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF64748B),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1486,12 +1749,7 @@ class ServiceDetailsBottomSheet extends StatelessWidget {
                   _buildSection(
                     'Cliente',
                     Icons.person_outline,
-                    child: Column(
-                      children: [
-                        _buildDetailRow('Nome', service.userName, Icons.person),
-                        _buildDetailRow('Email', service.userEmail, Icons.email_outlined),
-                      ],
-                    ),
+                    child: _buildDetailRow('Nome', service.userName, Icons.person),
                   ),
                   
                   const SizedBox(height: 24),
