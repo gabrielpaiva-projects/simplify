@@ -271,7 +271,7 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen> {
                 child: _buildPropertyCard(
                   'apartment',
                   'Apartamento',
-                  Icons.building,
+                  Icons.apartment,
                   '50-150m²',
                 ),
               ),
