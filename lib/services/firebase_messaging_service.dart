@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 import '../core/di/injection_container.dart' as di;
 import 'notification_overlay_service.dart';
+import 'notification_storage_service.dart';
+import '../models/notification_model.dart';
 
 class FirebaseMessagingService {
   static final FirebaseMessagingService _instance = FirebaseMessagingService._internal();
@@ -18,12 +20,17 @@ class FirebaseMessagingService {
 
   String? _currentToken;
   NotificationOverlayService? _overlayService;
+  NotificationStorageService? _storageService;
 
   /// Inicializar o serviço de mensagens
   Future<void> initialize() async {
     try {
-      // Inicializar referência ao serviço de overlay
+      // Inicializar referência aos serviços
       _overlayService = di.sl<NotificationOverlayService>();
+      _storageService = di.sl<NotificationStorageService>();
+      
+      // Inicializar o storage service
+      await _storageService!.initialize();
       
       // Solicitar permissões para notificações
       await _requestPermissions();
@@ -160,6 +167,9 @@ class FirebaseMessagingService {
       _logger.i('Message data: ${message.data}');
     }
     
+    // Salvar notificação no storage
+    _saveNotificationToStorage(message);
+    
     // Mostrar badge de notificação quando o app estiver em foreground
     if (_overlayService != null) {
       if (_overlayService!.isReady) {
@@ -176,6 +186,21 @@ class FirebaseMessagingService {
       }
     } else {
       _logger.w('Overlay service not initialized, cannot show notification badge');
+    }
+  }
+
+  /// Salvar notificação recebida no storage
+  void _saveNotificationToStorage(RemoteMessage message) {
+    try {
+      if (_storageService != null) {
+        final notification = NotificationModel.fromRemoteMessage(message);
+        _storageService!.addNotification(notification);
+        _logger.i('Notification saved to storage: ${notification.title}');
+      } else {
+        _logger.w('Storage service not initialized, cannot save notification');
+      }
+    } catch (e) {
+      _logger.e('Error saving notification to storage: $e');
     }
   }
 
