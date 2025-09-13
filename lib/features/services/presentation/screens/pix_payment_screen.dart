@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
+import 'dart:ui';
 import '../../../../core/constants/app_colors.dart';
 
 class PixPaymentScreen extends StatefulWidget {
@@ -9,7 +10,7 @@ class PixPaymentScreen extends StatefulWidget {
   final String serviceTitle;
   final DateTime selectedDate;
   final String selectedTime;
-  
+
   const PixPaymentScreen({
     Key? key,
     required this.pixCode,
@@ -23,38 +24,57 @@ class PixPaymentScreen extends StatefulWidget {
   State<PixPaymentScreen> createState() => _PixPaymentScreenState();
 }
 
-class _PixPaymentScreenState extends State<PixPaymentScreen> 
-    with SingleTickerProviderStateMixin {
-  
-  late AnimationController _controller;
+class _PixPaymentScreenState extends State<PixPaymentScreen>
+    with TickerProviderStateMixin {
+  late AnimationController _fadeController;
+  late AnimationController _pulseController;
+  late AnimationController _timerController;
   late Animation<double> _fadeAnimation;
-  
+  late Animation<double> _pulseAnimation;
+  late Animation<Color?> _timerColorAnimation;
+
   bool _codeCopied = false;
   Timer? _timer;
   int _minutes = 30;
   int _seconds = 0;
-  
+
   @override
   void initState() {
     super.initState();
-    
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 600),
+
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeIn,
-    ));
-    
-    _controller.forward();
+
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    );
+
+    _timerController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeOutCubic),
+    );
+
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.1).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    _timerColorAnimation =
+        ColorTween(begin: AppColors.warning, end: AppColors.error).animate(
+          CurvedAnimation(parent: _timerController, curve: Curves.easeInOut),
+        );
+
+    _fadeController.forward();
+    _pulseController.repeat(reverse: true);
     _startTimer();
   }
-  
+
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
@@ -66,360 +86,355 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
         } else {
           timer.cancel();
         }
+
+        // Animate timer color when time is running low
+        if (_minutes <= 5 && !_timerController.isAnimating) {
+          _timerController.repeat(reverse: true);
+        }
       });
     });
   }
-  
+
   void _copyPixCode() async {
     await Clipboard.setData(ClipboardData(text: widget.pixCode));
     HapticFeedback.lightImpact();
-    
+
     setState(() => _codeCopied = true);
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Row(
+        content: Row(
           children: [
-            Icon(Icons.check, color: Colors.white),
-            SizedBox(width: 8),
-            Text('Código copiado!'),
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.check_circle,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Código PIX copiado!',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+            ),
           ],
         ),
-        backgroundColor: Colors.green,
+        backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 3),
       ),
     );
-    
-    Future.delayed(const Duration(seconds: 2), () {
+
+    Future.delayed(const Duration(seconds: 3), () {
       if (mounted) setState(() => _codeCopied = false);
     });
   }
-  
+
   @override
   void dispose() {
-    _controller.dispose();
+    _fadeController.dispose();
+    _pulseController.dispose();
+    _timerController.dispose();
     _timer?.cancel();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF166F53),
-              Color(0xFF0F4C3A),
-            ],
+      backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        title: const Text(
+          'Pagamento PIX',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
           ),
         ),
-        child: SafeArea(
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: Column(
-              children: [
-                // Header
-                Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Row(
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+      ),
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: Column(
+          children: [
+            // Header info
+            Container(
+              width: double.infinity,
+              color: Colors.white,
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
                       Container(
+                        width: 48,
+                        height: 48,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: AppColors.primaryGreen.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(
-                            Icons.arrow_back,
-                            color: Colors.white,
-                          ),
+                        child: Icon(
+                          Icons.pix,
+                          color: AppColors.primaryGreen,
+                          size: 24,
                         ),
                       ),
-                      const Expanded(
-                        child: Text(
-                          'Pagamento PIX',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                          ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.serviceTitle,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'R\$ ${widget.amount.toStringAsFixed(2).replaceAll('.', ',')}',
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primaryGreen,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 48),
+                      // Timer
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: _minutes < 5 ? Colors.red[50] : Colors.orange[50],
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: _minutes < 5 ? Colors.red[200]! : Colors.orange[200]!,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.timer,
+                              size: 16,
+                              color: _minutes < 5 ? Colors.red[600] : Colors.orange[600],
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              '${_minutes.toString().padLeft(2, '0')}:${_seconds.toString().padLeft(2, '0')}',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: _minutes < 5 ? Colors.red[700] : Colors.orange[700],
+                                fontFeatures: const [FontFeature.tabularFigures()],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
-                ),
-                
-                // Conteúdo principal
-                Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.only(top: 20),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(30),
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        // Valor e info
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(30),
-                          child: Column(
-                            children: [
-                              // Handle
-                              Container(
-                                width: 40,
-                                height: 4,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[300],
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
-                              ),
-                              
-                              const SizedBox(height: 30),
-                              
-                              // PIX icon
-                              Container(
-                                width: 70,
-                                height: 70,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF32BCAD),
-                                  borderRadius: BorderRadius.circular(35),
-                                ),
-                                child: const Icon(
-                                  Icons.pix,
-                                  color: Colors.white,
-                                  size: 35,
-                                ),
-                              ),
-                              
-                              const SizedBox(height: 20),
-                              
-                              // Valor
-                              Text(
-                                'R\$ ${widget.amount.toStringAsFixed(2).replaceAll('.', ',')}',
-                                style: const TextStyle(
-                                  fontSize: 40,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              
-                              const SizedBox(height: 8),
-                              
-                              Text(
-                                widget.serviceTitle,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey[600],
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              
-                              const SizedBox(height: 25),
-                              
-                              // Timer
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _minutes < 5 
-                                    ? Colors.red[100] 
-                                    : Colors.orange[100],
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.timer,
-                                      size: 16,
-                                      color: _minutes < 5 
-                                        ? Colors.red[600] 
-                                        : Colors.orange[600],
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      '${_minutes.toString().padLeft(2, '0')}:${_seconds.toString().padLeft(2, '0')}',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: _minutes < 5 
-                                          ? Colors.red[700] 
-                                          : Colors.orange[700],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                ],
+              ),
+            ),
+            
+            // Content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // PIX Code Card
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
                           ),
-                        ),
-                        
-                        // Código PIX
-                        Expanded(
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 20),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
                             padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[50],
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            child: Row(
                               children: [
+                                Icon(
+                                  Icons.qr_code_2,
+                                  color: AppColors.primaryGreen,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
                                 const Text(
                                   'Código PIX',
                                   style: TextStyle(
-                                    fontSize: 18,
+                                    fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                     color: Colors.black87,
-                                  ),
-                                ),
-                                
-                                const SizedBox(height: 15),
-                                
-                                // Código
-                                Expanded(
-                                  child: Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.all(15),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                        color: Colors.grey[300]!,
-                                      ),
-                                    ),
-                                    child: SingleChildScrollView(
-                                      child: Text(
-                                        widget.pixCode,
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          fontFamily: 'monospace',
-                                          height: 1.4,
-                                          color: Colors.black87,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                
-                                const SizedBox(height: 15),
-                                
-                                // Botão copiar
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 50,
-                                  child: ElevatedButton(
-                                    onPressed: _copyPixCode,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: _codeCopied 
-                                        ? Colors.green 
-                                        : const Color(0xFF166F53),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          _codeCopied ? Icons.check : Icons.copy,
-                                          color: Colors.white,
-                                          size: 20,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          _codeCopied ? 'Copiado!' : 'Copiar código',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        ),
-                        
-                        const SizedBox(height: 20),
-                        
-                        // Instruções
-                        Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 20),
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.blue[50],
-                            borderRadius: BorderRadius.circular(12),
+                          
+                          Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 20),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[50],
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.grey[200]!,
+                                width: 1,
+                              ),
+                            ),
+                            child: SelectableText(
+                              widget.pixCode,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontFamily: 'monospace',
+                                height: 1.4,
+                                color: Colors.black87,
+                              ),
+                            ),
                           ),
-                          child: Row(
+                          
+                          Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: ElevatedButton.icon(
+                              onPressed: _copyPixCode,
+                              icon: Icon(
+                                _codeCopied ? Icons.check_circle : Icons.content_copy,
+                                size: 18,
+                              ),
+                              label: Text(_codeCopied ? 'Copiado!' : 'Copiar código'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _codeCopied ? AppColors.success : AppColors.primaryGreen,
+                                foregroundColor: Colors.white,
+                                minimumSize: const Size(double.infinity, 48),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 0,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // Instructions Card
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.blue[50],
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Colors.blue[100]!,
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
                             children: [
                               Icon(
                                 Icons.info_outline,
                                 color: Colors.blue[600],
                                 size: 20,
                               ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  'Cole este código no seu app de banco na opção PIX > Copia e Cola',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.blue[700],
-                                  ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Como pagar',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.blue[800],
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                        
-                        // Botão principal
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(20),
-                          child: ElevatedButton(
-                            onPressed: () => _showConfirmation(),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF166F53),
-                              minimumSize: const Size(double.infinity, 55),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: const Text(
-                              'Já realizei o pagamento',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
+                          const SizedBox(height: 12),
+                          Text(
+                            '1. Abra o app do seu banco\n2. Acesse a área PIX\n3. Escolha "PIX Copia e Cola"\n4. Cole o código copiado\n5. Confirme o pagamento',
+                            style: TextStyle(
+                              fontSize: 14,
+                              height: 1.5,
+                              color: Colors.blue[700],
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 30),
+                  ],
+                ),
+              ),
+            ),
+            
+            // Bottom button
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                top: false,
+                child: ElevatedButton(
+                  onPressed: () => _showConfirmation(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryGreen,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 52),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Já realizei o pagamento',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -428,11 +443,13 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
   void _showConfirmation() {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        padding: const EdgeInsets.all(25),
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -445,36 +462,45 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
               ),
             ),
             
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             
-            const Icon(
-              Icons.help_outline,
-              size: 50,
-              color: Colors.orange,
-            ),
-            
-            const SizedBox(height: 15),
-            
-            const Text(
-              'Confirmar pagamento',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: Colors.orange[100],
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: Icon(
+                Icons.help_outline,
+                size: 28,
+                color: Colors.orange[600],
               ),
             ),
             
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
             
             const Text(
-              'Você já fez o pagamento via PIX?',
+              'Confirmar Pagamento',
               style: TextStyle(
-                fontSize: 16,
-                color: Colors.black54,
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+            
+            const SizedBox(height: 8),
+            
+            Text(
+              'Você já realizou o pagamento via PIX?',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
               ),
               textAlign: TextAlign.center,
             ),
             
-            const SizedBox(height: 25),
+            const SizedBox(height: 24),
             
             Row(
               children: [
@@ -482,15 +508,16 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 50),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(12),
                       ),
+                      side: BorderSide(color: Colors.grey[300]!),
                     ),
                     child: const Text('Cancelar'),
                   ),
                 ),
-                const SizedBox(width: 15),
+                const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
@@ -498,22 +525,21 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
                       _showSuccess();
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF166F53),
-                      minimumSize: const Size(double.infinity, 50),
+                      backgroundColor: AppColors.primaryGreen,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(12),
                       ),
+                      elevation: 0,
                     ),
-                    child: const Text(
-                      'Sim, já paguei',
-                      style: TextStyle(color: Colors.white),
-                    ),
+                    child: const Text('Sim, já paguei'),
                   ),
                 ),
               ],
             ),
             
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -526,44 +552,121 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(20),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.check_circle,
-              color: Colors.green,
-              size: 60,
-            ),
-            const SizedBox(height: 15),
-            const Text(
-              'Sucesso!',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: AppColors.success,
+                borderRadius: BorderRadius.circular(40),
+              ),
+              child: const Icon(
+                Icons.check,
+                color: Colors.white,
+                size: 40,
               ),
             ),
-            const SizedBox(height: 10),
+            
+            const SizedBox(height: 24),
+            
             const Text(
-              'Pagamento confirmado.\nSeu agendamento foi realizado!',
+              'Pagamento Confirmado!',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16),
             ),
-            const SizedBox(height: 20),
+            
+            const SizedBox(height: 12),
+            
+            Text(
+              'Seu agendamento foi realizado com sucesso!',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+              ),
+              textAlign: TextAlign.center,
+            ),
+            
+            const SizedBox(height: 24),
+            
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.cleaning_services,
+                        color: AppColors.primaryGreen,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          widget.serviceTitle,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today,
+                        color: AppColors.primaryGreen,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${widget.selectedDate.day}/${widget.selectedDate.month}/${widget.selectedDate.year} - ${widget.selectedTime}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: 24),
+            
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF166F53),
+                  backgroundColor: AppColors.primaryGreen,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
                   ),
+                  elevation: 0,
                 ),
                 child: const Text(
                   'Continuar',
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
@@ -573,3 +676,4 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
     );
   }
 }
+
