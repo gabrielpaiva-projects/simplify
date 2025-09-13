@@ -68,8 +68,7 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFB),
-      appBar: const ProfessionalAppBar(),
+      backgroundColor: Colors.white,
       body: RefreshIndicator(
         onRefresh: () async {
           setState(() {});
@@ -78,13 +77,13 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            // Header Hero Section
+            // Custom App Bar
             SliverToBoxAdapter(
-              child: _buildHeroHeader(),
+              child: _buildModernAppBar(),
             ),
-            // Quick Stats
+            // Header impecável
             SliverToBoxAdapter(
-              child: _buildQuickStats(),
+              child: _buildImpeccableHeader(),
             ),
             // Services Section
             SliverToBoxAdapter(
@@ -96,307 +95,280 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
     );
   }
 
-  Widget _buildHeroHeader() {
+  Widget _buildModernAppBar() {
+    return Container(
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 10,
+        left: 24,
+        right: 24,
+        bottom: 10,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: Color(0xFFF1F5F9),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Avatar do profissional
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.primaryGreen,
+                  AppColors.primaryGreen.withOpacity(0.8),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primaryGreen.withOpacity(0.25),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.person,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 16),
+          // Título e status
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Simplify Pro',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.deepBlack,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                Row(
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.success,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Online',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.success,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // Ações do app bar
+          Row(
+            children: [
+              _buildAppBarAction(
+                Icons.notifications_outlined,
+                onTap: () {
+                  // TODO: Abrir notificações
+                },
+              ),
+              const SizedBox(width: 12),
+              _buildAppBarAction(
+                Icons.more_vert,
+                onTap: () {
+                  // TODO: Abrir menu
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAppBarAction(IconData icon, {required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: const Color(0xFFE2E8F0),
+            width: 1,
+          ),
+        ),
+        child: Icon(
+          icon,
+          size: 20,
+          color: const Color(0xFF64748B),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImpeccableHeader() {
     return AnimatedBuilder(
       animation: _animationController,
       builder: (context, child) {
         return Transform.translate(
-          offset: Offset(0, 50 * (1 - _animationController.value)),
+          offset: Offset(0, 20 * (1 - _animationController.value)),
           child: Opacity(
             opacity: _animationController.value,
             child: Container(
-              margin: const EdgeInsets.all(20),
-              child: Stack(
+              margin: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Background gradient card
+                  // Saudação elegante
+                  Consumer<AuthProvider>(
+                    builder: (context, authProvider, child) {
+                      final userName = authProvider.userData?['fullName']?.split(' ')[0] ?? 'Profissional';
+                      return RichText(
+                        text: TextSpan(
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.deepBlack,
+                            letterSpacing: -1.2,
+                            height: 1.1,
+                          ),
+                          children: [
+                            const TextSpan(text: 'Olá '),
+                            TextSpan(
+                              text: userName,
+                              style: TextStyle(
+                                color: AppColors.primaryGreen,
+                              ),
+                            ),
+                            const TextSpan(text: '! 👋'),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  // Subtítulo moderno
+                  Text(
+                    'Encontre os melhores serviços próximos a você',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: const Color(0xFF64748B),
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // Estatística inline elegante
                   Container(
-                    height: 200,
-      decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(24),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          AppColors.primaryGreen,
-                          AppColors.primaryGreen.withOpacity(0.8),
-                          AppColors.mediumGreen,
+                          AppColors.primaryGreen.withOpacity(0.08),
+                          AppColors.primaryGreen.withOpacity(0.04),
                         ],
                       ),
-        boxShadow: [
-          BoxShadow(
-                          color: AppColors.primaryGreen.withOpacity(0.4),
-                          blurRadius: 30,
-                          offset: const Offset(0, 15),
-          ),
-        ],
-      ),
-                  ),
-                  // Floating decorative elements
-                  Positioned(
-                    top: -20,
-                    right: -20,
-                    child: Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.primaryGreen.withOpacity(0.12),
+                        width: 1,
                       ),
                     ),
-                  ),
-                  Positioned(
-                    bottom: -30,
-                    left: -30,
-                    child: Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withOpacity(0.05),
-                      ),
-                    ),
-                  ),
-                  // Content
-                  Padding(
-                    padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 60,
-                              height: 60,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: Icon(
-                                Icons.handyman_rounded,
-                                color: AppColors.primaryGreen,
-                                size: 28,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Consumer<AuthProvider>(
-            builder: (context, authProvider, child) {
-              final userName = authProvider.userData?['fullName'] ?? 'Profissional';
-                                  return Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Olá, $userName! 👋',
-                style: const TextStyle(
-                                          fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Vamos trabalhar hoje?',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          color: Colors.white.withOpacity(0.9),
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-              );
-            },
-          ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        // Status indicator
+                    child: Row(
+                      children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          width: 40,
+                          height: 40,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.3),
-                              width: 1,
-                            ),
+                            color: AppColors.primaryGreen.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                          child: Icon(
+                            Icons.work_outline,
+                            color: AppColors.primaryGreen,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              AnimatedBuilder(
-                                animation: _pulseController,
-                                builder: (context, child) {
-                                  return Container(
-                                    width: 12,
-                                    height: 12,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: AppColors.success,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: AppColors.success.withOpacity(0.6),
-                                          blurRadius: 8 * _pulseController.value,
-                                          spreadRadius: 2 * _pulseController.value,
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                              const SizedBox(width: 10),
                               Text(
-                                'Online • Disponível para trabalhar',
-            style: TextStyle(
+                                'Serviços disponíveis hoje',
+                                style: TextStyle(
                                   fontSize: 14,
-                                  color: Colors.white.withOpacity(0.95),
+                                  color: const Color(0xFF64748B),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Atualizado agora',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.primaryGreen,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ],
                           ),
                         ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.04),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1),
+                              ),
+                            ],
+                          ),
+                          child: StreamBuilder<List<ServiceWithDistance>>(
+                            stream: _servicesService.getAvailableServicesWithDistance(),
+                            builder: (context, snapshot) {
+                              final count = snapshot.data?.length ?? 0;
+                              return Text(
+                                '$count',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primaryGreen,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildQuickStats() {
-    return AnimatedBuilder(
-      animation: _animationController,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(0, 30 * (1 - _animationController.value)),
-          child: Opacity(
-            opacity: _animationController.value,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildStatCard(
-                      icon: Icons.pending_actions_rounded,
-                      title: 'Disponíveis',
-                      value: '8',
-                      subtitle: 'Novos hoje',
-                      color: const Color(0xFF3B82F6),
-                      delay: 0,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildStatCard(
-                      icon: Icons.check_circle_rounded,
-                      title: 'Concluídos',
-                      value: '24',
-                      subtitle: 'Este mês',
-                      color: AppColors.success,
-                      delay: 100,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildStatCard(
-                      icon: Icons.account_balance_wallet_rounded,
-                      title: 'Ganhos',
-                      value: 'R\$ 1.8K',
-                      subtitle: 'Este mês',
-                      color: const Color(0xFF10B981),
-                      delay: 200,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildStatCard({
-    required IconData icon,
-    required String title,
-    required String value,
-    required String subtitle,
-    required Color color,
-    required int delay,
-  }) {
-    return TweenAnimationBuilder<double>(
-      duration: Duration(milliseconds: 800 + delay),
-      tween: Tween(begin: 0.0, end: 1.0),
-      builder: (context, animationValue, child) {
-        return Transform.scale(
-          scale: 0.8 + (0.2 * animationValue),
-          child: Opacity(
-            opacity: animationValue,
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Icon(
-                      icon,
-                      color: color,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    value,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.deepBlack,
-                    ),
-                  ),
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 12,
-              color: AppColors.secondaryText,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: AppColors.secondaryText.withOpacity(0.7),
-            ),
-          ),
-        ],
               ),
             ),
           ),
@@ -415,66 +387,42 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
             opacity: _animationController.value,
             child: Column(
               children: [
-                const SizedBox(height: 32),
-                // Section header
+                const SizedBox(height: 8),
+                // Section header elegante
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Serviços Disponíveis',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.deepBlack,
-                            ),
-                          ),
-                          Text(
-                            'Próximos à sua localização',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: AppColors.secondaryText,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryGreen.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
+                      Text(
+                        'Serviços Próximos',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.deepBlack,
+                          letterSpacing: -0.5,
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: AppColors.success,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Ao vivo',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.primaryGreen,
-                              ),
-                            ),
-                          ],
+                      ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          'Ao vivo',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF64748B),
+                            letterSpacing: 0.2,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
                 // Services list
                 StreamBuilder<List<ServiceWithDistance>>(
       stream: _servicesService.getAvailableServicesWithDistance(),
@@ -508,8 +456,8 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                                 opacity: animationValue,
                                 child: Container(
                                   margin: const EdgeInsets.only(
-                                    left: 20,
-                                    right: 20,
+                                    left: 24,
+                                    right: 24,
                                     bottom: 16,
                                   ),
                                     child: ModernServiceCard(
