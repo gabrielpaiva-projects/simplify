@@ -1,0 +1,28 @@
+# Regras de segurança do Firebase Storage para desenvolvimento
+# IMPORTANTE: Altere estas regras antes de ir para produção!
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Permite leitura e escrita de imagens de perfil para usuários autenticados
+    match /profile_images/{imageId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Permite leitura e escrita de comprovantes de endereço para usuários autenticados
+    match /address_proofs/{proofId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Para desenvolvimento: permite tudo (REMOVER EM PRODUÇÃO!)
+    match /{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
+
+# Para configurar essas regras:
+# 1. Vá para o Console do Firebase
+# 2. Selecione seu projeto
+# 3. Vá para Storage > Rules
+# 4. Cole o conteúdo acima
+# 5. Publique as regras

@@ -7,13 +7,17 @@ import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../data/models/address_model.dart';
 import '../../data/models/user_model.dart';
 import '../../data/services/cep_service.dart';
 import '../widgets/terms_and_conditions_step.dart';
-import '../providers/auth_provider.dart';
+import '../providers/auth_provider.dart' as local_auth;
 import 'professional_analysis_screen.dart';
+import '../../../../services/face_detection_service.dart';
+import '../../../../services/storage_service.dart';
 
 class ModernProfessionalRegistration extends StatefulWidget {
   const ModernProfessionalRegistration({super.key});
@@ -88,6 +92,9 @@ class _ModernProfessionalRegistrationState
   bool _isSearchingCep = false;
   File? _addressProofFile;
   String? _addressProofFileName;
+  File? _profileImageFile;
+  String? _profileImageUrl;
+  bool _isValidatingFace = false;
   
   // Animation Controllers
   late AnimationController _progressController;
@@ -126,7 +133,7 @@ class _ModernProfessionalRegistrationState
     );
     
     _stepControllers = List.generate(
-      5, // 5 steps (including terms)
+      6, // 6 steps (including photo and terms)
       (index) => AnimationController(
         duration: const Duration(milliseconds: 600),
         vsync: this,
@@ -222,6 +229,17 @@ class _ModernProfessionalRegistrationState
         }
         break;
       case 4:
+        isValid = _profileImageFile != null;
+        if (!isValid) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Por favor, tire uma foto do seu rosto'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        break;
+      case 5:
         // Validate terms acceptance
         isValid = _termsAccepted;
         if (!isValid) {
@@ -236,7 +254,7 @@ class _ModernProfessionalRegistrationState
     }
     
     if (isValid) {
-      if (_currentStep < 4) {
+      if (_currentStep < 5) {
         // Animate to next step
         await _stepControllers[_currentStep].reverse();
         
@@ -288,9 +306,9 @@ class _ModernProfessionalRegistrationState
     });
     
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final authProvider = Provider.of<local_auth.AuthProvider>(context, listen: false);
       
-      // Criar modelo de profissional com os dados do formulário
+      // Primeiro, criar modelo de profissional sem as URLs dos arquivos
       final professional = ProfessionalModel(
         cpf: _cpfController.text.replaceAll(RegExp(r'[^0-9]'), ''),
         fullName: _nameController.text.trim(),
@@ -304,48 +322,83 @@ class _ModernProfessionalRegistrationState
         neighborhood: _neighborhoodController.text.trim(),
         city: _cityController.text.trim(),
         state: _stateController.text.trim(),
-        addressProofPath: _addressProofFileName, // Salvar o nome do arquivo por enquanto
+        addressProofPath: null, // Será atualizado após upload
+        profileImageUrl: null, // Será atualizado após upload
       );
       
-      // Registrar no Firebase
+      // Registrar no Firebase Auth primeiro
       final success = await authProvider.signUpProfessional(
         professional: professional,
       );
       
-      if (success) {
-        // Navega para a tela de análise com confetes
-        if (mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (context) => const ProfessionalAnalysisScreen(),
-            ),
-          );
+      if (!success) {
+        throw Exception(authProvider.errorMessage ?? 'Erro ao criar conta no Firebase Auth');
+      }
+
+      // Agora que o usuário foi criado, obter o UID
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        throw Exception('Usuário não foi criado corretamente');
+      }
+
+      String? profileImageUrl;
+      String? addressProofUrl;
+
+      // Fazer upload da foto do rosto se houver
+      if (_profileImageFile != null) {
+        print('Fazendo upload da foto do rosto...');
+        profileImageUrl = await StorageService.uploadProfileImage(
+          _profileImageFile!, 
+          userId: currentUser.uid,
+        );
+        if (profileImageUrl == null) {
+          throw Exception('Erro ao fazer upload da foto do rosto');
         }
-      } else {
-        // Mostrar erro
-        if (mounted) {
-          final errorMessage = authProvider.errorMessage ?? 'Erro ao criar conta';
-          
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.error_outline, color: Colors.white),
-                  const SizedBox(width: 12),
-                  Expanded(child: Text(errorMessage)),
-                ],
-              ),
-              backgroundColor: AppColors.error,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              margin: const EdgeInsets.all(20),
-            ),
-          );
+        print('Upload da foto do rosto concluído: $profileImageUrl');
+      }
+      
+      // Fazer upload do comprovante de endereço se houver
+      if (_addressProofFile != null) {
+        print('Fazendo upload do comprovante de residência...');
+        addressProofUrl = await StorageService.uploadAddressProof(
+          _addressProofFile!, 
+          userId: currentUser.uid,
+        );
+        if (addressProofUrl == null) {
+          throw Exception('Erro ao fazer upload do comprovante de residência');
         }
+        print('Upload do comprovante concluído: $addressProofUrl');
+      }
+
+      // Atualizar o documento do usuário no Firestore com as URLs dos arquivos
+      if (profileImageUrl != null || addressProofUrl != null) {
+        print('Atualizando documento do usuário com URLs dos arquivos...');
+        final updateData = <String, dynamic>{};
+        if (profileImageUrl != null) {
+          updateData['profileImageUrl'] = profileImageUrl;
+        }
+        if (addressProofUrl != null) {
+          updateData['addressProofPath'] = addressProofUrl;
+        }
+        
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.uid)
+            .update(updateData);
+        
+        print('Documento do usuário atualizado com sucesso');
+      }
+      
+      // Navega para a tela de análise com confetes
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => const ProfessionalAnalysisScreen(),
+          ),
+        );
       }
     } catch (e) {
+      print('Erro na criação da conta: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -530,6 +583,152 @@ class _ModernProfessionalRegistrationState
       ),
     );
   }
+
+  Future<void> _pickProfilePhoto() async {
+    // Show options dialog
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.charcoalGrey,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Escolha uma opção',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ListTile(
+              leading: Icon(Icons.camera_alt, color: AppColors.primaryGreen),
+              title: const Text(
+                'Tirar foto',
+                style: TextStyle(color: Colors.white),
+              ),
+              onTap: () async {
+                Navigator.pop(context);
+                await _captureProfilePhoto(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.photo_library, color: AppColors.primaryGreen),
+              title: const Text(
+                'Escolher da galeria',
+                style: TextStyle(color: Colors.white),
+              ),
+              onTap: () async {
+                Navigator.pop(context);
+                await _captureProfilePhoto(ImageSource.gallery);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _captureProfilePhoto(ImageSource source) async {
+    try {
+      final XFile? photo = await _imagePicker.pickImage(
+        source: source,
+        imageQuality: 80,
+        maxWidth: 1024,
+        maxHeight: 1024,
+      );
+
+      if (photo != null) {
+        setState(() {
+          _isValidatingFace = true;
+        });
+
+        // Validar se há um rosto na imagem
+        final validationResult = await FaceDetectionService.validateFaceInImage(photo.path);
+
+        setState(() {
+          _isValidatingFace = false;
+        });
+
+        if (validationResult.isValid) {
+          setState(() {
+            _profileImageFile = File(photo.path);
+          });
+
+          // Mostrar sucesso
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    Icon(Icons.check_circle, color: AppColors.primaryGreen),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(validationResult.message),
+                    ),
+                  ],
+                ),
+                backgroundColor: AppColors.charcoalGrey,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                margin: const EdgeInsets.all(20),
+              ),
+            );
+          }
+        } else {
+          // Mostrar erro de validação
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.error_outline, color: Colors.white),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(validationResult.message),
+                    ),
+                  ],
+                ),
+                backgroundColor: AppColors.error,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                margin: const EdgeInsets.all(20),
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      setState(() {
+        _isValidatingFace = false;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao capturar foto: $e'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(20),
+          ),
+        );
+      }
+    }
+  }
   
   @override
   Widget build(BuildContext context) {
@@ -575,8 +774,9 @@ class _ModernProfessionalRegistrationState
                           _buildPasswordStep(),
                           _buildAddressStep(),
                           _buildDocumentsStep(),
+                          _buildProfilePhotoStep(),
                           TermsAndConditionsStep(
-                            animationController: _stepControllers[4],
+                            animationController: _stepControllers[5],
                             formKey: _termsFormKey,
                             onAcceptanceChanged: (accepted) {
                               setState(() {
@@ -683,7 +883,7 @@ class _ModernProfessionalRegistrationState
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              '${_currentStep + 1}/5',
+              '${_currentStep + 1}/6',
               style: TextStyle(
                 color: AppColors.primaryGreen,
                 fontWeight: FontWeight.bold,
@@ -706,6 +906,8 @@ class _ModernProfessionalRegistrationState
       case 3:
         return 'Comprovante de Residência';
       case 4:
+        return 'Foto do Rosto';
+      case 5:
         return 'Termos e Condições';
       default:
         return '';
@@ -722,7 +924,7 @@ class _ModernProfessionalRegistrationState
           return ClipRRect(
             borderRadius: BorderRadius.circular(3),
             child: LinearProgressIndicator(
-              value: (_currentStep + _progressAnimation.value) / 5,
+              value: (_currentStep + _progressAnimation.value) / 6,
               backgroundColor: Colors.white.withOpacity(0.1),
               valueColor: AlwaysStoppedAnimation<Color>(
                 AppColors.primaryGreen,
@@ -1418,6 +1620,279 @@ class _ModernProfessionalRegistrationState
     );
   }
   
+  Widget _buildProfilePhotoStep() {
+    return AnimatedBuilder(
+      animation: _stepControllers[4],
+      builder: (context, child) {
+        return Transform.scale(
+          scale: 0.9 + (_stepControllers[4].value * 0.1),
+          child: Opacity(
+            opacity: _stepControllers[4].value,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 24),
+                  
+                  // Title
+                  const Text(
+                    'Foto do Rosto',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 8),
+                  
+                  Text(
+                    'Tire uma foto do seu rosto para validação. Esta foto ficará visível para os clientes.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white.withOpacity(0.7),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 32),
+                  
+                  // Photo preview or capture area
+                  GestureDetector(
+                    onTap: _isValidatingFace ? null : _pickProfilePhoto,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      height: 300,
+                      decoration: BoxDecoration(
+                        color: _profileImageFile != null
+                            ? AppColors.primaryGreen.withOpacity(0.1)
+                            : Colors.white.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: _profileImageFile != null
+                              ? AppColors.primaryGreen
+                              : Colors.white.withOpacity(0.2),
+                          width: 2,
+                          style: _profileImageFile != null
+                              ? BorderStyle.solid
+                              : BorderStyle.none,
+                        ),
+                      ),
+                      child: _profileImageFile != null
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(14),
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  Image.file(
+                                    _profileImageFile!,
+                                    fit: BoxFit.cover,
+                                  ),
+                                  // Overlay with success icon
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
+                                        colors: [
+                                          Colors.transparent,
+                                          Colors.black.withOpacity(0.3),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    top: 16,
+                                    right: 16,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primaryGreen,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.check,
+                                        color: Colors.white,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                if (_isValidatingFace)
+                                  Column(
+                                    children: [
+                                      CircularProgressIndicator(
+                                        valueColor: AlwaysStoppedAnimation<Color>(
+                                          AppColors.primaryGreen,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        'Validando rosto...',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.primaryGreen,
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                else ...[
+                                  Icon(
+                                    Icons.camera_alt_outlined,
+                                    color: Colors.white.withOpacity(0.5),
+                                    size: 64,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  const Text(
+                                    'Clique para tirar sua foto',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Mantenha seu rosto bem visível',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.white.withOpacity(0.5),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Info card about photo visibility
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.blue.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.visibility,
+                          color: Colors.blue,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Visibilidade da Foto',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Esta foto ficará visível para os clientes quando eles visualizarem seu perfil profissional.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white.withOpacity(0.7),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Tips card
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryGreen.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.primaryGreen.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.lightbulb_outline,
+                          color: AppColors.primaryGreen,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Dicas para uma boa foto',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '• Mantenha boa iluminação\n• Olhe diretamente para a câmera\n• Evite óculos escuros ou objetos no rosto',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white.withOpacity(0.7),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  if (_profileImageFile != null) ...[
+                    const SizedBox(height: 16),
+                    // Remove photo button
+                    TextButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _profileImageFile = null;
+                        });
+                      },
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        color: Colors.red,
+                      ),
+                      label: const Text(
+                        'Tirar nova foto',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+  
   Widget _buildNavigationButtons() {
     return Container(
       padding: const EdgeInsets.all(24),
@@ -1436,7 +1911,7 @@ class _ModernProfessionalRegistrationState
             flex: 2,
             child: _ModernButton(
               onPressed: _isLoading ? null : _nextStep,
-              text: _currentStep == 4 ? 'Finalizar Cadastro' : 'Continuar',
+              text: _currentStep == 5 ? 'Finalizar Cadastro' : 'Continuar',
               isLoading: _isLoading,
             ),
           ),

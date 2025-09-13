@@ -88,6 +88,7 @@ class ClientModel extends UserModel {
 class ProfessionalModel extends UserModel {
   final String rg;
   final String? addressProofPath; // Caminho do comprovante de endereço
+  final String? profileImageUrl; // URL da foto do rosto no Firebase Storage
   final bool isVerified; // Flag de verificação do profissional
 
   ProfessionalModel({
@@ -104,6 +105,7 @@ class ProfessionalModel extends UserModel {
     required String city,
     required String state,
     this.addressProofPath,
+    this.profileImageUrl,
     this.isVerified = false, // Por padrão, profissional não verificado
     bool isBlocked = false,
   }) : super(
@@ -139,6 +141,7 @@ class ProfessionalModel extends UserModel {
       'state': state,
       'userType': 'professional',
       'addressProofPath': addressProofPath,
+      'profileImageUrl': profileImageUrl,
       'isVerified': isVerified,
       'isBlocked': isBlocked,
     };

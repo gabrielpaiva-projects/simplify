@@ -45,5 +45,7 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Este aplicativo precisa acessar a câmera para capturar fotos de rosto para validação do perfil profissional.</string>
 </dict>
 </plist>
