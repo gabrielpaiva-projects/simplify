@@ -5,6 +5,27 @@ import '../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../../../services/professional_available_services_service.dart';
 import '../../../../models/appointment_model.dart';
 import '../widgets/professional_app_bar.dart';
+import '../widgets/modern_service_card.dart';
+
+// Função global para gerar URLs do Google Maps (mesma do fluxo do cliente)
+String getGoogleMapsUrl(String address) {
+  final encodedAddress = Uri.encodeComponent(address);
+  final url = 'https://maps.googleapis.com/maps/api/staticmap?'
+      'center=$encodedAddress&'
+      'zoom=16&'
+      'size=400x200&'
+      'maptype=roadmap&'
+      'markers=color:green%7C$encodedAddress&'
+      'style=feature:poi%7Cvisibility:off&'
+      'style=feature:transit%7Cvisibility:off&'
+      'key=AIzaSyBRg_0vHtd-kB2lHQ_y1w0oIV0ChdIcBlw';
+  
+  print('🗺️ [PROFESSIONAL] Gerando URL do mapa para: $address');
+  print('🗺️ [PROFESSIONAL] Endereço codificado: $encodedAddress');
+  print('🗺️ [PROFESSIONAL] URL gerada: $url');
+  
+  return url;
+}
 
 class ProfessionalHomeScreen extends StatefulWidget {
   const ProfessionalHomeScreen({Key? key}) : super(key: key);
@@ -90,7 +111,7 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                   // Background gradient card
                   Container(
                     height: 200,
-                    decoration: BoxDecoration(
+      decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(24),
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
@@ -101,14 +122,14 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                           AppColors.mediumGreen,
                         ],
                       ),
-                      boxShadow: [
-                        BoxShadow(
+        boxShadow: [
+          BoxShadow(
                           color: AppColors.primaryGreen.withOpacity(0.4),
                           blurRadius: 30,
                           offset: const Offset(0, 15),
-                        ),
-                      ],
-                    ),
+          ),
+        ],
+      ),
                   ),
                   // Floating decorative elements
                   Positioned(
@@ -138,9 +159,9 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                   // Content
                   Padding(
                     padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
                         Row(
                           children: [
                             Container(
@@ -166,16 +187,16 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                             const SizedBox(width: 16),
                             Expanded(
                               child: Consumer<AuthProvider>(
-                                builder: (context, authProvider, child) {
-                                  final userName = authProvider.userData?['fullName'] ?? 'Profissional';
+            builder: (context, authProvider, child) {
+              final userName = authProvider.userData?['fullName'] ?? 'Profissional';
                                   return Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'Olá, $userName! 👋',
-                                        style: const TextStyle(
+                style: const TextStyle(
                                           fontSize: 22,
-                                          fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.bold,
                                           color: Colors.white,
                                         ),
                                       ),
@@ -189,9 +210,9 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                                         ),
                                       ),
                                     ],
-                                  );
-                                },
-                              ),
+              );
+            },
+          ),
                             ),
                           ],
                         ),
@@ -233,7 +254,7 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                               const SizedBox(width: 10),
                               Text(
                                 'Online • Disponível para trabalhar',
-                                style: TextStyle(
+            style: TextStyle(
                                   fontSize: 14,
                                   color: Colors.white.withOpacity(0.95),
                                   fontWeight: FontWeight.w600,
@@ -364,7 +385,7 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                     title,
                     style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.secondaryText,
+              color: AppColors.secondaryText,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -373,9 +394,9 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                     style: TextStyle(
                       fontSize: 10,
                       color: AppColors.secondaryText.withOpacity(0.7),
-                    ),
-                  ),
-                ],
+            ),
+          ),
+        ],
               ),
             ),
           ),
@@ -456,21 +477,21 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                 const SizedBox(height: 20),
                 // Services list
                 StreamBuilder<List<ServiceWithDistance>>(
-                  stream: _servicesService.getAvailableServicesWithDistance(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return _buildLoadingState();
-                    }
+      stream: _servicesService.getAvailableServicesWithDistance(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return _buildLoadingState();
+        }
 
-                    if (snapshot.hasError) {
-                      return _buildErrorState(snapshot.error.toString());
-                    }
+        if (snapshot.hasError) {
+          return _buildErrorState(snapshot.error.toString());
+        }
 
-                    final servicesWithDistance = snapshot.data ?? [];
+        final servicesWithDistance = snapshot.data ?? [];
 
-                    if (servicesWithDistance.isEmpty) {
-                      return _buildEmptyState();
-                    }
+        if (servicesWithDistance.isEmpty) {
+          return _buildEmptyState();
+        }
 
                     return Column(
                       children: servicesWithDistance.asMap().entries.map((entry) {
@@ -491,15 +512,16 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                                     right: 20,
                                     bottom: 16,
                                   ),
-                                  child: UltraModernServiceCard(
-                                    service: serviceWithDistance.service,
-                                    distance: serviceWithDistance.distance,
-                                    onAccept: () => _handleAcceptService(serviceWithDistance.service),
-                                  ),
+                                    child: ModernServiceCard(
+                                      service: serviceWithDistance.service,
+                                      distance: serviceWithDistance.distance,
+                                      onAccept: () => _handleAcceptService(serviceWithDistance.service),
+                                      onViewDetails: () => _showServiceDetails(context, serviceWithDistance.service, serviceWithDistance.distance),
+                                    ),
                                 ),
-                              ),
-                            );
-                          },
+              ),
+            );
+          },
                         );
                       }).toList(),
                     );
@@ -582,8 +604,8 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
             child: Icon(
               Icons.error_outline_rounded,
               size: 50,
-              color: AppColors.error,
-            ),
+            color: AppColors.error,
+          ),
           ),
           const SizedBox(height: 24),
           Text(
@@ -608,12 +630,12 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () => setState(() {}),
-              style: ElevatedButton.styleFrom(
+            onPressed: () => setState(() {}),
+            style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryGreen,
-                foregroundColor: Colors.white,
+              foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
+              shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
                 elevation: 0,
@@ -685,12 +707,12 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
           SizedBox(
             width: double.infinity,
             child: OutlinedButton(
-              onPressed: () => setState(() {}),
+            onPressed: () => setState(() {}),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.primaryGreen,
                 side: BorderSide(color: AppColors.primaryGreen, width: 2),
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
+              shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
@@ -704,6 +726,19 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showServiceDetails(BuildContext context, AppointmentModel service, double distance) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ServiceDetailsBottomSheet(
+        service: service,
+        distance: distance,
+        onAccept: () => _handleAcceptService(service),
       ),
     );
   }
@@ -778,7 +813,7 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.pop(context, false),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.secondaryText,
                         side: BorderSide(color: AppColors.lightGrey),
@@ -796,10 +831,10 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      style: ElevatedButton.styleFrom(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryGreen,
-                        foregroundColor: Colors.white,
+              foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -874,8 +909,8 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
               ),
               const SizedBox(width: 12),
               Text(
-                success 
-                    ? 'Serviço aceito com sucesso!' 
+            success 
+                ? 'Serviço aceito com sucesso!' 
                     : 'Erro ao aceitar serviço',
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
@@ -1003,22 +1038,6 @@ class UltraModernServiceCard extends StatelessWidget {
                   ],
                 ),
               ),
-              // Distance badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF3F4F6),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '${distance.toStringAsFixed(1)} km',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF374151),
-                  ),
-                ),
-              ),
             ],
           ),
           
@@ -1057,55 +1076,178 @@ class UltraModernServiceCard extends StatelessWidget {
           
           const SizedBox(height: 20),
           
-          // Price and action
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          // Map image
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              height: 120,
+              width: double.infinity,
+              color: const Color(0xFFF3F4F6),
+              child: Stack(
                 children: [
-                  const Text(
-                    'Valor',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF6B7280),
-                      fontWeight: FontWeight.w500,
-                    ),
+                  // Mapa real do Google Maps
+                  Image.network(
+                    getGoogleMapsUrl(service.endereco.fullAddress),
+                    width: double.infinity,
+                    height: 120,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) {
+                        print('🗺️ [PROFESSIONAL] Mapa carregado com sucesso para: ${service.endereco.fullAddress}');
+                        return child;
+                      }
+                      
+                      final progress = loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                          : null;
+                      
+                      print('🗺️ [PROFESSIONAL] Carregando mapa... ${progress != null ? '${(progress * 100).toInt()}%' : 'indefinido'}');
+                      
+                      return Container(
+                        color: const Color(0xFFF8F9FA),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.primaryGreen,
+                            strokeWidth: 2,
+                            value: progress,
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      print('🗺️ [PROFESSIONAL] Erro ao carregar mapa para: ${service.endereco.fullAddress}');
+                      print('🗺️ [PROFESSIONAL] Erro: $error');
+                      
+                      return Container(
+                        width: double.infinity,
+                        height: 120,
+                        color: const Color(0xFFF3F4F6),
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.map_outlined,
+                              color: Color(0xFF9CA3AF),
+                              size: 32,
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Mapa não disponível',
+                              style: TextStyle(
+                                color: Color(0xFF6B7280),
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    service.formattedAmount,
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.primaryGreen,
+                  // Distance overlay
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${distance.toStringAsFixed(1)} km',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
                 ],
               ),
-              // Accept button
-              Container(
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: onAccept,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryGreen,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 32),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          
+          const SizedBox(height: 20),
+          
+          // Price and actions
+          Row(
+            children: [
+              // Price column
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Valor',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF6B7280),
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                  child: const Text(
-                    'Aceitar',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                    const SizedBox(height: 4),
+                    Text(
+                      service.formattedAmount,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primaryGreen,
+                      ),
                     ),
-                  ),
+                  ],
                 ),
+              ),
+              // Action buttons
+              Column(
+                children: [
+                  // Details button
+                  SizedBox(
+                    width: 120,
+                    height: 40,
+                    child: OutlinedButton(
+                      onPressed: () => _showServiceDetails(context),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primaryGreen,
+                        side: BorderSide(color: AppColors.primaryGreen, width: 1.5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        'Ver Detalhes',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Accept button
+                  SizedBox(
+                    width: 120,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: onAccept,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryGreen,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        'Aceitar',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -1141,6 +1283,425 @@ class UltraModernServiceCard extends StatelessWidget {
       ),
     );
   }
+
+  void _showServiceDetails(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ServiceDetailsBottomSheet(
+        service: service,
+        distance: distance,
+        onAccept: onAccept,
+      ),
+    );
+  }
+
+  IconData _getServiceIcon() {
+    switch (service.tipoLimpeza.toLowerCase()) {
+      case 'padrao':
+        return Icons.cleaning_services_outlined;
+      case 'pesada':
+        return Icons.home_repair_service_outlined;
+      case 'passadoria':
+        return Icons.iron_outlined;
+      default:
+        return Icons.home_repair_service_outlined;
+    }
+  }
+}
+
+// Service Details BottomSheet
+class ServiceDetailsBottomSheet extends StatelessWidget {
+  final AppointmentModel service;
+  final double distance;
+  final VoidCallback onAccept;
+
+  const ServiceDetailsBottomSheet({
+    Key? key,
+    required this.service,
+    required this.distance,
+    required this.onAccept,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.85,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+      ),
+      child: Column(
+        children: [
+          // Handle bar
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE5E7EB),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(
+                    _getServiceIcon(),
+                    color: AppColors.primaryGreen,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        service.serviceTypeDisplayName,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF111827),
+                        ),
+                      ),
+                      Text(
+                        service.propertyTypeDisplayName,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFF6B7280),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${distance.toStringAsFixed(1)} km',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primaryGreen,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Map section
+                  _buildSection(
+                    'Localização',
+                    Icons.location_on_outlined,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          service.endereco.fullAddress,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Color(0xFF374151),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            height: 200,
+                            width: double.infinity,
+                            child: Image.network(
+                              getGoogleMapsUrl(service.endereco.fullAddress),
+                              fit: BoxFit.cover,
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) {
+                                  print('🗺️ [PROFESSIONAL] Mapa do BottomSheet carregado com sucesso');
+                                  return child;
+                                }
+                                
+                                final progress = loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                    : null;
+                                
+                                return Container(
+                                  color: const Color(0xFFF8F9FA),
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: AppColors.primaryGreen,
+                                      strokeWidth: 2,
+                                      value: progress,
+                                    ),
+                                  ),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                print('🗺️ [PROFESSIONAL] Erro ao carregar mapa do BottomSheet: $error');
+                                
+                                return Container(
+                                  color: const Color(0xFFF3F4F6),
+                                  child: const Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.map_outlined,
+                                        color: Color(0xFF9CA3AF),
+                                        size: 48,
+                                      ),
+                                      SizedBox(height: 8),
+                                      Text('Mapa não disponível'),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Service details
+                  _buildSection(
+                    'Detalhes do Serviço',
+                    Icons.info_outline,
+                    child: Column(
+                      children: [
+                        _buildDetailRow('Data', service.formattedDate, Icons.calendar_today_outlined),
+                        _buildDetailRow('Horário', service.formattedTime, Icons.access_time_outlined),
+                        _buildDetailRow('Cômodos', '${service.quantidadeComodos}', Icons.home_outlined),
+                        _buildDetailRow('Banheiros', '${service.quantidadeBanheiros}', Icons.bathroom_outlined),
+                      ],
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Extra services
+                  if (service.servicosExtras.temPets || service.servicosExtras.produtosInclusos)
+                    _buildSection(
+                      'Serviços Extras',
+                      Icons.add_circle_outline,
+                      child: Column(
+                        children: [
+                          if (service.servicosExtras.temPets)
+                            _buildDetailRow(
+                              'Pets na residência',
+                              service.servicosExtras.petsValor > 0 
+                                  ? '+R\$ ${service.servicosExtras.petsValor.toStringAsFixed(2)}'
+                                  : 'Sim',
+                              Icons.pets_outlined,
+                            ),
+                          if (service.servicosExtras.produtosInclusos)
+                            _buildDetailRow(
+                              'Produtos inclusos',
+                              service.servicosExtras.produtosValor > 0
+                                  ? '+R\$ ${service.servicosExtras.produtosValor.toStringAsFixed(2)}'
+                                  : 'Sim',
+                              Icons.cleaning_services_outlined,
+                            ),
+                        ],
+                      ),
+                    ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Client info
+                  _buildSection(
+                    'Cliente',
+                    Icons.person_outline,
+                    child: Column(
+                      children: [
+                        _buildDetailRow('Nome', service.userName, Icons.person),
+                        _buildDetailRow('Email', service.userEmail, Icons.email_outlined),
+                      ],
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Payment info
+                  _buildSection(
+                    'Pagamento',
+                    Icons.payment_outlined,
+                    child: Column(
+                      children: [
+                        _buildDetailRow('Valor base', 'R\$ ${(service.paymentAmount - service.servicosExtras.totalExtrasValue).toStringAsFixed(2)}', Icons.monetization_on_outlined),
+                        if (service.servicosExtras.totalExtrasValue > 0)
+                          _buildDetailRow('Extras', 'R\$ ${service.servicosExtras.totalExtrasValue.toStringAsFixed(2)}', Icons.add),
+                        const Divider(),
+                        _buildDetailRow(
+                          'Total',
+                          service.formattedAmount,
+                          Icons.account_balance_wallet_outlined,
+                          isTotal: true,
+                        ),
+                        _buildDetailRow('Método', service.paymentTypeDisplayName, Icons.credit_card_outlined),
+                        _buildDetailRow('Status', service.paymentStatusDisplayName, Icons.check_circle_outline),
+                      ],
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 100), // Bottom padding
+                ],
+              ),
+            ),
+          ),
+          
+          // Fixed bottom action button
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              child: SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    onAccept();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryGreen,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.check_circle, size: 20),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Aceitar Serviço',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSection(String title, IconData icon, {required Widget child}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              icon,
+              size: 20,
+              color: AppColors.primaryGreen,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.deepBlack,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF9FAFB),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: const Color(0xFFE5E7EB),
+              width: 1,
+            ),
+          ),
+          child: child,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value, IconData icon, {bool isTotal = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 16,
+            color: isTotal ? AppColors.primaryGreen : const Color(0xFF9CA3AF),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: isTotal ? 16 : 14,
+                color: isTotal ? AppColors.deepBlack : const Color(0xFF6B7280),
+                fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
+              ),
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: isTotal ? 18 : 14,
+              fontWeight: isTotal ? FontWeight.bold : FontWeight.w600,
+              color: isTotal ? AppColors.primaryGreen : const Color(0xFF111827),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   IconData _getServiceIcon() {
     switch (service.tipoLimpeza.toLowerCase()) {
