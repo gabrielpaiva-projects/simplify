@@ -12,8 +12,11 @@ import '../../data/models/address_model.dart';
 import '../../data/models/user_model.dart';
 import '../../data/services/cep_service.dart';
 import '../widgets/terms_and_conditions_step.dart';
+import '../widgets/face_capture_step.dart';
 import '../providers/auth_provider.dart';
 import 'professional_analysis_screen.dart';
+import '../../../../services/simple_face_verification_service.dart';
+import '../../../../services/firebase_storage_service.dart';
 
 class ModernProfessionalRegistration extends StatefulWidget {
   const ModernProfessionalRegistration({super.key});
@@ -54,6 +57,7 @@ class _ModernProfessionalRegistrationState
   final _passwordFormKey = GlobalKey<FormState>();
   final _addressFormKey = GlobalKey<FormState>();
   final _documentsFormKey = GlobalKey<FormState>();
+  final _faceFormKey = GlobalKey<FormState>();
   final _termsFormKey = GlobalKey<FormState>();
   
   // Terms acceptance state
@@ -88,6 +92,8 @@ class _ModernProfessionalRegistrationState
   bool _isSearchingCep = false;
   File? _addressProofFile;
   String? _addressProofFileName;
+  File? _profilePhoto;
+  bool _isFaceVerified = false;
   
   // Animation Controllers
   late AnimationController _progressController;
@@ -126,7 +132,7 @@ class _ModernProfessionalRegistrationState
     );
     
     _stepControllers = List.generate(
-      5, // 5 steps (including terms)
+      6, // 6 steps (including face capture and terms)
       (index) => AnimationController(
         duration: const Duration(milliseconds: 600),
         vsync: this,
@@ -193,6 +199,115 @@ class _ModernProfessionalRegistrationState
     super.dispose();
   }
   
+  Future<bool> _validateFacePhoto() async {
+    if (_profilePhoto == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Por favor, tire uma foto do seu rosto'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return false;
+    }
+
+    // Mostrar loading enquanto verifica
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Center(
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: AppColors.charcoalGrey,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Verificando foto...',
+                style: TextStyle(color: Colors.white),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    try {
+      // Verificar a foto usando serviço simplificado
+      final result = await SimpleFaceVerificationService.verifyFace(_profilePhoto!);
+      
+      // Fechar dialog
+      if (mounted) Navigator.of(context).pop();
+      
+      if (result.isValid) {
+        setState(() {
+          _isFaceVerified = true;
+        });
+        
+        // Mostrar sucesso
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 12),
+                Text(result.message),
+              ],
+            ),
+            backgroundColor: AppColors.primaryGreen,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(20),
+          ),
+        );
+        
+        return true;
+      } else {
+        // Mostrar erro
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(child: Text(result.message)),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(20),
+            duration: const Duration(seconds: 5),
+          ),
+        );
+        
+        return false;
+      }
+    } catch (e) {
+      // Fechar dialog
+      if (mounted) Navigator.of(context).pop();
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao verificar foto: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      
+      return false;
+    }
+  }
+
   void _nextStep() async {
     // Close keyboard
     FocusScope.of(context).unfocus();
@@ -222,6 +337,10 @@ class _ModernProfessionalRegistrationState
         }
         break;
       case 4:
+        // Validate face photo
+        isValid = await _validateFacePhoto();
+        break;
+      case 5:
         // Validate terms acceptance
         isValid = _termsAccepted;
         if (!isValid) {
@@ -236,7 +355,7 @@ class _ModernProfessionalRegistrationState
     }
     
     if (isValid) {
-      if (_currentStep < 4) {
+      if (_currentStep < 5) {
         // Animate to next step
         await _stepControllers[_currentStep].reverse();
         
@@ -290,6 +409,32 @@ class _ModernProfessionalRegistrationState
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       
+      // Fazer upload da foto de perfil para o Firebase Storage
+      String? profilePhotoUrl;
+      if (_profilePhoto != null) {
+        // Usar um ID temporário até criar o usuário no Firebase
+        final tempUserId = '${_cpfController.text.replaceAll(RegExp(r'[^0-9]'), '')}_${DateTime.now().millisecondsSinceEpoch}';
+        profilePhotoUrl = await FirebaseStorageService.uploadProfilePhoto(
+          photo: _profilePhoto!,
+          userId: tempUserId,
+        );
+        
+        if (profilePhotoUrl == null) {
+          throw Exception('Erro ao fazer upload da foto de perfil');
+        }
+      }
+      
+      // Fazer upload do comprovante de residência
+      String? addressProofUrl;
+      if (_addressProofFile != null) {
+        final tempUserId = '${_cpfController.text.replaceAll(RegExp(r'[^0-9]'), '')}_${DateTime.now().millisecondsSinceEpoch}';
+        addressProofUrl = await FirebaseStorageService.uploadDocument(
+          document: _addressProofFile!,
+          userId: tempUserId,
+          documentType: 'address_proof',
+        );
+      }
+      
       // Criar modelo de profissional com os dados do formulário
       final professional = ProfessionalModel(
         cpf: _cpfController.text.replaceAll(RegExp(r'[^0-9]'), ''),
@@ -304,7 +449,9 @@ class _ModernProfessionalRegistrationState
         neighborhood: _neighborhoodController.text.trim(),
         city: _cityController.text.trim(),
         state: _stateController.text.trim(),
-        addressProofPath: _addressProofFileName, // Salvar o nome do arquivo por enquanto
+        addressProofPath: addressProofUrl ?? _addressProofFileName,
+        profilePhotoUrl: profilePhotoUrl,
+        isFaceVerified: _isFaceVerified,
       );
       
       // Registrar no Firebase
@@ -575,8 +722,19 @@ class _ModernProfessionalRegistrationState
                           _buildPasswordStep(),
                           _buildAddressStep(),
                           _buildDocumentsStep(),
-                          TermsAndConditionsStep(
+                          FaceCaptureStep(
                             animationController: _stepControllers[4],
+                            formKey: _faceFormKey,
+                            onPhotoChanged: (photo) {
+                              setState(() {
+                                _profilePhoto = photo;
+                                _isFaceVerified = false;
+                              });
+                            },
+                            initialPhoto: _profilePhoto,
+                          ),
+                          TermsAndConditionsStep(
+                            animationController: _stepControllers[5],
                             formKey: _termsFormKey,
                             onAcceptanceChanged: (accepted) {
                               setState(() {
@@ -683,7 +841,7 @@ class _ModernProfessionalRegistrationState
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              '${_currentStep + 1}/5',
+              '${_currentStep + 1}/6',
               style: TextStyle(
                 color: AppColors.primaryGreen,
                 fontWeight: FontWeight.bold,
@@ -706,6 +864,8 @@ class _ModernProfessionalRegistrationState
       case 3:
         return 'Comprovante de Residência';
       case 4:
+        return 'Foto do Rosto';
+      case 5:
         return 'Termos e Condições';
       default:
         return '';
@@ -722,7 +882,7 @@ class _ModernProfessionalRegistrationState
           return ClipRRect(
             borderRadius: BorderRadius.circular(3),
             child: LinearProgressIndicator(
-              value: (_currentStep + _progressAnimation.value) / 5,
+              value: (_currentStep + _progressAnimation.value) / 6,
               backgroundColor: Colors.white.withOpacity(0.1),
               valueColor: AlwaysStoppedAnimation<Color>(
                 AppColors.primaryGreen,
@@ -1436,7 +1596,7 @@ class _ModernProfessionalRegistrationState
             flex: 2,
             child: _ModernButton(
               onPressed: _isLoading ? null : _nextStep,
-              text: _currentStep == 4 ? 'Finalizar Cadastro' : 'Continuar',
+              text: _currentStep == 5 ? 'Finalizar Cadastro' : 'Continuar',
               isLoading: _isLoading,
             ),
           ),
