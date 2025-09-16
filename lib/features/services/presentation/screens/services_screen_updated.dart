@@ -1,8 +1,5 @@
-// Este é um arquivo temporário para demonstrar as mudanças necessárias
-// Na linha 6, adicione o import:
-// import '../../data/enums/cleaning_type.dart';
-
-// E na função _handleScheduleService (linhas 102-130), modifique para:
+import 'modern_schedule_screen.dart';
+import '../../data/enums/cleaning_type.dart';
 
 void _handleScheduleService(ServiceModel service) {
   HapticFeedback.mediumImpact();
@@ -20,7 +17,7 @@ void _handleScheduleService(ServiceModel service) {
       context,
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) =>
-            CleaningScheduleScreen(
+            ModernScheduleScreen(
               serviceTitle: service.title,
               cleaningType: cleaningType,
             ),
