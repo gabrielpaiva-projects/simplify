@@ -5,7 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../notifications/presentation/widgets/notifications_bottomsheet.dart';
 import '../../../../services/notification_storage_service.dart';
-import 'cleaning_schedule_screen.dart';
+import 'modern_schedule_screen.dart';
 import '../../data/enums/cleaning_type.dart';
 
 class ServicesScreen extends StatefulWidget {
@@ -118,7 +118,7 @@ class _ServicesScreenState extends State<ServicesScreen>
         context,
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) =>
-              CleaningScheduleScreen(
+              ModernScheduleScreen(
                 serviceTitle: service.title,
                 cleaningType: cleaningType,
               ),
