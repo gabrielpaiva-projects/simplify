@@ -232,7 +232,7 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen>
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: isActive ? AppColors.primary : Colors.grey[300],
+              color: isActive ? AppColors.primaryGreen : Colors.grey[300],
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -265,7 +265,7 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen>
       width: 40,
       height: 2,
       margin: const EdgeInsets.only(bottom: 20),
-      color: isActive ? AppColors.primary : Colors.grey[300],
+      color: isActive ? AppColors.primaryGreen : Colors.grey[300],
     );
   }
 
@@ -323,15 +323,15 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen>
         duration: const Duration(milliseconds: 300),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.white,
+          color: isSelected ? AppColors.primaryGreen.withOpacity(0.1) : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? AppColors.primary : Colors.grey[300]!,
+            color: isSelected ? AppColors.primaryGreen : Colors.grey[300]!,
             width: 2,
           ),
           boxShadow: isSelected ? [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.2),
+              color: AppColors.primaryGreen.withOpacity(0.2),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -342,7 +342,7 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen>
             Icon(
               icon,
               size: 40,
-              color: isSelected ? AppColors.primary : Colors.grey[600],
+              color: isSelected ? AppColors.primaryGreen : Colors.grey[600],
             ),
             const SizedBox(height: 12),
             Text(
@@ -350,7 +350,7 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen>
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected ? AppColors.primary : Colors.grey[700],
+                color: isSelected ? AppColors.primaryGreen : Colors.grey[700],
               ),
             ),
           ],
@@ -426,10 +426,10 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen>
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primaryGreen.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: AppColors.primary, size: 24),
+            child: Icon(icon, color: AppColors.primaryGreen, size: 24),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -487,7 +487,7 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen>
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: enabled ? AppColors.primary : Colors.grey[300],
+          color: enabled ? AppColors.primaryGreen : Colors.grey[300],
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(
@@ -538,18 +538,18 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen>
                   margin: const EdgeInsets.only(right: 12),
                   decoration: BoxDecoration(
                     color: isSelected 
-                        ? AppColors.primary 
+                        ? AppColors.primaryGreen 
                         : Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: isSelected 
-                          ? AppColors.primary 
+                          ? AppColors.primaryGreen 
                           : Colors.grey[300]!,
                       width: 2,
                     ),
                     boxShadow: isSelected ? [
                       BoxShadow(
-                        color: AppColors.primary.withOpacity(0.3),
+                        color: AppColors.primaryGreen.withOpacity(0.3),
                         blurRadius: 12,
                         offset: const Offset(0, 6),
                       ),
@@ -597,7 +597,7 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen>
                           decoration: BoxDecoration(
                             color: isSelected 
                                 ? Colors.white 
-                                : AppColors.primary,
+                                : AppColors.primaryGreen,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -652,20 +652,20 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen>
                 ),
                 decoration: BoxDecoration(
                   color: isSelected 
-                      ? AppColors.primary 
+                      ? AppColors.primaryGreen 
                       : isPast 
                           ? Colors.grey[200] 
                           : Colors.white,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isSelected 
-                        ? AppColors.primary 
+                        ? AppColors.primaryGreen 
                         : Colors.grey[300]!,
                     width: 1.5,
                   ),
                   boxShadow: isSelected ? [
                     BoxShadow(
-                      color: AppColors.primary.withOpacity(0.2),
+                      color: AppColors.primaryGreen.withOpacity(0.2),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),
@@ -764,7 +764,7 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen>
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: value ? AppColors.primary : Colors.grey[300]!,
+          color: value ? AppColors.primaryGreen : Colors.grey[300]!,
           width: 1.5,
         ),
       ),
@@ -774,13 +774,13 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen>
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: value 
-                ? AppColors.primary.withOpacity(0.1) 
+                ? AppColors.primaryGreen.withOpacity(0.1) 
                 : Colors.grey[100],
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
             icon,
-            color: value ? AppColors.primary : Colors.grey[600],
+            color: value ? AppColors.primaryGreen : Colors.grey[600],
             size: 24,
           ),
         ),
@@ -809,7 +809,7 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen>
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
+                  color: AppColors.primaryGreen,
                 ),
               ),
             ],
@@ -820,8 +820,8 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen>
           child: Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: AppColors.primary,
-            activeTrackColor: AppColors.primary.withOpacity(0.3),
+            activeColor: AppColors.primaryGreen,
+            activeTrackColor: AppColors.primaryGreen.withOpacity(0.3),
           ),
         ),
       ),
@@ -842,13 +842,13 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.primary.withOpacity(0.05),
-            AppColors.primary.withOpacity(0.1),
+            AppColors.primaryGreen.withOpacity(0.05),
+            AppColors.primaryGreen.withOpacity(0.1),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.primary.withOpacity(0.2),
+          color: AppColors.primaryGreen.withOpacity(0.2),
           width: 1,
         ),
       ),
@@ -873,7 +873,7 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen>
                       Icon(
                         Icons.schedule_rounded,
                         size: 20,
-                        color: AppColors.primary,
+                        color: AppColors.primaryGreen,
                       ),
                       const SizedBox(width: 8),
                       Text(
@@ -903,7 +903,7 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen>
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
+                      color: AppColors.primaryGreen,
                     ),
                   ),
                 ],
@@ -955,15 +955,15 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppColors.primary,
-              AppColors.primary.withBlue(200),
+              AppColors.primaryGreen,
+              AppColors.mediumGreen,
             ],
           ) : null,
           color: !isValid ? Colors.grey[300] : null,
           borderRadius: BorderRadius.circular(16),
           boxShadow: isValid ? [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.3),
+              color: AppColors.primaryGreen.withOpacity(0.3),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -1024,17 +1024,10 @@ class _ModernScheduleScreenState extends State<ModernScheduleScreen>
       MaterialPageRoute(
         builder: (context) => PaymentConfirmationScreen(
           serviceTitle: widget.serviceTitle,
-          serviceDate: _selectedDate!,
-          serviceTime: _selectedTime!,
-          totalPrice: _currentPrice,
-          estimatedTime: _estimatedTimeInMinutes,
-          details: {
-            'residence': _selectedResidence == 'apartment' ? 'Apartamento' : 'Casa',
-            'rooms': _rooms,
-            'bathrooms': _bathrooms,
-            'includeProducts': _includeProducts,
-            'includePets': _includePets,
-          },
+          totalAmount: _currentPrice,
+          selectedDate: _selectedDate!,
+          selectedTime: _selectedTime!,
+          paymentMethod: 'credit_card',
         ),
       ),
     );
