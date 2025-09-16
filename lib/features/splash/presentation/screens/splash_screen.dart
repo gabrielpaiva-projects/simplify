@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import '../../../../core/constants/app_colors.dart';
+import '../../../../services/biometric_auth_service.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../auth/data/models/user_model.dart';
@@ -120,20 +121,30 @@ class _SplashScreenState extends State<SplashScreen>
     Widget targetScreen;
     
     if (currentUser != null) {
-      // Usuário está logado, verifica o tipo de usuário
-      final authProvider = context.read<AuthProvider>();
+      // Usuário está logado, verifica biometria primeiro
+      final biometricAuthenticated = await _authenticateWithBiometrics();
       
-      // Aguarda carregar os dados do usuário
-      await Future.delayed(const Duration(milliseconds: 500));
-      
-      // Direcionar para a tela correta baseado no tipo de usuário
-      if (authProvider.userType == UserType.client) {
-        targetScreen = const ServicesScreen();
-      } else if (authProvider.userType == UserType.professional) {
-        targetScreen = const ProfessionalHomeScreen();
-      } else {
-        // Se não conseguiu determinar o tipo, vai para login
+      if (!biometricAuthenticated) {
+        // Se falhou na biometria, fazer logout e ir para login
+        final authProvider = context.read<AuthProvider>();
+        await authProvider.signOut();
         targetScreen = const LoginScreen();
+      } else {
+        // Biometria OK, verifica o tipo de usuário
+        final authProvider = context.read<AuthProvider>();
+        
+        // Aguarda carregar os dados do usuário
+        await Future.delayed(const Duration(milliseconds: 500));
+        
+        // Direcionar para a tela correta baseado no tipo de usuário
+        if (authProvider.userType == UserType.client) {
+          targetScreen = const ServicesScreen();
+        } else if (authProvider.userType == UserType.professional) {
+          targetScreen = const ProfessionalHomeScreen();
+        } else {
+          // Se não conseguiu determinar o tipo, vai para login
+          targetScreen = const LoginScreen();
+        }
       }
     } else {
       // Usuário não está logado
@@ -153,6 +164,43 @@ class _SplashScreenState extends State<SplashScreen>
           transitionDuration: const Duration(milliseconds: 500),
         ),
       );
+    }
+  }
+  
+  Future<bool> _authenticateWithBiometrics() async {
+    try {
+      // Verifica se a biometria está disponível
+      final bool isAvailable = await BiometricAuthService.isBiometricAvailable();
+      
+      if (!isAvailable) {
+        // Se não tem biometria disponível, continua sem ela
+        print('Biometria não disponível, continuando sem autenticação biométrica');
+        return true;
+      }
+      
+      // Tenta autenticar com biometria
+      final result = await BiometricAuthService.authenticate(
+        reason: 'Confirme sua identidade para acessar o aplicativo',
+      );
+      
+      if (result.isAuthenticated) {
+        return true;
+      }
+      
+      // Se falhou mas o erro é que não tem biometria cadastrada, permite continuar
+      if (result.error == BiometricError.notEnrolled || 
+          result.error == BiometricError.notAvailable ||
+          result.error == BiometricError.passcodeNotSet) {
+        print('Biometria não configurada: ${result.message}');
+        return true; // Permite continuar sem biometria
+      }
+      
+      // Para outros erros, não permite continuar
+      return false;
+    } catch (e) {
+      print('Erro ao verificar biometria: $e');
+      // Em caso de erro, permite continuar
+      return true;
     }
   }
 

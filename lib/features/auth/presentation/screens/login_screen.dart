@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/routes/app_routes.dart';
+import '../../../../services/biometric_auth_service.dart';
 import '../widgets/modern_profile_selection_sheet.dart';
 import 'modern_client_registration.dart';
 import 'modern_professional_registration.dart';
@@ -193,6 +194,34 @@ class _LoginScreenState extends State<LoginScreen>
             // Mostrar dialog de verificação pendente
             await _showVerificationPendingDialog();
           } else {
+            // Verificar biometria antes de continuar
+            final biometricResult = await _authenticateWithBiometrics();
+            
+            if (!biometricResult) {
+              // Se a autenticação biométrica falhou ou foi cancelada, fazer logout
+              await authProvider.signOut();
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        const Icon(Icons.error_outline, color: Colors.white),
+                        const SizedBox(width: 12),
+                        const Text('Autenticação biométrica necessária'),
+                      ],
+                    ),
+                    backgroundColor: AppColors.error,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    margin: const EdgeInsets.all(20),
+                  ),
+                );
+              }
+              return;
+            }
+            
             // Mostrar mensagem de sucesso normal
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -211,6 +240,12 @@ class _LoginScreenState extends State<LoginScreen>
                 margin: const EdgeInsets.all(20),
               ),
             );
+          }
+          
+          // Só navegar se passou pela biometria (ou se é profissional não verificado)
+          if (userType == UserType.professional && !authProvider.isProfessionalVerified) {
+            // Profissional não verificado já viu o dialog, não precisa de biometria
+            return;
           }
           
           // Navegar para a tela apropriada baseado no tipo de usuário
@@ -281,6 +316,57 @@ class _LoginScreenState extends State<LoginScreen>
           _isLoading = false;
         });
       }
+    }
+  }
+
+  Future<bool> _authenticateWithBiometrics() async {
+    try {
+      // Verifica se a biometria está disponível
+      final bool isAvailable = await BiometricAuthService.isBiometricAvailable();
+      
+      if (!isAvailable) {
+        // Se não tem biometria disponível, continua sem ela
+        print('Biometria não disponível, continuando sem autenticação biométrica');
+        return true;
+      }
+      
+      // Tenta autenticar com biometria
+      final result = await BiometricAuthService.authenticate(
+        reason: 'Confirme sua identidade para acessar o aplicativo',
+      );
+      
+      if (result.isAuthenticated) {
+        return true;
+      }
+      
+      // Se falhou mas o erro é que não tem biometria cadastrada, permite continuar
+      if (result.error == BiometricError.notEnrolled || 
+          result.error == BiometricError.notAvailable ||
+          result.error == BiometricError.passcodeNotSet) {
+        print('Biometria não configurada: ${result.message}');
+        return true; // Permite continuar sem biometria
+      }
+      
+      // Para outros erros, mostra mensagem e não permite continuar
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.message),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(20),
+          ),
+        );
+      }
+      
+      return false;
+    } catch (e) {
+      print('Erro ao verificar biometria: $e');
+      // Em caso de erro, permite continuar
+      return true;
     }
   }
 
