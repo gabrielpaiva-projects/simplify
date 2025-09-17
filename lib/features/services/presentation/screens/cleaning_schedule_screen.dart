@@ -991,6 +991,38 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
         children: [
           const SizedBox(height: 20),
 
+          // Info card for first time selection
+          if (_selectedDate == null || _selectedTime == null)
+            AnimatedBuilder(
+              animation: _pageTransitionAnimation,
+              builder: (context, child) {
+                final animationValue = _currentPage == 1 ? 1.0 : _pageTransitionAnimation.value;
+                return Transform.scale(
+                  scale: 0.95 + (0.05 * animationValue),
+                  child: Opacity(
+                    opacity: animationValue,
+                    child: _buildInfoCard(),
+                  ),
+                );
+              },
+            ),
+
+          // Summary card - shows when both date and time are selected
+          if (_selectedDate != null && _selectedTime != null)
+            AnimatedBuilder(
+              animation: _pageTransitionAnimation,
+              builder: (context, child) {
+                final animationValue = _currentPage == 1 ? 1.0 : _pageTransitionAnimation.value;
+                return Transform.scale(
+                  scale: 0.9 + (0.1 * animationValue),
+                  child: Opacity(
+                    opacity: animationValue,
+                    child: _buildScheduleSummaryCard(),
+                  ),
+                );
+              },
+            ),
+
           // Date Selection Section
           AnimatedBuilder(
             animation: _pageTransitionAnimation,
@@ -1023,10 +1055,300 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             },
           ),
 
+          // Availability note
+          AnimatedBuilder(
+            animation: _pageTransitionAnimation,
+            builder: (context, child) {
+              final animationValue = _currentPage == 1 ? 1.0 : _pageTransitionAnimation.value;
+              return Opacity(
+                opacity: animationValue * 0.8,
+                child: _buildAvailabilityNote(),
+              );
+            },
+          ),
+
           const SizedBox(height: 20),
         ],
       ),
     );
+  }
+
+  Widget _buildInfoCard() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.blue.withOpacity(0.05),
+            Colors.blue.withOpacity(0.02),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.blue.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.blue.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.info_outline_rounded,
+              color: Colors.blue.shade600,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Escolha o melhor momento',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.blue.shade700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Selecione uma data e horário disponíveis para seu atendimento',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAvailabilityNote() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFFE5E8EB),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.lightbulb_outline,
+            size: 16,
+            color: Colors.orange[700],
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: RichText(
+              text: TextSpan(
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[700],
+                  height: 1.3,
+                ),
+                children: [
+                  TextSpan(
+                    text: 'Dica: ',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.orange[700],
+                    ),
+                  ),
+                  const TextSpan(
+                    text: 'Horários marcados como "Popular" têm maior procura. Reserve com antecedência!',
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScheduleSummaryCard() {
+    final formattedDate = _selectedDate != null 
+        ? '${_selectedDate!.day} de ${_getFullMonth(_selectedDate!)} de ${_selectedDate!.year}'
+        : '';
+    final weekday = _selectedDate != null ? _getFullWeekday(_selectedDate!) : '';
+    
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primaryGreen.withOpacity(0.05),
+            AppColors.primaryGreen.withOpacity(0.02),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.primaryGreen.withOpacity(0.2),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryGreen.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Calendar icon
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.primaryGreen,
+                  AppColors.primaryGreen.withOpacity(0.8),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primaryGreen.withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  _selectedDate?.day.toString() ?? '',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    height: 1,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _selectedDate != null ? _getMonth(_selectedDate!).toUpperCase() : '',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white.withOpacity(0.9),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          
+          // Schedule details
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.event_available,
+                      size: 14,
+                      color: AppColors.primaryGreen,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Agendamento Confirmado',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primaryGreen,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '$weekday, $formattedDate',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1A1F36),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.access_time,
+                      size: 12,
+                      color: Colors.grey[600],
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'às $_selectedTime',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[700],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Container(
+                      width: 4,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[400],
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Duração: ${_formatEstimatedTime()}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[700],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  String _getFullWeekday(DateTime date) {
+    const weekdays = [
+      'Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira',
+      'Quinta-feira', 'Sexta-feira', 'Sábado'
+    ];
+    return weekdays[date.weekday % 7];
   }
 
   Widget _buildAnimatedCard(int index, Widget child) {
@@ -1634,66 +1956,133 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   }
 
   Widget _buildDateSection() {
+    final currentMonth = _availableDates.isNotEmpty 
+        ? '${_getFullMonth(_availableDates.first)} ${_availableDates.first.year}'
+        : '';
+    
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white,
+            const Color(0xFFFAFBFC),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: AppColors.primaryGreen.withOpacity(0.05),
+            blurRadius: 30,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.deepPurple,
-                      Colors.deepPurple.withOpacity(0.8),
-                    ],
+          // Header with month/year
+          Container(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.primaryGreen,
+                            AppColors.primaryGreen.withOpacity(0.7),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primaryGreen.withOpacity(0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.calendar_month_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Selecione a Data',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1A1F36),
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          currentMonth,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                // Today chip
+                if (_selectedDate != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryGreen.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${_selectedDate!.day} de ${_getFullMonth(_selectedDate!)}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primaryGreen,
+                      ),
+                    ),
                   ),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.calendar_today,
-                  color: Colors.white,
-                  size: 16,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'Escolha a Data',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF2D3436),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: 20),
           
-          // Date grid
-          SizedBox(
-            height: 70,
+          // Calendar grid with improved design
+          Container(
+            height: 100,
+            padding: const EdgeInsets.only(left: 24, right: 14, bottom: 24),
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
               itemCount: _availableDates.length,
               itemBuilder: (context, index) {
                 final date = _availableDates[index];
-                final isSelected = _selectedDate?.day == date.day;
+                final isSelected = _selectedDate?.day == date.day && 
+                                 _selectedDate?.month == date.month;
                 final isToday = index == 0;
+                final isWeekend = date.weekday == DateTime.saturday || 
+                                 date.weekday == DateTime.sunday;
                 
                 return GestureDetector(
                   onTap: () {
@@ -1702,64 +2091,177 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                       _selectedDate = date;
                     });
                   },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: 56,
-                    margin: const EdgeInsets.only(right: 10),
-                    decoration: BoxDecoration(
-                      gradient: isSelected
-                          ? LinearGradient(
-                              colors: [
-                                AppColors.primaryGreen,
-                                AppColors.primaryGreen.withOpacity(0.8),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            )
-                          : null,
-                      color: isSelected ? null : const Color(0xFFF8FAFB),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isSelected 
-                            ? AppColors.primaryGreen
-                            : const Color(0xFFE8ECEF),
-                      ),
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween(
+                      begin: 0.0,
+                      end: isSelected ? 1.0 : 0.0,
                     ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          isToday ? 'Hoje' : _getWeekday(date),
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                            color: isSelected 
-                                ? Colors.white.withOpacity(0.8)
-                                : const Color(0xFF74788D),
-                          ),
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, value, child) {
+                      return Container(
+                        width: 72,
+                        margin: const EdgeInsets.only(right: 10),
+                        child: Stack(
+                          children: [
+                            // Background card
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: isSelected
+                                    ? LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [
+                                          AppColors.primaryGreen,
+                                          AppColors.primaryGreen.withOpacity(0.85),
+                                        ],
+                                      )
+                                    : null,
+                                color: isSelected 
+                                    ? null 
+                                    : isWeekend 
+                                        ? const Color(0xFFF5F7FA)
+                                        : Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: isSelected 
+                                      ? Colors.transparent
+                                      : const Color(0xFFE5E8EB),
+                                  width: 1.5,
+                                ),
+                                boxShadow: isSelected
+                                    ? [
+                                        BoxShadow(
+                                          color: AppColors.primaryGreen.withOpacity(0.3),
+                                          blurRadius: 12,
+                                          offset: const Offset(0, 6),
+                                        ),
+                                      ]
+                                    : [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.02),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  // Today badge
+                                  if (isToday)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
+                                      margin: const EdgeInsets.only(bottom: 4),
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? Colors.white.withOpacity(0.2)
+                                            : AppColors.primaryGreen.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Text(
+                                        'HOJE',
+                                        style: TextStyle(
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.w700,
+                                          color: isSelected
+                                              ? Colors.white
+                                              : AppColors.primaryGreen,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                    ),
+                                  
+                                  // Weekday
+                                  Text(
+                                    _getWeekday(date),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: isSelected 
+                                          ? Colors.white.withOpacity(0.9)
+                                          : isWeekend
+                                              ? const Color(0xFF9CA3AF)
+                                              : const Color(0xFF6B7280),
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  
+                                  // Day number
+                                  Container(
+                                    width: 36,
+                                    height: 36,
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? Colors.white.withOpacity(0.15)
+                                          : Colors.transparent,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        date.day.toString(),
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w700,
+                                          color: isSelected 
+                                              ? Colors.white
+                                              : const Color(0xFF111827),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  
+                                  // Month
+                                  Text(
+                                    _getMonth(date).toUpperCase(),
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: isSelected 
+                                          ? Colors.white.withOpacity(0.8)
+                                          : const Color(0xFF9CA3AF),
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            
+                            // Selection indicator animation
+                            if (isSelected)
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: Container(
+                                  width: 20,
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.1),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Icon(
+                                    Icons.check,
+                                    size: 12,
+                                    color: AppColors.primaryGreen,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          date.day.toString(),
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: isSelected 
-                                ? Colors.white
-                                : const Color(0xFF2D3436),
-                          ),
-                        ),
-                        Text(
-                          _getMonth(date),
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: isSelected 
-                                ? Colors.white.withOpacity(0.8)
-                                : const Color(0xFF74788D),
-                          ),
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                 );
               },
@@ -1769,99 +2271,265 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       ),
     );
   }
+  
+  String _getFullMonth(DateTime date) {
+    const months = [
+      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+    ];
+    return months[date.month - 1];
+  }
 
   Widget _buildTimeSection() {
+    // Calculate available slots count
+    final availableMorningSlots = _morningSlots.where((time) => !['11:00'].contains(time)).length;
+    final availableAfternoonSlots = _afternoonSlots.where((time) => !['16:00'].contains(time)).length;
+    
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white,
+            const Color(0xFFFAFBFC),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: Colors.blue.withOpacity(0.05),
+            blurRadius: 30,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.cyan,
-                      Colors.cyan.withOpacity(0.8),
-                    ],
+          // Header
+          Container(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.blue.shade600,
+                            Colors.blue.shade500,
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.blue.withOpacity(0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.schedule_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Selecione o Horário',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1A1F36),
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '$availableMorningSlots horários pela manhã • $availableAfternoonSlots à tarde',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                // Selected time chip
+                if (_selectedTime != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.check_circle,
+                          size: 14,
+                          color: Colors.blue.shade600,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _selectedTime!,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.blue.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.access_time,
-                  color: Colors.white,
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'Escolha o Horário',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF2D3436),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          
-          // Morning slots
-          const Text(
-            'Manhã',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF74788D),
+              ],
             ),
           ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: _morningSlots.map((time) => _buildTimeSlot(time)).toList(),
-          ),
           
-          const SizedBox(height: 16),
-          
-          // Afternoon slots
-          const Text(
-            'Tarde',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF74788D),
+          // Time slots container
+          Container(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Morning section
+                _buildTimePeriodSection(
+                  icon: Icons.wb_sunny_outlined,
+                  title: 'Manhã',
+                  subtitle: '8:00 - 12:00',
+                  color: Colors.orange,
+                  slots: _morningSlots,
+                ),
+                
+                const SizedBox(height: 20),
+                
+                // Divider
+                Container(
+                  height: 1,
+                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.transparent,
+                        Colors.grey.withOpacity(0.2),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+                
+                const SizedBox(height: 20),
+                
+                // Afternoon section
+                _buildTimePeriodSection(
+                  icon: Icons.wb_twilight_outlined,
+                  title: 'Tarde',
+                  subtitle: '13:00 - 18:00',
+                  color: Colors.indigo,
+                  slots: _afternoonSlots,
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: _afternoonSlots.map((time) => _buildTimeSlot(time)).toList(),
           ),
         ],
       ),
     );
   }
-
-  Widget _buildTimeSlot(String time) {
+  
+  Widget _buildTimePeriodSection({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required List<String> slots,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Period header
+        Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                color: color,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1A1F36),
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        
+        // Time grid
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final itemWidth = (constraints.maxWidth - 36) / 4; // 4 items per row with spacing
+            
+            return Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: slots.map((time) {
+                return SizedBox(
+                  width: itemWidth,
+                  child: _buildModernTimeSlot(time),
+                );
+              }).toList(),
+            );
+          },
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildModernTimeSlot(String time) {
     final isSelected = _selectedTime == time;
     final isAvailable = !['11:00', '16:00'].contains(time);
+    final isPeakTime = ['09:00', '10:00', '14:00', '15:00'].contains(time);
     
     return GestureDetector(
       onTap: isAvailable ? () {
@@ -1870,47 +2538,158 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           _selectedTime = time;
         });
       } : null,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          gradient: isSelected
-              ? LinearGradient(
-                  colors: [
-                    AppColors.primaryGreen,
-                    AppColors.primaryGreen.withOpacity(0.8),
-                  ],
-                )
-              : null,
-          color: isSelected 
-              ? null 
-              : isAvailable 
-                  ? const Color(0xFFF8FAFB)
-                  : const Color(0xFFF5F5F5),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isSelected 
-                ? AppColors.primaryGreen
-                : isAvailable 
-                    ? const Color(0xFFE8ECEF)
-                    : const Color(0xFFE8ECEF),
-          ),
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(
+          begin: 0.0,
+          end: isSelected ? 1.0 : 0.0,
         ),
-        child: Text(
-          time,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: isSelected 
-                ? Colors.white
-                : isAvailable 
-                    ? const Color(0xFF2D3436)
-                    : const Color(0xFFCED4DA),
-          ),
-        ),
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+        builder: (context, value, child) {
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            height: 48,
+            decoration: BoxDecoration(
+              gradient: isSelected
+                  ? LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppColors.primaryGreen,
+                        AppColors.primaryGreen.withOpacity(0.85),
+                      ],
+                    )
+                  : null,
+              color: isSelected 
+                  ? null 
+                  : isAvailable 
+                      ? Colors.white
+                      : const Color(0xFFF5F7FA),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isSelected 
+                    ? Colors.transparent
+                    : isAvailable 
+                        ? const Color(0xFFE5E8EB)
+                        : const Color(0xFFE5E8EB).withOpacity(0.5),
+                width: 1.5,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: AppColors.primaryGreen.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.02),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+            ),
+            child: Stack(
+              children: [
+                // Main content
+                Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        time,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: isSelected 
+                              ? Colors.white
+                              : isAvailable 
+                                  ? const Color(0xFF1A1F36)
+                                  : const Color(0xFF9CA3AF),
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      if (isPeakTime && isAvailable && !isSelected)
+                        Container(
+                          margin: const EdgeInsets.only(top: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'Popular',
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.orange.shade700,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                
+                // Unavailable overlay
+                if (!isAvailable)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        color: Colors.white.withOpacity(0.7),
+                      ),
+                      child: Center(
+                        child: Transform.rotate(
+                          angle: -0.2,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'OCUPADO',
+                              style: TextStyle(
+                                fontSize: 8,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.red.shade600,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                
+                // Selection indicator
+                if (isSelected)
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: Container(
+                      width: 16,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.9),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.check,
+                        size: 10,
+                        color: AppColors.primaryGreen,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
+
 
 
 
