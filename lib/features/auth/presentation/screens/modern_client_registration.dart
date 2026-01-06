@@ -20,20 +20,16 @@ class ModernClientRegistration extends StatefulWidget {
 
 class _ModernClientRegistrationState extends State<ModernClientRegistration>
     with TickerProviderStateMixin {
-  // Controllers
   final PageController _pageController = PageController();
   
-  // Personal Data
   final _nameController = TextEditingController();
   final _cpfController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   
-  // Password
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   
-  // Address
   final _cepController = TextEditingController();
   final _streetController = TextEditingController();
   final _numberController = TextEditingController();
@@ -42,13 +38,11 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
   final _cityController = TextEditingController();
   final _stateController = TextEditingController();
   
-  // Form Keys
   final _personalFormKey = GlobalKey<FormState>();
   final _passwordFormKey = GlobalKey<FormState>();
   final _addressFormKey = GlobalKey<FormState>();
   final _termsFormKey = GlobalKey<FormState>();
   
-  // Masks
   final _cpfMask = MaskTextInputFormatter(
     mask: '###.###.###-##',
     filter: {"#": RegExp(r'[0-9]')},
@@ -64,7 +58,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
     filter: {"#": RegExp(r'[0-9]')},
   );
   
-  // States
   int _currentStep = 0;
   bool _isLoading = false;
   bool _isPasswordVisible = false;
@@ -72,18 +65,15 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
   bool _isSearchingCep = false;
   bool _termsAccepted = false;
   
-  // Animation Controllers
   late AnimationController _progressController;
   late AnimationController _fadeController;
   late AnimationController _slideController;
   late List<AnimationController> _stepControllers;
   
-  // Animations
   late Animation<double> _progressAnimation;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   
-  // Auto-save data
   final Map<String, dynamic> _savedData = {};
   
   @override
@@ -141,23 +131,19 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
       curve: Curves.easeOutCubic,
     ));
     
-    // Start initial animations
     _fadeController.forward();
     _slideController.forward();
     _stepControllers[0].forward();
   }
   
   void _loadSavedData() {
-    // TODO: Load from SharedPreferences
   }
   
   void _saveData() {
-    // Auto-save current form data
     _savedData['name'] = _nameController.text;
     _savedData['cpf'] = _cpfController.text;
     _savedData['email'] = _emailController.text;
     _savedData['phone'] = _phoneController.text;
-    // TODO: Save to SharedPreferences
   }
   
   @override
@@ -169,7 +155,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
       controller.dispose();
     }
     
-    // Dispose text controllers
     _nameController.dispose();
     _cpfController.dispose();
     _emailController.dispose();
@@ -188,10 +173,8 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
   }
   
   void _nextStep() async {
-    // Close keyboard
     FocusScope.of(context).unfocus();
     
-    // Validate current step
     bool isValid = false;
     
     switch (_currentStep) {
@@ -205,7 +188,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
         isValid = _addressFormKey.currentState?.validate() ?? false;
         break;
       case 3:
-        // Validate terms acceptance
         isValid = _termsAccepted;
         if (!isValid) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -222,7 +204,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
       _saveData();
       
       if (_currentStep < 3) {
-        // Animate to next step
         await _stepControllers[_currentStep].reverse();
         
         setState(() {
@@ -237,14 +218,12 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
           curve: Curves.easeInOut,
         );
       } else {
-        // Complete registration
         _completeRegistration();
       }
     }
   }
   
   void _previousStep() async {
-    // Close keyboard
     FocusScope.of(context).unfocus();
     
     if (_currentStep > 0) {
@@ -265,7 +244,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
   }
   
   void _completeRegistration() async {
-    // Close keyboard
     FocusScope.of(context).unfocus();
     
     setState(() {
@@ -275,7 +253,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       
-      // Criar modelo de cliente com os dados do formulário
       final client = ClientModel(
         cpf: _cpfController.text.replaceAll(RegExp(r'[^0-9]'), ''),
         fullName: _nameController.text.trim(),
@@ -290,18 +267,15 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
         state: _stateController.text.trim(),
       );
       
-      // Registrar no Firebase
       final success = await authProvider.signUpClient(
         client: client,
       );
       
       if (success) {
-        // Show success and navigate
         if (mounted) {
           _showSuccessDialog();
         }
       } else {
-        // Mostrar erro
         if (mounted) {
           final errorMessage = authProvider.errorMessage ?? 'Erro ao criar conta';
           
@@ -373,7 +347,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
       return;
     }
     
-    // Evita múltiplas chamadas simultâneas
     if (_isSearchingCep) {
       print('Já está buscando CEP, ignorando');
       return;
@@ -401,7 +374,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
         print('Cidade: ${address.localidade}');
         print('Estado: ${address.uf}');
         
-        // CEP encontrado com sucesso - não exibe snackbar
       } else {
         print('❌ CEP não encontrado ou resposta nula');
         if (mounted) {
@@ -442,7 +414,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Background gradient
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -456,7 +427,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
             ),
           ),
           
-          // Animated background elements
           Positioned(
             top: -100,
             right: -100,
@@ -483,17 +453,13 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
             ),
           ),
           
-          // Main content
           SafeArea(
             child: Column(
               children: [
-                // Header
                 _buildHeader(),
                 
-                // Progress indicator
                 _buildProgressIndicator(),
                 
-                // Form content
                 Expanded(
                   child: FadeTransition(
                     opacity: _fadeAnimation,
@@ -521,13 +487,11 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
                   ),
                 ),
                 
-                // Navigation buttons
                 _buildNavigationButtons(),
               ],
             ),
           ),
           
-          // Loading overlay
           if (_isLoading)
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
@@ -552,10 +516,8 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Row(
         children: [
-          // Back button
           IconButton(
             onPressed: () {
-              // Close keyboard
               FocusScope.of(context).unfocus();
               
               if (_currentStep > 0) {
@@ -579,7 +541,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
           
           const SizedBox(width: 16),
           
-          // Title
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -606,7 +567,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
             ),
           ),
           
-          // Step indicator
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
@@ -675,7 +635,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
                   children: [
                     const SizedBox(height: 24),
                     
-                    // Name field
                     _ModernTextField(
                       controller: _nameController,
                       label: 'Nome completo',
@@ -694,7 +653,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
                     
                     const SizedBox(height: 20),
                     
-                    // CPF field
                     _ModernTextField(
                       controller: _cpfController,
                       label: 'CPF',
@@ -716,7 +674,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
                     
                     const SizedBox(height: 20),
                     
-                    // Email field
                     _ModernTextField(
                       controller: _emailController,
                       label: 'E-mail',
@@ -737,7 +694,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
                     
                     const SizedBox(height: 20),
                     
-                    // Phone field
                     _ModernTextField(
                       controller: _phoneController,
                       label: 'Telefone',
@@ -759,7 +715,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
                     
                     const SizedBox(height: 32),
                     
-                    // Info card
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -816,14 +771,12 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
                   children: [
                     const SizedBox(height: 24),
                     
-                    // Password strength indicator
                     _PasswordStrengthIndicator(
                       password: _passwordController.text,
                     ),
                     
                     const SizedBox(height: 32),
                     
-                    // Password field
                     _ModernTextField(
                       controller: _passwordController,
                       label: 'Senha',
@@ -862,7 +815,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
                     
                     const SizedBox(height: 20),
                     
-                    // Confirm password field
                     _ModernTextField(
                       controller: _confirmPasswordController,
                       label: 'Confirmar senha',
@@ -894,7 +846,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
                     
                     const SizedBox(height: 32),
                     
-                    // Password tips
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -970,7 +921,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
                   children: [
                     const SizedBox(height: 24),
                     
-                    // CEP field with search
                     _ModernTextField(
                       controller: _cepController,
                       label: 'CEP',
@@ -1004,7 +954,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
                       },
                       onChanged: (value) {
                         final cleanCep = value.replaceAll(RegExp(r'[^0-9]'), '');
-                        // Quando atingir 8 dígitos (limite do CEP), busca automaticamente
                         if (cleanCep.length == 8) {
                           _searchCep();
                         }
@@ -1013,7 +962,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
                     
                     const SizedBox(height: 20),
                     
-                    // Street field
                     _ModernTextField(
                       controller: _streetController,
                       label: 'Rua',
@@ -1028,7 +976,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
                     
                     const SizedBox(height: 20),
                     
-                    // Number and complement
                     Row(
                       children: [
                         Expanded(
@@ -1060,7 +1007,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
                     
                     const SizedBox(height: 20),
                     
-                    // Neighborhood field
                     _ModernTextField(
                       controller: _neighborhoodController,
                       label: 'Bairro',
@@ -1075,7 +1021,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
                     
                     const SizedBox(height: 20),
                     
-                    // City and state
                     Row(
                       children: [
                         Expanded(
@@ -1152,7 +1097,6 @@ class _ModernClientRegistrationState extends State<ModernClientRegistration>
   }
 }
 
-// Modern Text Field Widget
 class _ModernTextField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
@@ -1241,7 +1185,6 @@ class _ModernTextField extends StatelessWidget {
   }
 }
 
-// Modern Button Widget
 class _ModernButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final String text;
@@ -1308,7 +1251,6 @@ class _ModernButton extends StatelessWidget {
   }
 }
 
-// Password Strength Indicator Widget
 class _PasswordStrengthIndicator extends StatelessWidget {
   final String password;
 
@@ -1392,7 +1334,6 @@ class _PasswordStrengthIndicator extends StatelessWidget {
   }
 }
 
-// Success Dialog Widget
 class _SuccessDialog extends StatefulWidget {
   final VoidCallback onContinue;
 
@@ -1466,7 +1407,6 @@ class _SuccessDialogState extends State<_SuccessDialog>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Success icon with animation
                     TweenAnimationBuilder<double>(
                       tween: Tween(begin: 0.0, end: 1.0),
                       duration: const Duration(milliseconds: 800),

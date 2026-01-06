@@ -11,8 +11,6 @@ class FaceDetectionService {
     ),
   );
 
-  /// Valida se a imagem contém pelo menos um rosto detectável
-  /// Retorna true se encontrar um rosto válido, false caso contrário
   static Future<FaceValidationResult> validateFaceInImage(String imagePath) async {
     try {
       final inputImage = InputImage.fromFilePath(imagePath);
@@ -34,10 +32,8 @@ class FaceDetectionService {
 
       final face = faces.first;
       
-      // Verificações adicionais de qualidade
       final boundingBox = face.boundingBox;
       
-      // Verificar se o rosto não é muito pequeno (menos de 100x100 pixels)
       if (boundingBox.width < 100 || boundingBox.height < 100) {
         return FaceValidationResult(
           isValid: false,
@@ -45,7 +41,6 @@ class FaceDetectionService {
         );
       }
 
-      // Verificar se há landmarks faciais básicos detectados
       if (face.landmarks.isEmpty) {
         return FaceValidationResult(
           isValid: false,
@@ -53,7 +48,6 @@ class FaceDetectionService {
         );
       }
 
-      // Verificar probabilidade de sorriso e olhos abertos (se disponível)
       double? leftEyeOpenProbability = face.leftEyeOpenProbability;
       double? rightEyeOpenProbability = face.rightEyeOpenProbability;
 
@@ -80,13 +74,11 @@ class FaceDetectionService {
     }
   }
 
-  /// Libera os recursos do detector de faces
   static void dispose() {
     _faceDetector.close();
   }
 }
 
-/// Resultado da validação de rosto
 class FaceValidationResult {
   final bool isValid;
   final String message;

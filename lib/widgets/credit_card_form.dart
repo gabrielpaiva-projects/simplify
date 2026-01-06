@@ -428,7 +428,6 @@ class _CreditCardFormState extends State<CreditCardForm> {
   }
 }
 
-// Formatador para número do cartão
 class _CardNumberFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
@@ -454,7 +453,6 @@ class _CardNumberFormatter extends TextInputFormatter {
   }
 }
 
-// Formatador para data de validade
 class _ExpiryDateFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(

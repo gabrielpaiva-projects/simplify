@@ -33,10 +33,8 @@ class PaymentScreen extends StatefulWidget {
 class _PaymentScreenState extends State<PaymentScreen> 
     with TickerProviderStateMixin {
   
-  // Payment method
   PaymentMethod _selectedPaymentMethod = PaymentMethod.creditCard;
   
-  // Animation Controllers
   late AnimationController _headerController;
   late AnimationController _cardController;
   late AnimationController _footerController;
@@ -44,14 +42,12 @@ class _PaymentScreenState extends State<PaymentScreen>
   late AnimationController _pulseController;
   late AnimationController _successController;
   
-  // Animations
   late Animation<double> _headerAnimation;
   late Animation<double> _cardAnimation;
   late Animation<double> _footerSlideAnimation;
   late Animation<double> _priceAnimation;
   late Animation<double> _pulseAnimation;
   
-  // Card Form Controllers
   final _cardNumberController = TextEditingController();
   final _cardHolderController = TextEditingController();
   final _expiryDateController = TextEditingController();
@@ -59,7 +55,6 @@ class _PaymentScreenState extends State<PaymentScreen>
   final _formKey = GlobalKey<FormState>();
   final _scrollController = ScrollController();
   
-  // State
   bool _isProcessing = false;
   int _cardInstallments = 1;
   String _pixCode = '';
@@ -67,7 +62,6 @@ class _PaymentScreenState extends State<PaymentScreen>
   bool _pixCopied = false;
   bool _showCardBack = false;
   
-  // Price animation
   double _currentPrice = 0;
   double _targetPrice = 0;
 
@@ -81,7 +75,6 @@ class _PaymentScreenState extends State<PaymentScreen>
   }
 
   void _initializeAnimations() {
-    // Header animation
     _headerController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -94,7 +87,6 @@ class _PaymentScreenState extends State<PaymentScreen>
       curve: Curves.easeOutCubic,
     ));
     
-    // Main card animation
     _cardController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
@@ -107,7 +99,6 @@ class _PaymentScreenState extends State<PaymentScreen>
       curve: Curves.easeOutBack,
     ));
     
-    // Footer animation
     _footerController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
@@ -120,7 +111,6 @@ class _PaymentScreenState extends State<PaymentScreen>
       curve: Curves.easeOutCubic,
     ));
     
-    // Price animation
     _priceController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -133,7 +123,6 @@ class _PaymentScreenState extends State<PaymentScreen>
       curve: Curves.easeInOut,
     ));
     
-    // Pulse animation
     _pulseController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
@@ -146,7 +135,6 @@ class _PaymentScreenState extends State<PaymentScreen>
       curve: Curves.easeInOut,
     ));
     
-    // Success animation
     _successController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
@@ -180,7 +168,6 @@ class _PaymentScreenState extends State<PaymentScreen>
   }
 
   void _generatePixCode() async {
-    // PIX code will be generated when payment is processed
     setState(() {
       _pixCodeGenerated = false;
       _pixCode = '';
@@ -221,14 +208,12 @@ class _PaymentScreenState extends State<PaymentScreen>
     HapticFeedback.mediumImpact();
 
     try {
-      // Get current user ID
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser == null) {
         throw Exception('Usuário não autenticado');
       }
 
       if (_selectedPaymentMethod == PaymentMethod.pix) {
-        // Process PIX payment
         final response = await PaymentService.processPixPayment(
           userId: currentUser.uid,
           amount: widget.totalAmount,
@@ -243,13 +228,11 @@ class _PaymentScreenState extends State<PaymentScreen>
             _pixCodeGenerated = true;
           });
           
-          // Show PIX QR Code in a dialog
           await _showPixPaymentDialog(response.data!);
         } else {
           _showErrorMessage(response.error ?? 'Erro ao processar pagamento PIX');
         }
       } else {
-        // Process Card payment
         final expiryParts = _expiryDateController.text.split('/');
         final expiryMonth = expiryParts[0];
         final expiryYear = '20${expiryParts[1]}'; // Convert YY to YYYY
@@ -315,7 +298,6 @@ class _PaymentScreenState extends State<PaymentScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // QR Code
               if (pixResponse.qrCodeBase64.isNotEmpty)
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -368,7 +350,6 @@ class _PaymentScreenState extends State<PaymentScreen>
               
               const SizedBox(height: 16),
               
-              // Copy button
               OutlinedButton.icon(
                 onPressed: () {
                   Clipboard.setData(ClipboardData(text: pixResponse.qrCode));
@@ -437,7 +418,6 @@ class _PaymentScreenState extends State<PaymentScreen>
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // Background gradient
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -451,11 +431,9 @@ class _PaymentScreenState extends State<PaymentScreen>
             ),
           ),
           
-          // Main content
           SafeArea(
             child: Column(
               children: [
-                // Animated Header
                 AnimatedBuilder(
                   animation: _headerAnimation,
                   builder: (context, child) {
@@ -466,10 +444,8 @@ class _PaymentScreenState extends State<PaymentScreen>
                   },
                 ),
                 
-                // Progress Bar - Step 3 of 3
                 _buildProgressBar(),
                 
-                // Content
                 Expanded(
                   child: SingleChildScrollView(
                     controller: _scrollController,
@@ -480,7 +456,6 @@ class _PaymentScreenState extends State<PaymentScreen>
                       children: [
                         const SizedBox(height: 24),
                         
-                        // Title
                         AnimatedBuilder(
                           animation: _cardAnimation,
                           builder: (context, child) {
@@ -517,7 +492,6 @@ class _PaymentScreenState extends State<PaymentScreen>
                         
                         const SizedBox(height: 24),
                         
-                        // Service Summary Card
                         AnimatedBuilder(
                           animation: _cardAnimation,
                           builder: (context, child) {
@@ -530,12 +504,10 @@ class _PaymentScreenState extends State<PaymentScreen>
                         
                         const SizedBox(height: 24),
                         
-                        // Payment Method Selector
                         _buildPaymentMethodSelector(),
                         
                         const SizedBox(height: 24),
                         
-                        // Payment Content
                         AnimatedSwitcher(
                           duration: const Duration(milliseconds: 400),
                           switchInCurve: Curves.easeInOut,
@@ -566,7 +538,6 @@ class _PaymentScreenState extends State<PaymentScreen>
             ),
           ),
           
-          // Animated Footer with Payment Button
           Positioned(
             bottom: 0,
             left: 0,
@@ -601,7 +572,6 @@ class _PaymentScreenState extends State<PaymentScreen>
       ),
       child: Row(
         children: [
-          // Back button
           GestureDetector(
             onTap: () => Navigator.pop(context),
             child: Container(
@@ -621,7 +591,6 @@ class _PaymentScreenState extends State<PaymentScreen>
           
           const SizedBox(width: 16),
           
-          // Title
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -647,7 +616,6 @@ class _PaymentScreenState extends State<PaymentScreen>
             ),
           ),
           
-          // Help button
           Container(
             width: 40,
             height: 40,
@@ -671,16 +639,12 @@ class _PaymentScreenState extends State<PaymentScreen>
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Column(
         children: [
-          // Steps indicator
           Row(
             children: [
-              // Step 1 - Complete
               _buildStepIndicator(1, true, 'Configuração'),
               Expanded(child: _buildStepLine(true)),
-              // Step 2 - Complete
               _buildStepIndicator(2, true, 'Data e Hora'),
               Expanded(child: _buildStepLine(true)),
-              // Step 3 - Current
               _buildStepIndicator(3, false, 'Pagamento', isCurrent: true),
             ],
           ),
@@ -766,7 +730,6 @@ class _PaymentScreenState extends State<PaymentScreen>
       ),
       child: Column(
         children: [
-          // Service icon and title
           Row(
             children: [
               Container(
@@ -840,7 +803,6 @@ class _PaymentScreenState extends State<PaymentScreen>
           ),
           const SizedBox(height: 20),
           
-          // Price
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -980,7 +942,6 @@ class _PaymentScreenState extends State<PaymentScreen>
       ),
       child: Column(
         children: [
-          // QR Code
           Container(
             width: 200,
             height: 200,
@@ -1026,7 +987,6 @@ class _PaymentScreenState extends State<PaymentScreen>
           
           const SizedBox(height: 24),
           
-          // Instructions
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -1056,7 +1016,6 @@ class _PaymentScreenState extends State<PaymentScreen>
           
           const SizedBox(height: 16),
           
-          // Copy PIX Code button
           GestureDetector(
             onTap: () {
               Clipboard.setData(ClipboardData(text: _pixCode));
@@ -1106,7 +1065,6 @@ class _PaymentScreenState extends State<PaymentScreen>
           
           const SizedBox(height: 16),
           
-          // Timer
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -1139,7 +1097,6 @@ class _PaymentScreenState extends State<PaymentScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Visual Credit Card
             Container(
               height: 200,
               decoration: BoxDecoration(
@@ -1254,7 +1211,6 @@ class _PaymentScreenState extends State<PaymentScreen>
             
             const SizedBox(height: 24),
             
-            // Card form fields
             _buildTextField(
               controller: _cardNumberController,
               label: 'Número do Cartão',
@@ -1335,7 +1291,6 @@ class _PaymentScreenState extends State<PaymentScreen>
             
             const SizedBox(height: 24),
             
-            // Installments
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -1506,7 +1461,6 @@ class _PaymentScreenState extends State<PaymentScreen>
           padding: const EdgeInsets.all(20),
           child: Row(
             children: [
-              // Price display
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1542,7 +1496,6 @@ class _PaymentScreenState extends State<PaymentScreen>
               
               const SizedBox(width: 20),
               
-              // CTA Button
               AnimatedBuilder(
                 animation: _pulseAnimation,
                 builder: (context, child) {
@@ -1654,7 +1607,6 @@ class _PaymentScreenState extends State<PaymentScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Success animation
             TweenAnimationBuilder<double>(
               tween: Tween(begin: 0, end: 1),
               duration: const Duration(milliseconds: 600),

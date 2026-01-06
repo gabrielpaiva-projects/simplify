@@ -12,11 +12,9 @@ class NotificationOverlayService {
   BuildContext? _context;
   OverlayState? _overlayState;
 
-  /// Inicializar o serviço com o contexto da aplicação
   void initialize(BuildContext context) {
     _context = context;
     
-    // Tentar obter e cachear o OverlayState
     try {
       _overlayState = Overlay.maybeOf(context);
       if (_overlayState != null) {
@@ -29,7 +27,6 @@ class NotificationOverlayService {
     }
   }
 
-  /// Mostrar badge de notificação como overlay
   void showNotificationBadge(RemoteMessage message) {
     if (_context == null) {
       debugPrint('NotificationOverlayService: Context not initialized, cannot show badge');
@@ -37,19 +34,15 @@ class NotificationOverlayService {
     }
 
     try {
-      // Remover overlay anterior se existir
       _removeCurrentOverlay();
 
-      // Tentar múltiplas estratégias para obter o overlay
       OverlayState? overlay;
       
-      // Estratégia 1: Usar o overlay cacheado
       if (_overlayState != null && _overlayState!.mounted) {
         overlay = _overlayState;
         debugPrint('NotificationOverlayService: Using cached OverlayState');
       }
       
-      // Estratégia 2: Tentar obter do contexto atual
       if (overlay == null) {
         overlay = Overlay.maybeOf(_context!);
         if (overlay != null) {
@@ -57,7 +50,6 @@ class NotificationOverlayService {
         }
       }
       
-      // Estratégia 3: Usar Navigator.overlay se disponível
       if (overlay == null) {
         try {
           final navigator = Navigator.maybeOf(_context!);
@@ -75,7 +67,6 @@ class NotificationOverlayService {
         return;
       }
 
-      // Criar novo overlay
       _currentOverlay = OverlayEntry(
         builder: (context) => Positioned(
           top: 0,
@@ -91,7 +82,6 @@ class NotificationOverlayService {
         ),
       );
 
-      // Adicionar overlay à tela
       overlay.insert(_currentOverlay!);
       debugPrint('NotificationOverlayService: Badge overlay inserted successfully');
       
@@ -101,7 +91,6 @@ class NotificationOverlayService {
     }
   }
 
-  /// Remover overlay atual
   void _removeCurrentOverlay() {
     if (_currentOverlay != null) {
       try {
@@ -114,7 +103,6 @@ class NotificationOverlayService {
     }
   }
 
-  /// Lidar com tap na notificação
   void _handleNotificationTap(RemoteMessage message) {
     if (_context == null) return;
 
@@ -135,19 +123,14 @@ class NotificationOverlayService {
         _navigateToMessages(navigator, message);
         break;
       default:
-        // Navegação padrão ou mostrar detalhes da notificação
         _showNotificationDetails(message);
         break;
     }
   }
 
-  /// Navegar para detalhes do pagamento
   void _navigateToPaymentDetails(NavigatorState navigator, RemoteMessage message) {
     try {
-      // Implementar navegação para tela de detalhes do pagamento
-      // Por exemplo: navigator.pushNamed('/payment-details', arguments: message.data);
       
-      // Por enquanto, mostrar um snackbar como exemplo
       ScaffoldMessenger.of(_context!).showSnackBar(
         SnackBar(
           content: Text('Pagamento confirmado: ${message.data['amount'] ?? 'N/A'}'),
@@ -160,11 +143,8 @@ class NotificationOverlayService {
     }
   }
 
-  /// Navegar para tela de agendamentos
   void _navigateToAppointments(NavigatorState navigator, RemoteMessage message) {
     try {
-      // Implementar navegação para tela de agendamentos
-      // Por exemplo: navigator.pushNamed('/appointments');
       
       ScaffoldMessenger.of(_context!).showSnackBar(
         const SnackBar(
@@ -178,11 +158,8 @@ class NotificationOverlayService {
     }
   }
 
-  /// Navegar para histórico de serviços
   void _navigateToServiceHistory(NavigatorState navigator, RemoteMessage message) {
     try {
-      // Implementar navegação para histórico de serviços
-      // Por exemplo: navigator.pushNamed('/service-history');
       
       ScaffoldMessenger.of(_context!).showSnackBar(
         const SnackBar(
@@ -196,11 +173,8 @@ class NotificationOverlayService {
     }
   }
 
-  /// Navegar para mensagens
   void _navigateToMessages(NavigatorState navigator, RemoteMessage message) {
     try {
-      // Implementar navegação para tela de mensagens
-      // Por exemplo: navigator.pushNamed('/messages');
       
       ScaffoldMessenger.of(_context!).showSnackBar(
         const SnackBar(
@@ -214,7 +188,6 @@ class NotificationOverlayService {
     }
   }
 
-  /// Mostrar detalhes da notificação em um dialog
   void _showNotificationDetails(RemoteMessage message) {
     if (_context == null) return;
 
@@ -255,20 +228,16 @@ class NotificationOverlayService {
     );
   }
 
-  /// Limpar contexto (chamar quando o app for fechado)
   void dispose() {
     _removeCurrentOverlay();
     _context = null;
   }
 
-  /// Verificar se há overlay ativo
   bool get hasActiveOverlay => _currentOverlay != null;
 
-  /// Verificar se o serviço está inicializado e pronto para uso
   bool get isReady {
     if (_context == null) return false;
     
-    // Verificar se pelo menos uma estratégia de overlay está disponível
     if (_overlayState != null && _overlayState!.mounted) return true;
     if (Overlay.maybeOf(_context!) != null) return true;
     
@@ -276,13 +245,11 @@ class NotificationOverlayService {
       final navigator = Navigator.maybeOf(_context!);
       if (navigator?.overlay != null) return true;
     } catch (e) {
-      // Ignore erros na verificação
     }
     
     return false;
   }
 
-  /// Forçar remoção de overlay (para casos específicos)
   void forceRemoveOverlay() {
     _removeCurrentOverlay();
   }

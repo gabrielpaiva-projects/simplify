@@ -3,7 +3,6 @@ import 'services/notification_storage_service.dart';
 import 'models/notification_model.dart';
 import 'core/di/injection_container.dart' as di;
 
-/// Função para testar o sistema de notificações com bottomsheet
 Future<void> addTestNotifications() async {
   final service = di.sl<NotificationStorageService>();
   
@@ -49,7 +48,6 @@ Future<void> addTestNotifications() async {
   debugPrint('🎯 ${notifications.length} notificações de teste adicionadas!');
 }
 
-/// Widget para adicionar botão de teste em qualquer tela
 class TestNotificationsButton extends StatelessWidget {
   const TestNotificationsButton({super.key});
 

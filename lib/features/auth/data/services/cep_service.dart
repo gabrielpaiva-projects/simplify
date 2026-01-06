@@ -5,10 +5,8 @@ import '../models/address_model.dart';
 class CepService {
   static const String _baseUrl = 'https://viacep.com.br/ws';
 
-  /// Busca endereço pelo CEP usando a API ViaCEP
   static Future<AddressModel?> fetchAddressByCep(String cep) async {
     try {
-      // Remove caracteres não numéricos do CEP
       final cleanCep = cep.replaceAll(RegExp(r'[^0-9]'), '');
       
       print('[CepService] CEP recebido: $cep');
@@ -43,7 +41,6 @@ class CepService {
         final data = json.decode(response.body);
         print('[CepService] JSON decodificado: $data');
         
-        // Verifica se o CEP retornou erro
         if (data['erro'] == true) {
           print('[CepService] CEP não existe na base da ViaCEP');
           return null;
@@ -63,13 +60,11 @@ class CepService {
     }
   }
 
-  /// Valida se o CEP tem o formato correto
   static bool isValidCep(String cep) {
     final cleanCep = cep.replaceAll(RegExp(r'[^0-9]'), '');
     return cleanCep.length == 8;
   }
 
-  /// Formata o CEP para exibição (00000-000)
   static String formatCep(String cep) {
     final cleanCep = cep.replaceAll(RegExp(r'[^0-9]'), '');
     if (cleanCep.length == 8) {

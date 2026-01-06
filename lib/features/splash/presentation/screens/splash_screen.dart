@@ -32,7 +32,6 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
     
-    // Status bar style
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -50,7 +49,6 @@ class _SplashScreenState extends State<SplashScreen>
       vsync: this,
     );
 
-    // Logo animations
     _logoFadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -67,7 +65,6 @@ class _SplashScreenState extends State<SplashScreen>
       curve: const Interval(0.0, 0.5, curve: Curves.easeOutBack),
     ));
 
-    // Text animations
     _textFadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -84,7 +81,6 @@ class _SplashScreenState extends State<SplashScreen>
       curve: const Interval(0.3, 0.7, curve: Curves.easeOutCubic),
     ));
 
-    // Slogan animation
     _sloganFadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -93,7 +89,6 @@ class _SplashScreenState extends State<SplashScreen>
       curve: const Interval(0.5, 0.9, curve: Curves.easeIn),
     ));
 
-    // Loading dots animation
     _dotAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -105,49 +100,39 @@ class _SplashScreenState extends State<SplashScreen>
     _controller.forward();
     _textController.repeat();
 
-    // Check authentication and navigate
     _checkAuthAndNavigate();
   }
 
   Future<void> _checkAuthAndNavigate() async {
-    // Aguarda um tempo mínimo para mostrar a splash
     await Future.delayed(const Duration(milliseconds: 2500));
     
     if (!mounted) return;
     
-    // Verifica se o usuário está logado
     final currentUser = FirebaseAuth.instance.currentUser;
     
     Widget targetScreen;
     
     if (currentUser != null) {
-      // Usuário está logado, verifica biometria primeiro
       final biometricAuthenticated = await _authenticateWithBiometrics();
       
       if (!biometricAuthenticated) {
-        // Se falhou na biometria, fazer logout e ir para login
         final authProvider = context.read<AuthProvider>();
         await authProvider.signOut();
         targetScreen = const LoginScreen();
       } else {
-        // Biometria OK, verifica o tipo de usuário
         final authProvider = context.read<AuthProvider>();
         
-        // Aguarda carregar os dados do usuário
         await Future.delayed(const Duration(milliseconds: 500));
         
-        // Direcionar para a tela correta baseado no tipo de usuário
         if (authProvider.userType == UserType.client) {
           targetScreen = const ServicesScreen();
         } else if (authProvider.userType == UserType.professional) {
           targetScreen = const ProfessionalHomeScreen();
         } else {
-          // Se não conseguiu determinar o tipo, vai para login
           targetScreen = const LoginScreen();
         }
       }
     } else {
-      // Usuário não está logado
       targetScreen = const LoginScreen();
     }
     
@@ -169,16 +154,13 @@ class _SplashScreenState extends State<SplashScreen>
   
   Future<bool> _authenticateWithBiometrics() async {
     try {
-      // Verifica se a biometria está disponível
       final bool isAvailable = await BiometricAuthService.isBiometricAvailable();
       
       if (!isAvailable) {
-        // Se não tem biometria disponível, continua sem ela
         print('Biometria não disponível, continuando sem autenticação biométrica');
         return true;
       }
       
-      // Tenta autenticar com biometria
       final result = await BiometricAuthService.authenticate(
         reason: 'Confirme sua identidade para acessar o aplicativo',
       );
@@ -187,7 +169,6 @@ class _SplashScreenState extends State<SplashScreen>
         return true;
       }
       
-      // Se falhou mas o erro é que não tem biometria cadastrada, permite continuar
       if (result.error == BiometricError.notEnrolled || 
           result.error == BiometricError.notAvailable ||
           result.error == BiometricError.passcodeNotSet) {
@@ -195,11 +176,9 @@ class _SplashScreenState extends State<SplashScreen>
         return true; // Permite continuar sem biometria
       }
       
-      // Para outros erros, não permite continuar
       return false;
     } catch (e) {
       print('Erro ao verificar biometria: $e');
-      // Em caso de erro, permite continuar
       return true;
     }
   }
@@ -236,7 +215,6 @@ class _SplashScreenState extends State<SplashScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Logo with animation
                 AnimatedBuilder(
                   animation: _controller,
                   builder: (context, child) {
@@ -283,7 +261,6 @@ class _SplashScreenState extends State<SplashScreen>
                 
                 const SizedBox(height: 40),
                 
-                // SIMPLIFY text with green M
                 AnimatedBuilder(
                   animation: _controller,
                   builder: (context, child) {
@@ -338,7 +315,6 @@ class _SplashScreenState extends State<SplashScreen>
                 
                 const SizedBox(height: 16),
                 
-                // Slogan
                 AnimatedBuilder(
                   animation: _controller,
                   builder: (context, child) {
@@ -359,7 +335,6 @@ class _SplashScreenState extends State<SplashScreen>
                 
                 const SizedBox(height: 60),
                 
-                // Loading indicator
                 AnimatedBuilder(
                   animation: _textController,
                   builder: (context, child) {

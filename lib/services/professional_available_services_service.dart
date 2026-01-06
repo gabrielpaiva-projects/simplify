@@ -8,7 +8,6 @@ class ProfessionalAvailableServicesService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleMapsDistanceService _distanceService = GoogleMapsDistanceService();
 
-  /// Busca serviços disponíveis (sem profissional alocado) ordenados por distância
   Stream<List<ServiceWithDistance>> getAvailableServicesWithDistance() {
     final currentUser = _auth.currentUser;
     if (currentUser == null) {
@@ -22,7 +21,6 @@ class ProfessionalAvailableServicesService {
         .asyncMap((snapshot) async {
       final services = <AppointmentModel>[];
       
-      // Buscar dados do profissional logado para obter endereço
       final professionalData = await _getUserData(currentUser.uid);
       if (professionalData == null) {
         return <ServiceWithDistance>[];
@@ -33,7 +31,6 @@ class ProfessionalAvailableServicesService {
         return <ServiceWithDistance>[];
       }
 
-      // Converter documentos para AppointmentModel
       for (var doc in snapshot.docs) {
         try {
           final service = AppointmentModel.fromFirestore(doc.data(), doc.id);
@@ -43,7 +40,6 @@ class ProfessionalAvailableServicesService {
         }
       }
 
-      // Calcular distâncias usando API real e ordenar
       final servicesWithDistance = <ServiceWithDistance>[];
       
       for (var service in services) {
@@ -61,22 +57,18 @@ class ProfessionalAvailableServicesService {
         ));
       }
 
-      // Ordenar por distância (mais próximos primeiro)
       servicesWithDistance.sort((a, b) => a.distance.compareTo(b.distance));
 
       return servicesWithDistance;
     });
   }
 
-  /// Busca serviços disponíveis (sem profissional alocado) ordenados por distância
-  /// Versão que retorna apenas os serviços (compatibilidade)
   Stream<List<AppointmentModel>> getAvailableServices() {
     return getAvailableServicesWithDistance().map(
       (servicesWithDistance) => servicesWithDistance.map((swd) => swd.service).toList(),
     );
   }
 
-  /// Busca dados do usuário no Firestore
   Future<Map<String, dynamic>?> _getUserData(String userId) async {
     try {
       final doc = await _firestore.collection('users').doc(userId).get();
@@ -87,7 +79,6 @@ class ProfessionalAvailableServicesService {
     }
   }
 
-  /// Extrai endereço dos dados do usuário
   AddressModel? _extractAddress(Map<String, dynamic> userData) {
     try {
       return AddressModel(
@@ -103,7 +94,6 @@ class ProfessionalAvailableServicesService {
     }
   }
 
-  /// Formata endereço para uso na API do Google Maps
   String _formatAddress(AddressModel address) {
     final parts = <String>[];
     
@@ -133,7 +123,6 @@ class ProfessionalAvailableServicesService {
   }
 
 
-  /// Aceita um serviço (aloca o profissional)
   Future<bool> acceptService(String serviceId) async {
     final currentUser = _auth.currentUser;
     if (currentUser == null) return false;
@@ -151,7 +140,6 @@ class ProfessionalAvailableServicesService {
   }
 }
 
-/// Classe auxiliar para ordenação por distância
 class ServiceWithDistance {
   final AppointmentModel service;
   final double distance;

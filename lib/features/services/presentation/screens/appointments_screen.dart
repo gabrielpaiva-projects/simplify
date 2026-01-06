@@ -12,7 +12,6 @@ import '../../../../services/appointment_service.dart';
 import '../../../../services/payment_pix_service.dart';
 import '../../../../services/unified_payment_service.dart';
 
-// Função global para gerar URLs do Google Maps com logs
 String getGoogleMapsUrl(String address) {
   final encodedAddress = Uri.encodeComponent(address);
   final url = 'https://maps.googleapis.com/maps/api/staticmap?'
@@ -72,7 +71,6 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
     
     _fadeController.forward();
     
-    // Debug das collections
     _unifiedPaymentService.debugAllCollections();
   }
 
@@ -83,7 +81,6 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
     super.dispose();
   }
 
-  // Métodos auxiliares para a tab bar
   IconData _getTabIcon(int index) {
     switch (index) {
       case 0:
@@ -114,15 +111,12 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
     try {
       switch (index) {
         case 0:
-          // Contador de pagamentos pendentes
           final payments = await _unifiedPaymentService.getPendingPayments().first;
           return payments.length;
         case 1:
-          // Contador de pagamentos confirmados com data futura
           final upcomingPayments = await _unifiedPaymentService.getUpcomingPayments().first;
           return upcomingPayments.length;
         case 2:
-          // Contador de histórico
           final history = await _unifiedPaymentService.getPaymentHistory().first;
           return history.length;
         default:
@@ -144,7 +138,6 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header customizado
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
                 child: Row(
@@ -201,7 +194,6 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
                 ),
               ),
 
-              // Tab bar premium e elegante
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 24),
                 padding: const EdgeInsets.all(4),
@@ -326,7 +318,6 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
 
               const SizedBox(height: 12),
 
-              // Conteúdo com fundo sutil
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
@@ -400,7 +391,6 @@ class _PendingPaymentsTab extends StatelessWidget {
                 child: _PaymentCard(payment: paymentPix),
               );
             } else {
-              // Se não conseguir converter para PaymentPixModel, mostrar dados brutos
               print('🔍 [DEBUG] _PendingPaymentsTab: Mostrando RawDataCard para ${paymentData['id']}');
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
@@ -484,7 +474,6 @@ class _UpcomingAppointmentsTab extends StatelessWidget {
     try {
       String? serviceDate;
       
-      // Para collection services, a data está no campo 'data'
       if (data['data'] != null) {
         serviceDate = data['data'].toString();
       } else if (data['serviceData'] != null && data['serviceData']['data'] != null) {
@@ -496,13 +485,11 @@ class _UpcomingAppointmentsTab extends StatelessWidget {
         return '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year}';
       }
     } catch (e) {
-      // Ignorar erro
     }
     return 'Data não informada';
   }
 
   Widget _buildPaymentCard(Map<String, dynamic> data, UnifiedPaymentService service) {
-    // Para collection services, sempre tentar converter para AppointmentModel primeiro
     final appointment = service.toAppointmentModel(data);
     final paymentPix = service.toPaymentPixModel(data);
     
@@ -586,7 +573,6 @@ class _HistoryAppointmentsTab extends StatelessWidget {
     try {
       String? serviceDate;
       
-      // Para collection services, a data está no campo 'data'
       if (data['data'] != null) {
         serviceDate = data['data'].toString();
       } else if (data['serviceData'] != null && data['serviceData']['data'] != null) {
@@ -598,13 +584,11 @@ class _HistoryAppointmentsTab extends StatelessWidget {
         return '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year}';
       }
     } catch (e) {
-      // Ignorar erro
     }
     return 'Data não informada';
   }
 
   Widget _buildPaymentCard(Map<String, dynamic> data, UnifiedPaymentService service) {
-    // Para collection services, sempre tentar converter para AppointmentModel primeiro
     final appointment = service.toAppointmentModel(data);
     final paymentPix = service.toPaymentPixModel(data);
     
@@ -1392,7 +1376,6 @@ class _ErrorWidget extends StatelessWidget {
             const SizedBox(height: 24),
             FilledButton.icon(
               onPressed: () {
-                // Implementar retry
               },
               icon: const Icon(Icons.refresh),
               label: const Text('Tentar novamente'),
@@ -1539,7 +1522,6 @@ class _EmptyWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Container com gradiente sutil para o ícone
             Container(
               width: 120,
               height: 120,
@@ -1567,7 +1549,6 @@ class _EmptyWidget extends StatelessWidget {
             
             const SizedBox(height: 32),
             
-            // Título com estilo moderno
             Text(
               title,
               style: const TextStyle(
@@ -1581,7 +1562,6 @@ class _EmptyWidget extends StatelessWidget {
             
             const SizedBox(height: 12),
             
-            // Subtítulo com cor mais suave
             Text(
               subtitle,
               style: TextStyle(
@@ -1595,7 +1575,6 @@ class _EmptyWidget extends StatelessWidget {
             
             const SizedBox(height: 40),
             
-            // Botão moderno e atraente
             Container(
               width: double.infinity,
               height: 56,
@@ -1636,7 +1615,6 @@ class _EmptyWidget extends StatelessWidget {
             
             const SizedBox(height: 16),
             
-            // Texto adicional sutil
             Text(
               'Seus itens aparecerão aqui quando disponíveis',
               style: TextStyle(

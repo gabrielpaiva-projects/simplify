@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../models/appointment_model.dart';
 
-// Função global para gerar URLs do Google Maps (mesma do fluxo do cliente)
 String getGoogleMapsUrl(String address) {
   final encodedAddress = Uri.encodeComponent(address);
   final url = 'https://maps.googleapis.com/maps/api/staticmap?'
@@ -50,12 +49,10 @@ class ModernServiceCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header com informações básicas
           Padding(
             padding: const EdgeInsets.all(20),
             child: Row(
               children: [
-                // Ícone do serviço
                 Container(
                   width: 56,
                   height: 56,
@@ -84,7 +81,6 @@ class ModernServiceCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 16),
-                // Informações do serviço
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -107,7 +103,6 @@ class ModernServiceCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      // Tags de informação rápida
                       Row(
                         children: [
                           _buildInfoTag(
@@ -126,7 +121,6 @@ class ModernServiceCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Badge de distância
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
@@ -158,7 +152,6 @@ class ModernServiceCard extends StatelessWidget {
             ),
           ),
           
-          // Mapa
           Container(
             height: 160,
             margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -176,7 +169,6 @@ class ModernServiceCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               child: Stack(
                 children: [
-                  // Mapa
                   Positioned.fill(
                     child: Image.network(
                       getGoogleMapsUrl(service.endereco.fullAddress),
@@ -226,7 +218,6 @@ class ModernServiceCard extends StatelessWidget {
                       },
                     ),
                   ),
-                  // Overlay com endereço
                   Positioned(
                     bottom: 0,
                     left: 0,
@@ -271,12 +262,10 @@ class ModernServiceCard extends StatelessWidget {
             ),
           ),
           
-          // Footer com preço e ações
           Padding(
             padding: const EdgeInsets.all(20),
             child: Row(
               children: [
-                // Preço
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -308,10 +297,8 @@ class ModernServiceCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Botões de ação
                 Column(
                   children: [
-                    // Botão Ver Detalhes
                     SizedBox(
                       width: 120,
                       height: 40,
@@ -371,7 +358,6 @@ class ModernServiceCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    // Botão Aceitar
                     SizedBox(
                       width: 120,
                       height: 48,

@@ -73,7 +73,6 @@ class _ModernProfileSelectionSheetState extends State<ModernProfileSelectionShee
       curve: Curves.easeOut,
     ));
     
-    // Animações individuais para cada item
     _itemAnimations = List.generate(
       3,
       (index) => Tween<double>(
@@ -154,7 +153,6 @@ class _ModernProfileSelectionSheetState extends State<ModernProfileSelectionShee
                   ),
                   child: Stack(
                     children: [
-                      // Background gradient effect
                       Positioned(
                         top: -100,
                         left: -100,
@@ -188,13 +186,11 @@ class _ModernProfileSelectionSheetState extends State<ModernProfileSelectionShee
                         ),
                       ),
                       
-                      // Content
                       SafeArea(
                         child: SingleChildScrollView(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              // Handle
                               Container(
                                 margin: const EdgeInsets.only(top: 12, bottom: 8),
                                 width: 40,
@@ -205,14 +201,12 @@ class _ModernProfileSelectionSheetState extends State<ModernProfileSelectionShee
                                 ),
                               ),
                               
-                              // Header
                               Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                                 child: ScaleTransition(
                                   scale: _itemAnimations[0],
                                   child: Column(
                                     children: [
-                                      // Animated Icon
                                       TweenAnimationBuilder<double>(
                                         tween: Tween(begin: 0.0, end: 1.0),
                                         duration: const Duration(milliseconds: 800),
@@ -251,7 +245,6 @@ class _ModernProfileSelectionSheetState extends State<ModernProfileSelectionShee
                                       ),
                                       const SizedBox(height: 24),
                                       
-                                      // Title with gradient
                                       ShaderMask(
                                         shaderCallback: (bounds) => LinearGradient(
                                           colors: [
@@ -285,13 +278,11 @@ class _ModernProfileSelectionSheetState extends State<ModernProfileSelectionShee
                               
                               const SizedBox(height: 32),
                               
-                              // Options
                               Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 24),
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    // Cliente Option
                                     ScaleTransition(
                                       scale: _itemAnimations[1],
                                       child: _ProfileOption(
@@ -312,7 +303,6 @@ class _ModernProfileSelectionSheetState extends State<ModernProfileSelectionShee
                                     
                                     const SizedBox(height: 16),
                                     
-                                    // Profissional Option
                                     ScaleTransition(
                                       scale: _itemAnimations[2],
                                       child: _ProfileOption(
@@ -336,12 +326,10 @@ class _ModernProfileSelectionSheetState extends State<ModernProfileSelectionShee
                               
                               const SizedBox(height: 24),
                               
-                              // Bottom Section
                               Padding(
                                 padding: const EdgeInsets.all(24),
                                 child: Column(
                                 children: [
-                                  // Terms text
                                   Text(
                                     'Ao continuar, você concorda com nossos',
                                     style: TextStyle(
@@ -355,7 +343,6 @@ class _ModernProfileSelectionSheetState extends State<ModernProfileSelectionShee
                                     children: [
                                       GestureDetector(
                                         onTap: () {
-                                          // TODO: Open terms
                                         },
                                         child: Text(
                                           'Termos de Uso',
@@ -375,7 +362,6 @@ class _ModernProfileSelectionSheetState extends State<ModernProfileSelectionShee
                                       ),
                                       GestureDetector(
                                         onTap: () {
-                                          // TODO: Open privacy
                                         },
                                         child: Text(
                                           'Política de Privacidade',
@@ -523,7 +509,6 @@ class _ProfileOptionState extends State<_ProfileOption>
                   borderRadius: BorderRadius.circular(24),
                   child: Stack(
                     children: [
-                      // Animated background pattern
                       if (widget.isSelected)
                         Positioned(
                           right: -30,
@@ -547,13 +532,11 @@ class _ProfileOptionState extends State<_ProfileOption>
                           ),
                         ),
                       
-                      // Content
                       Padding(
                         padding: const EdgeInsets.all(16),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            // Icon
                             Container(
                               width: 56,
                               height: 56,
@@ -573,7 +556,6 @@ class _ProfileOptionState extends State<_ProfileOption>
                             ),
                             const SizedBox(width: 16),
                             
-                            // Text
                             Expanded(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -617,7 +599,6 @@ class _ProfileOptionState extends State<_ProfileOption>
                               ),
                             ),
                             
-                            // Arrow
                             Container(
                               width: 32,
                               height: 32,

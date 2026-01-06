@@ -6,7 +6,6 @@ class PaymentPixService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  /// Busca pagamentos PIX pendentes do usuário atual
   Stream<List<PaymentPixModel>> getPendingPixPayments() {
     final currentUser = _auth.currentUser;
     if (currentUser == null) {
@@ -22,12 +21,10 @@ class PaymentPixService {
         return PaymentPixModel.fromFirestore(doc.data(), doc.id);
       }).toList();
       
-      // Filtrar pagamentos pendentes
       final pendingPayments = allPayments.where((payment) {
         return payment.isPending && !payment.isExpired;
       }).toList();
       
-      // Ordenar por data de criação (mais recente primeiro)
       pendingPayments.sort((a, b) {
         try {
           final dateA = DateTime.parse(a.createdAt);
@@ -42,7 +39,6 @@ class PaymentPixService {
     });
   }
 
-  /// Busca um pagamento PIX específico por ID
   Future<PaymentPixModel?> getPixPaymentById(String paymentId) async {
     try {
       final doc = await _firestore
@@ -60,7 +56,6 @@ class PaymentPixService {
     }
   }
 
-  /// Conta total de pagamentos PIX pendentes do usuário
   Future<int> getTotalPendingPaymentsCount() async {
     final currentUser = _auth.currentUser;
     if (currentUser == null) return 0;
@@ -80,7 +75,6 @@ class PaymentPixService {
     }
   }
 
-  /// Busca todos os pagamentos PIX do usuário (para histórico)
   Stream<List<PaymentPixModel>> getAllPixPayments() {
     final currentUser = _auth.currentUser;
     if (currentUser == null) {
@@ -96,7 +90,6 @@ class PaymentPixService {
         return PaymentPixModel.fromFirestore(doc.data(), doc.id);
       }).toList();
       
-      // Ordenar por data de criação (mais recente primeiro)
       payments.sort((a, b) {
         try {
           final dateA = DateTime.parse(a.createdAt);
@@ -111,7 +104,6 @@ class PaymentPixService {
     });
   }
 
-  /// Busca pagamentos PIX confirmados com data futura (para aba Próximos)
   Stream<List<PaymentPixModel>> getUpcomingPixPayments() {
     final currentUser = _auth.currentUser;
     if (currentUser == null) {
@@ -132,7 +124,6 @@ class PaymentPixService {
         final paymentModel = PaymentPixModel.fromFirestore(data, doc.id);
         
         try {
-          // Verificar se tem data de serviço e se é futura
           if (paymentModel.serviceData.data.isNotEmpty) {
             final serviceDate = DateTime.parse(paymentModel.serviceData.data);
             if (serviceDate.isAfter(now)) {
@@ -140,11 +131,9 @@ class PaymentPixService {
             }
           }
         } catch (e) {
-          // Data inválida, ignora o documento
         }
       }
       
-      // Ordenar por data de serviço (próximo primeiro)
       upcomingPayments.sort((a, b) {
         try {
           final dateA = DateTime.parse(a.serviceData.data);

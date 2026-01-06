@@ -17,20 +17,15 @@ import '../../services/notification_storage_service.dart';
 
 final sl = GetIt.instance;
 
-/// Initialize all dependencies
 Future<void> init() async {
-  // External dependencies
   await _initExternal();
   
-  // Core
   _initCore();
   
-  // Features
   _initFeatures();
 }
 
 void _initCore() {
-  // Network
   sl.registerLazySingleton<DioClient>(
     () => DioClient(
       dio: sl(),
@@ -42,34 +37,28 @@ void _initCore() {
     () => NetworkInfoImpl(sl()),
   );
   
-  // Logger
   sl.registerLazySingleton<LoggerService>(
     () => LoggerService(sl()),
   );
   
-  // Firebase Messaging
   sl.registerLazySingleton<FirebaseMessagingService>(
     () => FirebaseMessagingService(),
   );
   
-  // Notification Overlay
   sl.registerLazySingleton<NotificationOverlayService>(
     () => NotificationOverlayService(),
   );
   
-  // Notification Storage
   sl.registerLazySingleton<NotificationStorageService>(
     () => NotificationStorageService(),
   );
 }
 
 void _initFeatures() {
-  // Auth feature
   _initAuth();
 }
 
 void _initAuth() {
-  // Services
   sl.registerLazySingleton<CepService>(
     () => CepService(),
   );
@@ -78,14 +67,12 @@ void _initAuth() {
     () => FirebaseAuthService(),
   );
   
-  // Repositories
   sl.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(
       authService: sl(),
     ),
   );
   
-  // Providers
   sl.registerFactory<AuthProvider>(
     () => AuthProvider(
       authRepository: sl(),
@@ -94,17 +81,13 @@ void _initAuth() {
 }
 
 Future<void> _initExternal() async {
-  // Shared Preferences
   final sharedPreferences = await SharedPreferences.getInstance();
   sl.registerLazySingleton(() => sharedPreferences);
   
-  // Dio
   sl.registerLazySingleton(() => Dio());
   
-  // Connectivity
   sl.registerLazySingleton(() => Connectivity());
   
-  // Logger
   sl.registerLazySingleton(() => Logger(
     printer: PrettyPrinter(
       methodCount: 0,

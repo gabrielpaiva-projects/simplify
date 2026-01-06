@@ -17,7 +17,6 @@ class ServicesScreen extends StatefulWidget {
 
 class _ServicesScreenState extends State<ServicesScreen>
     with TickerProviderStateMixin {
-  // Controllers
   late PageController _pageController;
   late AnimationController _fadeController;
   late AnimationController _scaleController;
@@ -26,7 +25,6 @@ class _ServicesScreenState extends State<ServicesScreen>
   int _currentPage = 0;
   int _selectedNavIndex = 0;
   
-  // Dados mockados dos serviços de limpeza
   final List<ServiceModel> _cleaningServices = [
     ServiceModel(
       title: 'Limpeza Padrão',
@@ -48,7 +46,6 @@ class _ServicesScreenState extends State<ServicesScreen>
     ),
   ];
   
-  // Serviço especial de instalação
   final ServiceModel _cameraService = ServiceModel(
     title: 'Instalação de Câmeras',
     description: 'Segurança profissional com instalação e configuração completa',
@@ -105,15 +102,12 @@ class _ServicesScreenState extends State<ServicesScreen>
   void _handleScheduleService(ServiceModel service) {
     HapticFeedback.mediumImpact();
     
-    // Verifica se é um serviço de limpeza
     if (service.title.toLowerCase().contains('limpeza')) {
-      // Determina o tipo de limpeza baseado no título
       CleaningType cleaningType = CleaningType.standard;
       if (service.title.toLowerCase().contains('pesada')) {
         cleaningType = CleaningType.heavy;
       }
       
-      // Navega para a tela de agendamento de limpeza
       Navigator.push(
         context,
         PageRouteBuilder(
@@ -140,7 +134,6 @@ class _ServicesScreenState extends State<ServicesScreen>
         ),
       );
     } else {
-      // Para outros serviços, mantém o comportamento original
       showModalBottomSheet(
         context: context,
         backgroundColor: Colors.transparent,
@@ -241,11 +234,9 @@ class _ServicesScreenState extends State<ServicesScreen>
               onPressed: () async {
                 Navigator.pop(context); // Fecha o diálogo
                 
-                // Executa o logout
                 final authProvider = Provider.of<AuthProvider>(context, listen: false);
                 await authProvider.signOut();
                 
-                // Navega para a tela de login
                 if (mounted) {
                   Navigator.pushNamedAndRemoveUntil(
                     context,
@@ -285,7 +276,6 @@ class _ServicesScreenState extends State<ServicesScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Handle bar
               Container(
                 margin: const EdgeInsets.only(top: 12),
                 width: 40,
@@ -297,7 +287,6 @@ class _ServicesScreenState extends State<ServicesScreen>
               ),
               const SizedBox(height: 20),
               
-              // Título
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 28),
                 child: Row(
@@ -332,7 +321,6 @@ class _ServicesScreenState extends State<ServicesScreen>
               ),
               const SizedBox(height: 24),
               
-              // Opções do Menu
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
@@ -343,7 +331,6 @@ class _ServicesScreenState extends State<ServicesScreen>
                       subtitle: 'Gerencie suas informações pessoais',
                       onTap: () {
                         Navigator.pop(context);
-                        // TODO: Navegar para perfil
                       },
                     ),
                     _buildMenuOption(
@@ -361,7 +348,6 @@ class _ServicesScreenState extends State<ServicesScreen>
                       subtitle: 'Tire suas dúvidas e obtenha ajuda',
                       onTap: () {
                         Navigator.pop(context);
-                        // TODO: Navegar para ajuda
                       },
                     ),
                     const SizedBox(height: 16),
@@ -498,7 +484,6 @@ class _ServicesScreenState extends State<ServicesScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header Redesenhado
                   Container(
                     padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
                     child: Row(
@@ -514,13 +499,11 @@ class _ServicesScreenState extends State<ServicesScreen>
                                 builder: (context, authProvider, _) {
                                   String firstName = 'Cliente';
                                   
-                                  // Debug: Imprime os dados disponíveis
                                   debugPrint('=== DEBUG NOME USUÁRIO ===');
                                   debugPrint('userData: ${authProvider.userData}');
                                   debugPrint('user: ${authProvider.user}');
                                   debugPrint('displayName: ${authProvider.user?.displayName}');
                                   
-                                  // Tenta pegar o nome do userData
                                   if (authProvider.userData != null) {
                                     final fullName = authProvider.userData!['fullName'];
                                     debugPrint('fullName from userData: $fullName');
@@ -529,7 +512,6 @@ class _ServicesScreenState extends State<ServicesScreen>
                                     }
                                   }
                                   
-                                  // Se não encontrou no userData, tenta o displayName do Firebase
                                   if (firstName == 'Cliente' && authProvider.user != null) {
                                     final displayName = authProvider.user!.displayName;
                                     debugPrint('displayName from Firebase: $displayName');
@@ -592,7 +574,6 @@ class _ServicesScreenState extends State<ServicesScreen>
                                     ),
                                   ),
                                 ),
-                                // Badge com contador de notificações não lidas
                                 if (notificationService.hasUnreadNotifications)
                                   Positioned(
                                     right: 6,
@@ -633,7 +614,6 @@ class _ServicesScreenState extends State<ServicesScreen>
                   
                   const SizedBox(height: 24),
                   
-                  // Indicador de deslize
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Row(
@@ -658,7 +638,6 @@ class _ServicesScreenState extends State<ServicesScreen>
                   
                   const SizedBox(height: 16),
                 
-                                  // Seção de Serviços de Limpeza
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Text(
@@ -673,7 +652,6 @@ class _ServicesScreenState extends State<ServicesScreen>
                   
                   const SizedBox(height: 16),
                   
-                  // Cards de Serviços de Limpeza com Indicador
                   Stack(
                     children: [
                       SizedBox(
@@ -709,7 +687,6 @@ class _ServicesScreenState extends State<ServicesScreen>
                         ),
                       ),
                     
-                    // Indicador de Scroll à Esquerda
                     if (_currentPage > 0)
                       Positioned(
                         left: 8,
@@ -747,7 +724,6 @@ class _ServicesScreenState extends State<ServicesScreen>
                         ),
                       ),
                     
-                                          // Indicador de Scroll à Direita
                       if (_currentPage < _cleaningServices.length - 1)
                       Positioned(
                         right: 8,
@@ -787,7 +763,6 @@ class _ServicesScreenState extends State<ServicesScreen>
                   ],
                 ),
                 
-                // Indicador de Páginas (Dots)
                 const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -810,7 +785,6 @@ class _ServicesScreenState extends State<ServicesScreen>
                 
                 const SizedBox(height: 32),
                 
-                // Seção de Serviços Especializados
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Column(
@@ -831,7 +805,6 @@ class _ServicesScreenState extends State<ServicesScreen>
                       ),
                       const SizedBox(height: 16),
                       
-                      // Card do serviço de câmera - Design Sutil
                       Container(
                         height: 140, // Aumentado de 120 para 140 para evitar overflow
                         decoration: BoxDecoration(
@@ -849,7 +822,6 @@ class _ServicesScreenState extends State<ServicesScreen>
                           borderRadius: BorderRadius.circular(16),
                           child: Row(
                             children: [
-                              // Imagem à esquerda
                               Container(
                                 width: 120,
                                 decoration: BoxDecoration(
@@ -872,7 +844,6 @@ class _ServicesScreenState extends State<ServicesScreen>
                                 ),
                               ),
                               
-                              // Conteúdo
                               Expanded(
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
@@ -957,7 +928,6 @@ class _ServicesScreenState extends State<ServicesScreen>
                   ),
                 ),
                 
-                // Espaço para o bottom navigation
                 const SizedBox(height: 100),
               ],
             ),
@@ -966,7 +936,6 @@ class _ServicesScreenState extends State<ServicesScreen>
         ),
       ),
       
-      // Bottom Navigation Bar Customizado
       bottomNavigationBar: Container(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
         color: Colors.transparent,
@@ -1046,7 +1015,6 @@ class _ServicesScreenState extends State<ServicesScreen>
           borderRadius: BorderRadius.circular(20),
           child: Stack(
             children: [
-              // Imagem de fundo
               Positioned.fill(
                 child: Image.asset(
                   service.imagePath,
@@ -1054,7 +1022,6 @@ class _ServicesScreenState extends State<ServicesScreen>
                 ),
               ),
               
-              // Gradient overlay
               Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(
@@ -1070,7 +1037,6 @@ class _ServicesScreenState extends State<ServicesScreen>
                 ),
               ),
               
-              // Conteúdo
               Positioned.fill(
                 child: Padding(
                   padding: const EdgeInsets.all(20),
@@ -1210,7 +1176,6 @@ class _ServicesScreenState extends State<ServicesScreen>
   }
 }
 
-// Modelo de dados atualizado
 class ServiceModel {
   final String title;
   final String description;

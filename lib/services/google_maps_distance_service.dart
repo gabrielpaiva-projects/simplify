@@ -4,14 +4,11 @@ import '../core/config/google_maps_config.dart';
 
 class GoogleMapsDistanceService {
 
-  /// Calcula a distância entre dois endereços usando a API do Google Maps
-  /// Retorna a distância em quilômetros
   Future<double?> calculateDistance({
     required String originAddress,
     required String destinationAddress,
   }) async {
     try {
-      // Validar se a API key está configurada
       if (!GoogleMapsConfig.isConfigured) {
         print('⚠️ [GOOGLE_MAPS] API Key não configurada. Configure sua chave do Google Maps.');
         print(GoogleMapsConfig.configurationInstructions);
@@ -74,13 +71,10 @@ class GoogleMapsDistanceService {
     }
   }
 
-  /// Método de fallback para calcular distância aproximada quando a API falha
-  /// Usa uma lógica simples baseada em CEP
   double _fallbackDistance(String address1, String address2) {
     print('🔄 [GOOGLE_MAPS] Usando cálculo de fallback');
     
     try {
-      // Extrair CEPs dos endereços
       final cep1 = _extractCEP(address1);
       final cep2 = _extractCEP(address2);
       
@@ -88,7 +82,6 @@ class GoogleMapsDistanceService {
         return _calculateDistanceByCEP(cep1, cep2);
       }
       
-      // Se não conseguir extrair CEPs, usar distância baseada em texto
       return _calculateDistanceByText(address1, address2);
     } catch (e) {
       print('❌ [GOOGLE_MAPS] Erro no fallback: $e');
@@ -96,18 +89,15 @@ class GoogleMapsDistanceService {
     }
   }
 
-  /// Extrai CEP de um endereço
   String? _extractCEP(String address) {
     final cepRegex = RegExp(r'\d{5}-?\d{3}');
     final match = cepRegex.firstMatch(address);
     return match?.group(0)?.replaceAll('-', '');
   }
 
-  /// Calcula distância aproximada baseada em CEPs
   double _calculateDistanceByCEP(String cep1, String cep2) {
     if (cep1 == cep2) return 0.5; // Mesmo CEP = 500m
     
-    // Comparar primeiros dígitos para estimar distância
     final prefix1 = cep1.substring(0, 5);
     final prefix2 = cep2.substring(0, 5);
     
@@ -126,21 +116,17 @@ class GoogleMapsDistanceService {
     return 50.0; // Regiões diferentes = 50km
   }
 
-  /// Calcula distância aproximada baseada em texto do endereço
   double _calculateDistanceByText(String address1, String address2) {
     final addr1Lower = address1.toLowerCase();
     final addr2Lower = address2.toLowerCase();
     
-    // Extrair cidades
     final cities1 = _extractCities(addr1Lower);
     final cities2 = _extractCities(addr2Lower);
     
-    // Se tem cidades em comum
     if (cities1.any((city) => cities2.contains(city))) {
       return 5.0; // Mesma cidade = 5km
     }
     
-    // Extrair estados
     final state1 = _extractState(addr1Lower);
     final state2 = _extractState(addr2Lower);
     
@@ -151,7 +137,6 @@ class GoogleMapsDistanceService {
     return 100.0; // Estados diferentes = 100km
   }
 
-  /// Extrai possíveis nomes de cidades do endereço
   List<String> _extractCities(String address) {
     final commonCities = [
       'são paulo', 'rio de janeiro', 'belo horizonte', 'salvador',
@@ -163,7 +148,6 @@ class GoogleMapsDistanceService {
     return commonCities.where((city) => address.contains(city)).toList();
   }
 
-  /// Extrai estado do endereço
   String? _extractState(String address) {
     final stateMap = {
       'sp': ['são paulo', 'sp'],
@@ -204,12 +188,10 @@ class GoogleMapsDistanceService {
     return null;
   }
 
-  /// Verifica se a API está configurada corretamente
   static bool isConfigured() {
     return GoogleMapsConfig.isConfigured;
   }
 
-  /// Instrução para configurar a API
   static String getConfigurationInstructions() {
     return GoogleMapsConfig.configurationInstructions;
   }

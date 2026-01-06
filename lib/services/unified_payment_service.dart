@@ -7,7 +7,6 @@ class UnifiedPaymentService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  /// Busca todos os documentos da collection pagamentos do usuário atual
   Stream<List<Map<String, dynamic>>> getAllUserPayments() {
     final currentUser = _auth.currentUser;
     if (currentUser == null) {
@@ -26,7 +25,6 @@ class UnifiedPaymentService {
     });
   }
 
-  /// Método de debug para verificar todas as collections
   Future<void> debugAllCollections() async {
     final currentUser = _auth.currentUser;
     if (currentUser == null) {
@@ -36,7 +34,6 @@ class UnifiedPaymentService {
 
     print('🔍 [DEBUG] debugAllCollections: Verificando collections para userId: ${currentUser.uid}');
 
-    // Verificar collection pagamentos
     try {
       final pagamentosSnapshot = await _firestore
           .collection('pagamentos')
@@ -53,7 +50,6 @@ class UnifiedPaymentService {
       print('🔍 [DEBUG] debugAllCollections: Erro ao buscar pagamentos: $e');
     }
 
-    // Verificar collection services
     try {
       final servicesSnapshot = await _firestore
           .collection('services')
@@ -70,7 +66,6 @@ class UnifiedPaymentService {
       print('🔍 [DEBUG] debugAllCollections: Erro ao buscar services: $e');
     }
 
-    // Verificar collection services sem filtro de userId
     try {
       final allServicesSnapshot = await _firestore
           .collection('services')
@@ -88,7 +83,6 @@ class UnifiedPaymentService {
     }
   }
 
-  /// Busca pagamentos pendentes (status PENDING) da collection pagamentos
   Stream<List<Map<String, dynamic>>> getPendingPayments() {
     final currentUser = _auth.currentUser;
     if (currentUser == null) {
@@ -120,7 +114,6 @@ class UnifiedPaymentService {
     });
   }
 
-  /// Busca todos os serviços com data futura da collection services
   Stream<List<Map<String, dynamic>>> getUpcomingPayments() {
     final currentUser = _auth.currentUser;
     if (currentUser == null) {
@@ -145,7 +138,6 @@ class UnifiedPaymentService {
         print('🔍 [DEBUG] getUpcomingPayments: Processando documento ${doc.id}: paymentStatus=${data['paymentStatus']}, data=${data['data']}');
         
         try {
-          // Verificar se tem data de serviço e se é futura
           String? serviceDate;
           
           if (data['data'] != null) {
@@ -167,14 +159,12 @@ class UnifiedPaymentService {
             print('🔍 [DEBUG] getUpcomingPayments: Documento ${doc.id} sem data válida');
           }
         } catch (e) {
-          // Data inválida, ignora o documento
           print('🔍 [DEBUG] getUpcomingPayments: Erro ao processar data do documento ${doc.id}: $e');
         }
       }
       
       print('🔍 [DEBUG] getUpcomingPayments: Total de serviços futuros encontrados: ${upcomingPayments.length}');
       
-      // Ordenar por data de serviço (próximo primeiro)
       upcomingPayments.sort((a, b) {
         try {
           final dateA = a['data']?.toString();
@@ -193,7 +183,6 @@ class UnifiedPaymentService {
     });
   }
 
-  /// Busca histórico de todos os serviços da collection services
   Stream<List<Map<String, dynamic>>> getPaymentHistory() {
     final currentUser = _auth.currentUser;
     if (currentUser == null) {
@@ -218,7 +207,6 @@ class UnifiedPaymentService {
         print('🔍 [DEBUG] getPaymentHistory: Processando documento ${doc.id}: paymentStatus=${data['paymentStatus']}, data=${data['data']}');
         
         try {
-          // Verificar se tem data de serviço e se é passada
           String? serviceDate;
           
           if (data['data'] != null) {
@@ -240,14 +228,12 @@ class UnifiedPaymentService {
             print('🔍 [DEBUG] getPaymentHistory: Documento ${doc.id} sem data válida');
           }
         } catch (e) {
-          // Data inválida, ignora o documento
           print('🔍 [DEBUG] getPaymentHistory: Erro ao processar data do documento ${doc.id}: $e');
         }
       }
       
       print('🔍 [DEBUG] getPaymentHistory: Total de serviços históricos encontrados: ${historyPayments.length}');
       
-      // Ordenar por data de serviço (mais recente primeiro)
       historyPayments.sort((a, b) {
         try {
           final dateA = a['data']?.toString();
@@ -266,9 +252,7 @@ class UnifiedPaymentService {
     });
   }
 
-  /// Determina se um documento é um PaymentPixModel ou AppointmentModel
   bool isPaymentPixModel(Map<String, dynamic> data) {
-    // Verifica se tem campos específicos do PaymentPixModel
     final isPix = data.containsKey('asaasId') || 
            data.containsKey('qrCode') || 
            data.containsKey('lastWebhookEvent') ||
@@ -279,7 +263,6 @@ class UnifiedPaymentService {
     return isPix;
   }
 
-  /// Converte dados para PaymentPixModel se possível
   PaymentPixModel? toPaymentPixModel(Map<String, dynamic> data) {
     try {
       print('🔍 [DEBUG] toPaymentPixModel: Tentando converter ${data['id']}');
@@ -298,7 +281,6 @@ class UnifiedPaymentService {
     }
   }
 
-  /// Converte dados para AppointmentModel se possível
   AppointmentModel? toAppointmentModel(Map<String, dynamic> data) {
     try {
       print('🔍 [DEBUG] toAppointmentModel: Tentando converter ${data['id']}');

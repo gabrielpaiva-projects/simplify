@@ -6,7 +6,6 @@ import '../../data/enums/cleaning_type.dart';
 class CleaningPricingProvider extends ChangeNotifier {
   final CleaningPricingRepository _repository;
   
-  // Store pricing for each cleaning type
   final Map<CleaningType, CleaningPricingModel> _pricingMap = {};
   CleaningType _currentType = CleaningType.standard;
   bool _isLoading = false;
@@ -17,25 +16,20 @@ class CleaningPricingProvider extends ChangeNotifier {
     CleaningType initialType = CleaningType.standard,
   }) : _repository = repository ?? CleaningPricingRepository(),
        _currentType = initialType {
-    // Load pricing data when provider is created
     loadPricingData(type: initialType);
   }
   
-  // Getters
   CleaningPricingModel? get pricing => _pricingMap[_currentType];
   CleaningType get currentType => _currentType;
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get hasData => _pricingMap[_currentType] != null;
   
-  // Get pricing for a specific type
   CleaningPricingModel? getPricingForType(CleaningType type) => _pricingMap[type];
   
-  // Load pricing data from Firestore for a specific type
   Future<void> loadPricingData({CleaningType? type}) async {
     final targetType = type ?? _currentType;
     
-    // If we already have data for this type, don't reload unless forced
     if (_pricingMap.containsKey(targetType) && type == null) {
       return;
     }
@@ -59,7 +53,6 @@ class CleaningPricingProvider extends ChangeNotifier {
     }
   }
   
-  // Switch cleaning type and load data if needed
   Future<void> switchCleaningType(CleaningType type) async {
     if (_currentType == type && _pricingMap.containsKey(type)) {
       return; // Already on this type with data loaded
@@ -68,20 +61,17 @@ class CleaningPricingProvider extends ChangeNotifier {
     _currentType = type;
     notifyListeners();
     
-    // Load data for the new type if not already loaded
     if (!_pricingMap.containsKey(type)) {
       await loadPricingData(type: type);
     }
   }
   
-  // Reload pricing data (force refresh)
   Future<void> reloadPricingData({CleaningType? type}) async {
     final targetType = type ?? _currentType;
     _repository.clearCache(type: targetType);
     await loadPricingData(type: targetType);
   }
   
-  // Calculate price based on current configuration
   double calculatePrice({
     required String residenceType,
     required int rooms,
@@ -103,7 +93,6 @@ class CleaningPricingProvider extends ChangeNotifier {
     );
   }
   
-  // Calculate time based on current configuration
   int calculateTime({
     required String residenceType,
     required int rooms,
@@ -123,21 +112,18 @@ class CleaningPricingProvider extends ChangeNotifier {
     );
   }
   
-  // Get base price for a specific residence type
   double getBasePriceForResidence(String residenceType) {
     final pricingData = _pricingMap[_currentType];
     if (pricingData == null) return 0;
     return pricingData.getBasePriceForResidence(residenceType);
   }
   
-  // Get base time for a specific residence type
   int getBaseTimeForResidence(String residenceType) {
     final pricingData = _pricingMap[_currentType];
     if (pricingData == null) return 0;
     return pricingData.getBaseTimeForResidence(residenceType);
   }
   
-  // Get extra service prices
   double getPetsPrice() {
     return _pricingMap[_currentType]?.petsPrice ?? 0;
   }
@@ -146,7 +132,6 @@ class CleaningPricingProvider extends ChangeNotifier {
     return _pricingMap[_currentType]?.productsIncludedPrice ?? 0;
   }
   
-  // Get multipliers
   double getRoomMultiplier() {
     return _pricingMap[_currentType]?.roomPriceMultiplier ?? 0;
   }
@@ -155,7 +140,6 @@ class CleaningPricingProvider extends ChangeNotifier {
     return _pricingMap[_currentType]?.bathroomPriceMultiplier ?? 0;
   }
   
-  // Get pets extra time
   int getPetsExtraTime() {
     return _pricingMap[_currentType]?.petsExtraTime ?? 0;
   }

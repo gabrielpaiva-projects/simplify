@@ -4,7 +4,6 @@ import 'services/firebase_messaging_service.dart';
 import 'services/notification_overlay_service.dart';
 import 'core/di/injection_container.dart' as di;
 
-/// Tela de teste para demonstrar a integração com Firebase Cloud Messaging
 class TestFCMScreen extends StatefulWidget {
   const TestFCMScreen({super.key});
 
@@ -154,7 +153,6 @@ class _TestFCMScreenState extends State<TestFCMScreen> {
   }
 
   void _simulatePaymentNotification() {
-    // Simular notificação de pagamento confirmado com o payload fornecido
     final message = RemoteMessage(
       notification: const RemoteNotification(
         title: '✅ Pagamento Confirmado!',

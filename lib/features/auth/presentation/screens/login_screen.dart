@@ -29,7 +29,6 @@ class _LoginScreenState extends State<LoginScreen>
   bool _isLoading = false;
   bool _rememberMe = false;
 
-  // Animações
   late AnimationController _fadeController;
   late AnimationController _slideController;
   late AnimationController _scaleController;
@@ -42,7 +41,6 @@ class _LoginScreenState extends State<LoginScreen>
   void initState() {
     super.initState();
 
-    // Configuração das animações
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
@@ -90,7 +88,6 @@ class _LoginScreenState extends State<LoginScreen>
       curve: Curves.easeOutBack,
     ));
 
-    // Iniciar animações com delay
     _fadeController.forward();
     Future.delayed(const Duration(milliseconds: 200), () {
       _slideController.forward();
@@ -99,7 +96,6 @@ class _LoginScreenState extends State<LoginScreen>
       _scaleController.forward();
     });
 
-    // Adicionar listeners para efeitos visuais
     _emailFocusNode.addListener(() => setState(() {}));
     _passwordFocusNode.addListener(() => setState(() {}));
   }
@@ -146,7 +142,6 @@ class _LoginScreenState extends State<LoginScreen>
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) {
-      // Adicionar pequena vibração de erro
       HapticFeedback.mediumImpact();
       return;
     }
@@ -161,7 +156,6 @@ class _LoginScreenState extends State<LoginScreen>
       final email = _emailController.text.trim();
       final password = _passwordController.text;
 
-      // Fazer login com Firebase
       final success = await authProvider.signIn(
         email: email,
         password: password,
@@ -171,29 +165,21 @@ class _LoginScreenState extends State<LoginScreen>
         if (mounted) {
           HapticFeedback.lightImpact();
           
-          // Aguardar um momento para garantir que os dados do usuário sejam carregados
           await Future.delayed(const Duration(milliseconds: 500));
           
-          // Recarregar dados do usuário para garantir que temos as informações mais recentes
           await authProvider.reloadUserData();
           
-          // Verificar se a conta está bloqueada (para qualquer tipo de usuário)
           if (authProvider.isBlocked) {
-            // Mostrar dialog de conta bloqueada e fazer logout
             await _showAccountBlockedDialog();
             await authProvider.signOut();
             return;
           }
           
-          // Obter tipo de usuário para redirecionar corretamente
           final userType = authProvider.userType;
           
-          // Verificar se é profissional não verificado (apenas profissionais têm verificação)
           if (userType == UserType.professional && !authProvider.isProfessionalVerified) {
-            // Mostrar dialog de verificação pendente
             await _showVerificationPendingDialog();
           } else {
-            // Mostrar mensagem de sucesso normal
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Row(
@@ -213,7 +199,6 @@ class _LoginScreenState extends State<LoginScreen>
             );
           }
           
-          // Navegar para a tela apropriada baseado no tipo de usuário
           if (userType == UserType.client) {
             Navigator.pushReplacement(
               context,
@@ -227,7 +212,6 @@ class _LoginScreenState extends State<LoginScreen>
               AppRoutes.professionalHome,
             );
           } else if (userType == UserType.admin) {
-            // TODO: Implementar tela do admin
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Tela do admin em desenvolvimento'),
@@ -240,7 +224,6 @@ class _LoginScreenState extends State<LoginScreen>
         if (mounted) {
           HapticFeedback.heavyImpact();
           
-          // Obter mensagem de erro do provider
           final errorMessage = authProvider.errorMessage ?? 'E-mail ou senha incorretos';
           
           ScaffoldMessenger.of(context).showSnackBar(
@@ -312,7 +295,6 @@ class _LoginScreenState extends State<LoginScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Ícone de bloqueio
                   TweenAnimationBuilder<double>(
                     duration: const Duration(milliseconds: 600),
                     tween: Tween(begin: 0.0, end: 1.0),
@@ -338,7 +320,6 @@ class _LoginScreenState extends State<LoginScreen>
                   
                   const SizedBox(height: 24),
                   
-                  // Título
                   Text(
                     'Conta Bloqueada',
                     style: TextStyle(
@@ -351,7 +332,6 @@ class _LoginScreenState extends State<LoginScreen>
                   
                   const SizedBox(height: 16),
                   
-                  // Mensagem
                   Text(
                     'Sua conta foi temporariamente bloqueada. Entre em contato com o suporte para mais informações.',
                     style: TextStyle(
@@ -366,7 +346,6 @@ class _LoginScreenState extends State<LoginScreen>
                   
                   const SizedBox(height: 12),
                   
-                  // Box de informação
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -404,10 +383,8 @@ class _LoginScreenState extends State<LoginScreen>
                   
                   const SizedBox(height: 24),
                   
-                  // Botões
                   Column(
                     children: [
-                      // Botão Entender
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -435,10 +412,8 @@ class _LoginScreenState extends State<LoginScreen>
                       
                       const SizedBox(height: 12),
                       
-                      // Link de suporte
                       TextButton(
                         onPressed: () {
-                          // TODO: Abrir suporte
                           Navigator.of(context).pop();
                         },
                         child: Row(
@@ -500,7 +475,6 @@ class _LoginScreenState extends State<LoginScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Ícone animado
                   TweenAnimationBuilder<double>(
                     duration: const Duration(milliseconds: 600),
                     tween: Tween(begin: 0.0, end: 1.0),
@@ -526,7 +500,6 @@ class _LoginScreenState extends State<LoginScreen>
                   
                   const SizedBox(height: 24),
                   
-                  // Título
                   Text(
                     'Documentação em Análise',
                     style: TextStyle(
@@ -539,7 +512,6 @@ class _LoginScreenState extends State<LoginScreen>
                   
                   const SizedBox(height: 16),
                   
-                  // Mensagem
                   Text(
                     'Sua documentação está sendo validada pelos nossos colaboradores.',
                     style: TextStyle(
@@ -554,7 +526,6 @@ class _LoginScreenState extends State<LoginScreen>
                   
                   const SizedBox(height: 12),
                   
-                  // Informação adicional
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -592,15 +563,12 @@ class _LoginScreenState extends State<LoginScreen>
                   
                   const SizedBox(height: 24),
                   
-                  // Botões
                   Row(
                     children: [
-                      // Botão Sair
                       Expanded(
                         child: TextButton(
                           onPressed: () async {
                             Navigator.of(context).pop();
-                            // Fazer logout
                             final authProvider = Provider.of<AuthProvider>(
                               context, 
                               listen: false,
@@ -632,13 +600,10 @@ class _LoginScreenState extends State<LoginScreen>
                       
                       const SizedBox(width: 12),
                       
-                      // Botão Continuar
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () {
                             Navigator.of(context).pop();
-                            // TODO: Navegar para home com funcionalidades limitadas
-                            // Navigator.pushReplacementNamed(context, '/professional-home');
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryGreen,
@@ -662,10 +627,8 @@ class _LoginScreenState extends State<LoginScreen>
                   
                   const SizedBox(height: 12),
                   
-                  // Link de ajuda
                   TextButton(
                     onPressed: () {
-                      // TODO: Abrir suporte ou FAQ
                     },
                     child: Text(
                       'Precisa de ajuda? Fale conosco',
@@ -726,7 +689,6 @@ class _LoginScreenState extends State<LoginScreen>
                         children: [
                           const Spacer(flex: 2),
                           
-                          // Logo e Header
                           SlideTransition(
                             position: _slideAnimation,
                             child: ScaleTransition(
@@ -737,7 +699,6 @@ class _LoginScreenState extends State<LoginScreen>
                           
                           const Spacer(flex: 3),
                           
-                          // Formulário
                           SlideTransition(
                             position: _slideAnimation,
                             child: _buildModernForm(isDarkMode),
@@ -745,7 +706,6 @@ class _LoginScreenState extends State<LoginScreen>
                           
                           const SizedBox(height: 32),
                           
-                          // Botão de Login
                           ScaleTransition(
                             scale: _buttonScaleAnimation,
                             child: _buildModernLoginButton(isDarkMode),
@@ -753,7 +713,6 @@ class _LoginScreenState extends State<LoginScreen>
                           
                           const SizedBox(height: 24),
                           
-                          // Links adicionais
                           _buildAdditionalLinks(isDarkMode),
                           
                           const Spacer(flex: 2),
@@ -774,7 +733,6 @@ class _LoginScreenState extends State<LoginScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Logo secundário
         Align(
           alignment: Alignment.centerLeft,
           child: Image.asset(
@@ -797,7 +755,6 @@ class _LoginScreenState extends State<LoginScreen>
           ),
         ),
 
-        // Título com animação
         RichText(
           textAlign: TextAlign.left,
           text: TextSpan(
@@ -841,7 +798,6 @@ class _LoginScreenState extends State<LoginScreen>
         
         const SizedBox(height: 12),
         
-        // Subtítulo
         Text(
           'Faça login para continuar',
           textAlign: TextAlign.left,
@@ -861,7 +817,6 @@ class _LoginScreenState extends State<LoginScreen>
   Widget _buildModernForm(bool isDarkMode) {
     return Column(
       children: [
-        // Campo de E-mail
         _buildModernInputField(
           controller: _emailController,
           focusNode: _emailFocusNode,
@@ -875,7 +830,6 @@ class _LoginScreenState extends State<LoginScreen>
         
         const SizedBox(height: 20),
         
-        // Campo de Senha
         _buildModernInputField(
           controller: _passwordController,
           focusNode: _passwordFocusNode,
@@ -889,11 +843,9 @@ class _LoginScreenState extends State<LoginScreen>
         
         const SizedBox(height: 20),
         
-        // Remember me e Esqueci senha
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Remember me com checkbox customizado
             GestureDetector(
               onTap: () {
                 setState(() {
@@ -944,7 +896,6 @@ class _LoginScreenState extends State<LoginScreen>
               ),
             ),
             
-            // Esqueci senha
             TextButton(
               onPressed: () {
                 HapticFeedback.lightImpact();
@@ -995,7 +946,6 @@ class _LoginScreenState extends State<LoginScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Label animado
         AnimatedDefaultTextStyle(
           duration: const Duration(milliseconds: 200),
           style: TextStyle(
@@ -1013,7 +963,6 @@ class _LoginScreenState extends State<LoginScreen>
         
         const SizedBox(height: 8),
         
-        // Campo de input com design moderno
         AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
@@ -1190,7 +1139,6 @@ class _LoginScreenState extends State<LoginScreen>
   Widget _buildAdditionalLinks(bool isDarkMode) {
     return Column(
       children: [
-        // Divisor elegante
         Row(
           children: [
             Expanded(
@@ -1241,7 +1189,6 @@ class _LoginScreenState extends State<LoginScreen>
         
         const SizedBox(height: 24),
         
-        // Botão de criar conta
         Container(
           width: double.infinity,
           height: 56,
@@ -1270,11 +1217,9 @@ class _LoginScreenState extends State<LoginScreen>
               onTap: () async {
                 HapticFeedback.lightImpact();
                 
-                // Abre o BottomSheet para seleção do tipo de perfil
                 final UserType? selectedType = await ModernProfileSelectionSheet.show(context);
                 
                 if (selectedType != null && mounted) {
-                  // Navega para a tela de cadastro apropriada
                   if (selectedType == UserType.client) {
                     Navigator.push(
                       context,

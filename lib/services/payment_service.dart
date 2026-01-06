@@ -7,17 +7,14 @@ import '../utils/badge_generator.dart';
 import '../utils/card_validator.dart';
 import '../utils/secure_config.dart';
 
-/// Serviço principal para processar pagamentos
 class PaymentService {
   static const String _baseUrl = 'https://simplify-backend-paas.onrender.com';
   
-  /// Headers padrão para as requisições
   static Map<String, String> _getHeaders(String badge) => {
     'Content-Type': 'application/json',
     'badge': badge,
   };
 
-  /// Processa um pagamento via PIX
   static Future<ApiResponse<PixPaymentResponse>> processPixPayment({
     required String userId,
     required double amount,
@@ -25,14 +22,12 @@ class PaymentService {
     ServiceSchedulingData? serviceData,
   }) async {
     try {
-      // Gera a badge criptografada
       final badge = BadgeGenerator.generatePixBadge(
         userId: userId,
         amount: amount,
         serviceData: serviceData,
       );
       
-      // DEBUG: Log da badge e dados
       print('=== DEBUG PIX PAYMENT ===');
       print('UserId: $userId');
       print('Amount: $amount');
@@ -40,32 +35,26 @@ class PaymentService {
       print('Badge length: ${badge.length}');
       print('========================');
 
-      // Obtém a URL da API (pode ser configurada dinamicamente)
       final apiUrl = await SecureConfig.getApiBaseUrl();
       final url = Uri.parse('$apiUrl/api/payments/pix');
 
-      // Prepara o corpo da requisição
       final body = jsonEncode({
         'description': description,
       });
       
-      // DEBUG: Log da requisição
       print('URL: $url');
       print('Headers: ${_getHeaders(badge)}');
       print('Body: $body');
 
-      // Faz a requisição
       final response = await http.post(
         url,
         headers: _getHeaders(badge),
         body: body,
       );
       
-      // DEBUG: Log da resposta
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
 
-      // Processa a resposta
       if (response.statusCode == 200 || response.statusCode == 201) {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
         return ApiResponse.fromJson(
@@ -73,7 +62,6 @@ class PaymentService {
           (data) => PixPaymentResponse.fromJson(data),
         );
       } else {
-        // Trata erros HTTP
         final errorData = jsonDecode(response.body) as Map<String, dynamic>;
         return ApiResponse(
           success: false,
@@ -82,7 +70,6 @@ class PaymentService {
         );
       }
     } catch (e) {
-      // Trata erros de rede ou parsing
       return ApiResponse(
         success: false,
         error: 'Erro de conexão: ${e.toString()}',
@@ -90,7 +77,6 @@ class PaymentService {
     }
   }
 
-  /// Processa um pagamento com cartão de crédito
   static Future<ApiResponse<CardPaymentResponse>> processCardPayment({
     required String userId,
     required double amount,
@@ -112,7 +98,6 @@ class PaymentService {
       print('Installments: $installments');
       print('Description: $description');
       
-      // Valida o cartão antes de enviar
       final validationErrors = CardValidator.validateCard(
         cardNumber: cardNumber,
         expiryMonth: expirationMonth,
@@ -134,11 +119,9 @@ class PaymentService {
 
       print('Cartão validado com sucesso!');
 
-      // Detecta a bandeira do cartão
       final cardBrand = CardValidator.detectCardBrand(cardNumber);
       print('Bandeira detectada: ${cardBrand.name} (${cardBrand.paymentMethodId})');
       
-      // Gera a badge criptografada
       print('Gerando badge criptografada...');
       final badge = BadgeGenerator.generateCardBadge(
         userId: userId,
@@ -152,12 +135,10 @@ class PaymentService {
       );
       print('Badge gerada com sucesso! Length: ${badge.length}');
 
-      // Obtém a URL da API
       final apiUrl = await SecureConfig.getApiBaseUrl();
       final url = Uri.parse('$apiUrl/api/payments/card');
       print('URL da API: $url');
 
-      // Prepara o corpo da requisição
       final body = jsonEncode({
         'description': description,
         'paymentMethodId': cardBrand.paymentMethodId,
@@ -166,7 +147,6 @@ class PaymentService {
       print('Body da requisição: $body');
       print('Headers: Content-Type: application/json, badge: [ENCRYPTED]');
 
-      // Faz a requisição
       print('Enviando requisição POST...');
       final response = await http.post(
         url,
@@ -177,7 +157,6 @@ class PaymentService {
       print('Response Status Code: ${response.statusCode}');
       print('Response Body: ${response.body}');
 
-      // Processa a resposta
       if (response.statusCode == 200 || response.statusCode == 201) {
         print('Resposta bem-sucedida!');
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
@@ -195,7 +174,6 @@ class PaymentService {
         
         return apiResponse;
       } else {
-        // Trata erros HTTP
         print('ERRO HTTP: Status ${response.statusCode}');
         final errorData = jsonDecode(response.body) as Map<String, dynamic>;
         print('Error Data: $errorData');
@@ -206,7 +184,6 @@ class PaymentService {
         );
       }
     } catch (e, stackTrace) {
-      // Trata erros de rede ou parsing
       print('EXCEÇÃO NO PAYMENT SERVICE:');
       print('Error: ${e.toString()}');
       print('Stack Trace: $stackTrace');
@@ -217,7 +194,6 @@ class PaymentService {
     }
   }
 
-  /// Verifica o status de um pagamento
   static Future<ApiResponse<Map<String, dynamic>>> checkPaymentStatus({
     required String paymentId,
   }) async {
@@ -251,7 +227,6 @@ class PaymentService {
     }
   }
 
-  /// Cancela um pagamento
   static Future<ApiResponse<Map<String, dynamic>>> cancelPayment({
     required String paymentId,
   }) async {
@@ -285,7 +260,6 @@ class PaymentService {
     }
   }
 
-  /// Processa um reembolso
   static Future<ApiResponse<Map<String, dynamic>>> refundPayment({
     required String paymentId,
     double? amount,

@@ -1,4 +1,3 @@
-/// Base exception class
 class AppException implements Exception {
   final String message;
   final String? code;
@@ -14,7 +13,6 @@ class AppException implements Exception {
   String toString() => 'AppException: $message ${code != null ? '(Code: $code)' : ''}';
 }
 
-/// Server exception
 class ServerException extends AppException {
   ServerException({
     required super.message,
@@ -23,7 +21,6 @@ class ServerException extends AppException {
   });
 }
 
-/// Cache exception
 class CacheException extends AppException {
   CacheException({
     required super.message,
@@ -32,7 +29,6 @@ class CacheException extends AppException {
   });
 }
 
-/// Network exception
 class NetworkException extends AppException {
   NetworkException({
     required super.message,
@@ -41,7 +37,6 @@ class NetworkException extends AppException {
   });
 }
 
-/// Validation exception
 class ValidationException extends AppException {
   final Map<String, List<String>>? errors;
 

@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "582655389882",
+    "project_id": "simplify-mobile-app",
+    "storage_bucket": "simplify-mobile-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:582655389882:android:f0a7df131a2f2d7d645283",
+        "android_client_info": {
+          "package_name": "com.example.simplify"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDu6oGWMEfQ-XXH55_s8DN-MadYxp5oneY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:582655389882:android:afafd66e131fb0b0645283",
+        "android_client_info": {
+          "package_name": "com.pixelapps.simplify"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDu6oGWMEfQ-XXH55_s8DN-MadYxp5oneY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -15,19 +15,15 @@ class ClientRegistrationScreen extends StatefulWidget {
 
 class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> 
     with TickerProviderStateMixin {
-  // Controllers
   final PageController _pageController = PageController();
   
-  // Step 1: Dados Pessoais
   final _cpfController = TextEditingController();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   
-  // Step 2: Senha
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   
-  // Step 3: Endereço
   final _cepController = TextEditingController();
   final _streetController = TextEditingController();
   final _numberController = TextEditingController();
@@ -36,7 +32,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
   final _cityController = TextEditingController();
   final _stateController = TextEditingController();
   
-  // Focus Nodes
   final _cpfFocusNode = FocusNode();
   final _nameFocusNode = FocusNode();
   final _emailFocusNode = FocusNode();
@@ -50,12 +45,10 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
   final _cityFocusNode = FocusNode();
   final _stateFocusNode = FocusNode();
   
-  // Form Keys
   final _personalDataFormKey = GlobalKey<FormState>();
   final _passwordFormKey = GlobalKey<FormState>();
   final _addressFormKey = GlobalKey<FormState>();
   
-  // Masks
   final _cpfMask = MaskTextInputFormatter(
     mask: '###.###.###-##',
     filter: {"#": RegExp(r'[0-9]')},
@@ -66,14 +59,12 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
     filter: {"#": RegExp(r'[0-9]')},
   );
   
-  // States
   int _currentStep = 0;
   bool _isLoading = false;
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   bool _isSearchingCep = false;
   
-  // Animations
   late AnimationController _fadeController;
   late AnimationController _slideController;
   late AnimationController _scaleController;
@@ -86,7 +77,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
   void initState() {
     super.initState();
     
-    // Configuração das animações
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -134,15 +124,12 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
       curve: Curves.easeInOut,
     ));
     
-    // Iniciar animações
     _fadeController.forward();
     _slideController.forward();
     _scaleController.forward();
     
-    // Listener para buscar CEP automaticamente
     _cepController.addListener(_onCepChanged);
     
-    // Listeners para focus nodes
     _setupFocusListeners();
   }
   
@@ -167,7 +154,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
     _slideController.dispose();
     _scaleController.dispose();
     
-    // Dispose controllers
     _cpfController.dispose();
     _nameController.dispose();
     _emailController.dispose();
@@ -181,7 +167,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
     _cityController.dispose();
     _stateController.dispose();
     
-    // Dispose focus nodes
     _cpfFocusNode.dispose();
     _nameFocusNode.dispose();
     _emailFocusNode.dispose();
@@ -214,7 +199,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
           _cityController.text = address.localidade;
           _stateController.text = address.uf;
           
-          // Foca no campo número após preencher o endereço
           FocusScope.of(context).requestFocus(_numberFocusNode);
         }
       }
@@ -247,7 +231,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
         curve: Curves.easeInOutCubic,
       );
       
-      // Reset animations for new page
       _fadeController.reset();
       _slideController.reset();
       _fadeController.forward();
@@ -263,7 +246,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
         curve: Curves.easeInOutCubic,
       );
       
-      // Reset animations for new page
       _fadeController.reset();
       _slideController.reset();
       _fadeController.forward();
@@ -274,7 +256,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
   Future<void> _submitRegistration() async {
     setState(() => _isLoading = true);
     
-    // Simula envio para API
     await Future.delayed(const Duration(seconds: 2));
     
     final client = ClientModel(
@@ -296,7 +277,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
     setState(() => _isLoading = false);
     
     if (mounted) {
-      // Mostra sucesso com animação
       _showSuccessDialog();
     }
   }
@@ -408,13 +388,10 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
         child: SafeArea(
           child: Column(
             children: [
-              // Modern Header with Back Button
               _buildModernHeader(),
               
-              // Progress Indicator
               _buildModernProgressIndicator(),
               
-              // Form Content
               Expanded(
                 child: FadeTransition(
                   opacity: _fadeAnimation,
@@ -433,7 +410,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
                 ),
               ),
               
-              // Modern Navigation Buttons
               _buildModernNavigationButtons(),
             ],
           ),
@@ -447,7 +423,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
       padding: const EdgeInsets.all(24),
       child: Row(
         children: [
-          // Back Button
           Container(
             width: 48,
             height: 48,
@@ -477,7 +452,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
           ),
           const SizedBox(width: 20),
           
-          // Title
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -638,7 +612,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
           children: [
             const SizedBox(height: 20),
             
-            // CPF Field
             _buildModernInputField(
               controller: _cpfController,
               focusNode: _cpfFocusNode,
@@ -660,7 +633,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
             
             const SizedBox(height: 20),
             
-            // Nome Field
             _buildModernInputField(
               controller: _nameController,
               focusNode: _nameFocusNode,
@@ -681,7 +653,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
             
             const SizedBox(height: 20),
             
-            // Email Field
             _buildModernInputField(
               controller: _emailController,
               focusNode: _emailFocusNode,
@@ -718,7 +689,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
           children: [
             const SizedBox(height: 20),
             
-            // Password Field
             _buildModernInputField(
               controller: _passwordController,
               focusNode: _passwordFocusNode,
@@ -739,7 +709,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
             
             const SizedBox(height: 20),
             
-            // Confirm Password Field
             _buildModernInputField(
               controller: _confirmPasswordController,
               focusNode: _confirmPasswordFocusNode,
@@ -760,7 +729,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
             
             const SizedBox(height: 32),
             
-            // Password Tips
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -865,7 +833,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
           children: [
             const SizedBox(height: 20),
             
-            // CEP Field with auto-complete
             _buildModernInputField(
               controller: _cepController,
               focusNode: _cepFocusNode,
@@ -899,7 +866,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
             
             const SizedBox(height: 20),
             
-            // Street Field
             _buildModernInputField(
               controller: _streetController,
               focusNode: _streetFocusNode,
@@ -916,7 +882,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
             
             const SizedBox(height: 20),
             
-            // Number and Complement Row
             Row(
               children: [
                 Expanded(
@@ -952,7 +917,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
             
             const SizedBox(height: 20),
             
-            // Neighborhood Field
             _buildModernInputField(
               controller: _neighborhoodController,
               focusNode: _neighborhoodFocusNode,
@@ -969,7 +933,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
             
             const SizedBox(height: 20),
             
-            // City and State Row
             Row(
               children: [
                 Expanded(
@@ -1039,7 +1002,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Animated Label
         AnimatedDefaultTextStyle(
           duration: const Duration(milliseconds: 200),
           style: TextStyle(
@@ -1055,7 +1017,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen>
         
         const SizedBox(height: 8),
         
-        // Input Container
         AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(

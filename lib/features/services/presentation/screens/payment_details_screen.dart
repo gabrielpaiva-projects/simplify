@@ -8,7 +8,6 @@ import '../../../../services/professional_service.dart';
 import '../../../../services/appointment_service.dart';
 import '../../../../models/appointment_model.dart';
 
-// Função global para gerar URLs do Google Maps com logs
 String getGoogleMapsUrl(String address) {
   final encodedAddress = Uri.encodeComponent(address);
   final url = 'https://maps.googleapis.com/maps/api/staticmap?'
@@ -57,7 +56,6 @@ class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
     print('🔍 [PAYMENT_DETAILS] Status: ${widget.payment.status}');
     print('🔍 [PAYMENT_DETAILS] PaymentId: ${widget.payment.asaasId}');
     
-    // Para pagamentos RECEIVED (PIX) ou CONFIRMED (CARTÃO), buscar na collection services
     if (widget.payment.status == 'RECEIVED' || widget.payment.status == 'CONFIRMED') {
       print('🔍 [PAYMENT_DETAILS] Buscando appointment na collection services...');
       
@@ -66,7 +64,6 @@ class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
       });
 
       try {
-        // Buscar appointment pelo paymentId
         final appointments = await _appointmentService.getUserAppointments().first;
         final appointment = appointments.where((app) => app.paymentId == widget.payment.asaasId).firstOrNull;
         
@@ -75,11 +72,9 @@ class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
         if (appointment != null) {
           _appointment = appointment;
           
-          // Verificar se appointment tem profissionalId
           final profissionalId = appointment.profissionalId;
           print('🔍 [PAYMENT_DETAILS] ProfissionalId do appointment: $profissionalId');
           
-          // Se tem profissionalId, buscar dados do profissional
           if (profissionalId != null && profissionalId.isNotEmpty) {
             print('🔍 [PAYMENT_DETAILS] Carregando dados do profissional: $profissionalId');
             
@@ -122,7 +117,6 @@ class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
   }
 
   String get _statusText {
-    // Para pagamentos RECEIVED (PIX) ou CONFIRMED (CARTÃO)
     if (widget.payment.status == 'RECEIVED' || widget.payment.status == 'CONFIRMED') {
       if (_appointment?.profissionalId == null || (_appointment?.profissionalId?.isEmpty ?? true)) {
         return 'Buscando profissional';
@@ -152,7 +146,6 @@ class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
         bottom: false,
         child: Column(
           children: [
-            // Header customizado
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
               child: Row(
@@ -224,7 +217,6 @@ class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
               ),
             ),
             
-            // Conteúdo scrollável
             Expanded(
               child: Container(
                 decoration: const BoxDecoration(
@@ -236,7 +228,6 @@ class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Localização com mapa real
                       Container(
                         width: double.infinity,
                         height: 140,
@@ -246,7 +237,6 @@ class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
                         ),
                         child: Stack(
                           children: [
-                            // Mapa real do Google Maps
                             Positioned.fill(
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(20),
@@ -313,7 +303,6 @@ class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
                                 ),
                               ),
                             ),
-                            // Endereço overlay
                             Positioned(
                               bottom: 12,
                               left: 12,
@@ -361,7 +350,6 @@ class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
                       
                       const SizedBox(height: 32),
 
-                      // DEBUG INFO TEMPORÁRIO
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
@@ -393,7 +381,6 @@ class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
                       
                       const SizedBox(height: 16),
                       
-                      // Informações em grid
                       Row(
                         children: [
                           Expanded(
@@ -414,7 +401,6 @@ class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
                         ],
                       ),
 
-                      // Seção do profissional (se disponível)
                       if (_appointment?.profissionalId != null && (_appointment?.profissionalId?.isNotEmpty ?? false)) ...[
                         const SizedBox(height: 24),
                         Builder(
@@ -433,7 +419,6 @@ class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
                       if (!widget.payment.isExpired && widget.payment.qrCode.isNotEmpty) ...[
                         const SizedBox(height: 40),
                         
-                        // Botões clean
                         Column(
                           children: [
                             SizedBox(
@@ -672,7 +657,6 @@ class _ProfessionalSection extends StatelessWidget {
           else if (professional != null)
             Row(
               children: [
-                // Avatar do profissional
                 Container(
                   width: 50,
                   height: 50,
@@ -714,7 +698,6 @@ class _ProfessionalSection extends StatelessWidget {
                 
                 const SizedBox(width: 16),
                 
-                // Dados do profissional
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

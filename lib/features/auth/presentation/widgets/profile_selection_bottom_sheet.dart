@@ -97,7 +97,6 @@ class _ProfileSelectionBottomSheetState extends State<ProfileSelectionBottomShee
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Handle Indicator
                   Container(
                     margin: const EdgeInsets.only(top: 12),
                     width: 48,
@@ -113,7 +112,6 @@ class _ProfileSelectionBottomSheetState extends State<ProfileSelectionBottomShee
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Header
                         Column(
                           children: [
                             Container(
@@ -175,7 +173,6 @@ class _ProfileSelectionBottomSheetState extends State<ProfileSelectionBottomShee
                         
                         const SizedBox(height: 40),
                         
-                        // Options
                         _ProfileOptionCard(
                           index: 0,
                           icon: Icons.shopping_bag_outlined,
@@ -218,7 +215,6 @@ class _ProfileSelectionBottomSheetState extends State<ProfileSelectionBottomShee
                         
                         const SizedBox(height: 32),
                         
-                        // Cancel Button
                         TextButton(
                           onPressed: () {
                             HapticFeedback.lightImpact();
@@ -238,7 +234,6 @@ class _ProfileSelectionBottomSheetState extends State<ProfileSelectionBottomShee
                           ),
                         ),
                         
-                        // Safe area for bottom
                         SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
                       ],
                     ),
@@ -347,7 +342,6 @@ class _ProfileOptionCardState extends State<_ProfileOptionCard>
               ),
               child: Row(
                 children: [
-                  // Icon Container
                   Container(
                     width: 60,
                     height: 60,
@@ -367,7 +361,6 @@ class _ProfileOptionCardState extends State<_ProfileOptionCard>
                   ),
                   const SizedBox(width: 16),
                   
-                  // Text Content
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -398,7 +391,6 @@ class _ProfileOptionCardState extends State<_ProfileOptionCard>
                     ),
                   ),
                   
-                  // Arrow Icon
                   Container(
                     width: 32,
                     height: 32,

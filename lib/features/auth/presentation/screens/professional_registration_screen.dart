@@ -18,20 +18,16 @@ class ProfessionalRegistrationScreen extends StatefulWidget {
 
 class _ProfessionalRegistrationScreenState extends State<ProfessionalRegistrationScreen> 
     with TickerProviderStateMixin {
-  // Controllers
   final PageController _pageController = PageController();
   
-  // Step 1: Dados Pessoais
   final _cpfController = TextEditingController();
   final _nameController = TextEditingController();
   final _rgController = TextEditingController();
   final _emailController = TextEditingController();
   
-  // Step 2: Senha
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   
-  // Step 3: Endereço
   final _cepController = TextEditingController();
   final _streetController = TextEditingController();
   final _numberController = TextEditingController();
@@ -40,7 +36,6 @@ class _ProfessionalRegistrationScreenState extends State<ProfessionalRegistratio
   final _cityController = TextEditingController();
   final _stateController = TextEditingController();
   
-  // Focus Nodes
   final _cpfFocusNode = FocusNode();
   final _nameFocusNode = FocusNode();
   final _rgFocusNode = FocusNode();
@@ -55,12 +50,10 @@ class _ProfessionalRegistrationScreenState extends State<ProfessionalRegistratio
   final _cityFocusNode = FocusNode();
   final _stateFocusNode = FocusNode();
   
-  // Form Keys
   final _personalDataFormKey = GlobalKey<FormState>();
   final _passwordFormKey = GlobalKey<FormState>();
   final _addressFormKey = GlobalKey<FormState>();
   
-  // Masks
   final _cpfMask = MaskTextInputFormatter(
     mask: '###.###.###-##',
     filter: {"#": RegExp(r'[0-9]')},
@@ -76,7 +69,6 @@ class _ProfessionalRegistrationScreenState extends State<ProfessionalRegistratio
     filter: {"#": RegExp(r'[0-9]')},
   );
   
-  // States
   int _currentStep = 0;
   bool _isLoading = false;
   bool _isPasswordVisible = false;
@@ -85,7 +77,6 @@ class _ProfessionalRegistrationScreenState extends State<ProfessionalRegistratio
   File? _addressProofFile;
   String? _addressProofFileName;
   
-  // Animations
   late AnimationController _fadeController;
   late AnimationController _slideController;
   late AnimationController _scaleController;
@@ -93,14 +84,12 @@ class _ProfessionalRegistrationScreenState extends State<ProfessionalRegistratio
   late Animation<Offset> _slideAnimation;
   late Animation<double> _scaleAnimation;
   
-  // Image Picker
   final ImagePicker _imagePicker = ImagePicker();
   
   @override
   void initState() {
     super.initState();
     
-    // Configuração das animações
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -140,15 +129,12 @@ class _ProfessionalRegistrationScreenState extends State<ProfessionalRegistratio
       curve: Curves.easeOutBack,
     ));
     
-    // Iniciar animações
     _fadeController.forward();
     _slideController.forward();
     _scaleController.forward();
     
-    // Listener para buscar CEP automaticamente
     _cepController.addListener(_onCepChanged);
     
-    // Listeners para focus nodes
     _setupFocusListeners();
   }
   
@@ -173,7 +159,6 @@ class _ProfessionalRegistrationScreenState extends State<ProfessionalRegistratio
     _slideController.dispose();
     _scaleController.dispose();
     
-    // Dispose controllers
     _cpfController.dispose();
     _nameController.dispose();
     _rgController.dispose();
@@ -188,7 +173,6 @@ class _ProfessionalRegistrationScreenState extends State<ProfessionalRegistratio
     _cityController.dispose();
     _stateController.dispose();
     
-    // Dispose focus nodes
     _cpfFocusNode.dispose();
     _nameFocusNode.dispose();
     _rgFocusNode.dispose();

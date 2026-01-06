@@ -1,9 +1,6 @@
-// Models para Badge em Dart - Simplify Backend
-// Baseado nas interfaces TypeScript do backend
 
 import 'dart:convert';
 
-/// Classe base para payload da badge
 class BadgePayload {
   final String userId;
   final double amount;
@@ -48,7 +45,6 @@ class BadgePayload {
   String toJsonString() => jsonEncode(toJson());
 }
 
-/// Classe para payload da badge de cartão (extends BadgePayload)
 class CardBadgePayload extends BadgePayload {
   final String cardNumber;
   final String expirationYear;
@@ -98,7 +94,6 @@ class CardBadgePayload extends BadgePayload {
   }
 }
 
-/// Dados do agendamento de serviço
 class ServiceSchedulingData {
   final String idCliente;
   final TipoLimpeza tipoLimpeza;
@@ -151,7 +146,6 @@ class ServiceSchedulingData {
   }
 }
 
-/// Serviços extras
 class ServicosExtras {
   final bool produtosInclusos;
   final double produtosValor; // 0 se não tiver
@@ -184,7 +178,6 @@ class ServicosExtras {
   }
 }
 
-/// Endereço completo
 class Endereco {
   final String rua;
   final String numero;
@@ -230,7 +223,6 @@ class Endereco {
   }
 }
 
-/// Enum para tipo de limpeza
 enum TipoLimpeza {
   pesada('pesada'),
   padrao('padrao'),
@@ -253,7 +245,6 @@ enum TipoLimpeza {
   }
 }
 
-/// Enum para tipo de imóvel
 enum TipoImovel {
   studio('studio'),
   apartamento('apartamento'),
@@ -276,14 +267,12 @@ enum TipoImovel {
   }
 }
 
-/// Builder para facilitar a criação de badges
 class BadgeBuilder {
   String? _userId;
   double? _amount;
   int? _timestamp;
   ServiceSchedulingData? _serviceData;
 
-  // Dados do cartão (opcionais)
   String? _cardNumber;
   String? _expirationYear;
   String? _expirationMonth;
@@ -327,7 +316,6 @@ class BadgeBuilder {
     return this;
   }
 
-  /// Constrói uma badge PIX
   BadgePayload buildPixBadge() {
     if (_userId == null || _amount == null) {
       throw ArgumentError('userId and amount are required');
@@ -341,7 +329,6 @@ class BadgeBuilder {
     );
   }
 
-  /// Constrói uma badge de cartão
   CardBadgePayload buildCardBadge() {
     if (_userId == null || _amount == null) {
       throw ArgumentError('userId and amount are required');
@@ -366,7 +353,6 @@ class BadgeBuilder {
   }
 }
 
-/// Builder para dados do serviço
 class ServiceDataBuilder {
   String? _idCliente;
   TipoLimpeza? _tipoLimpeza;

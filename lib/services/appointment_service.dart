@@ -6,7 +6,6 @@ class AppointmentService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  /// Busca todos os agendamentos do usuário atual
   Stream<List<AppointmentModel>> getUserAppointments() {
     final currentUser = _auth.currentUser;
     if (currentUser == null) {
@@ -22,7 +21,6 @@ class AppointmentService {
         return AppointmentModel.fromFirestore(doc.data(), doc.id);
       }).toList();
       
-      // Ordenar por data no cliente
       appointments.sort((a, b) {
         try {
           final dateA = DateTime.parse(a.data);
@@ -37,7 +35,6 @@ class AppointmentService {
     });
   }
 
-  /// Busca agendamentos futuros do usuário
   Stream<List<AppointmentModel>> getUpcomingAppointments() {
     final currentUser = _auth.currentUser;
     if (currentUser == null) {
@@ -62,11 +59,9 @@ class AppointmentService {
             upcomingAppointments.add(appointmentModel);
           }
         } catch (e) {
-          // Data inválida, ignora o documento
         }
       }
       
-      // Ordenar por data (próximo primeiro)
       upcomingAppointments.sort((a, b) {
         try {
           final dateA = DateTime.parse(a.data);
@@ -81,7 +76,6 @@ class AppointmentService {
     });
   }
 
-  /// Busca histórico de agendamentos (passados)
   Stream<List<AppointmentModel>> getAppointmentHistory() {
     final currentUser = _auth.currentUser;
     if (currentUser == null) {
@@ -106,11 +100,9 @@ class AppointmentService {
             pastAppointments.add(appointmentModel);
           }
         } catch (e) {
-          // Data inválida, ignora o documento
         }
       }
       
-      // Ordenar por data (mais recente primeiro)
       pastAppointments.sort((a, b) {
         try {
           final dateA = DateTime.parse(a.data);
@@ -125,7 +117,6 @@ class AppointmentService {
     });
   }
 
-  /// Busca um agendamento específico por ID
   Future<AppointmentModel?> getAppointmentById(String appointmentId) async {
     try {
       final doc = await _firestore
@@ -143,7 +134,6 @@ class AppointmentService {
     }
   }
 
-  /// Cancela um agendamento (atualiza o status)
   Future<bool> cancelAppointment(String appointmentId) async {
     try {
       await _firestore
@@ -160,7 +150,6 @@ class AppointmentService {
     }
   }
 
-  /// Conta total de agendamentos do usuário
   Future<int> getTotalAppointmentsCount() async {
     final currentUser = _auth.currentUser;
     if (currentUser == null) return 0;
@@ -178,7 +167,6 @@ class AppointmentService {
     }
   }
 
-  /// Busca agendamentos por status de pagamento
   Stream<List<AppointmentModel>> getAppointmentsByPaymentStatus(String status) {
     final currentUser = _auth.currentUser;
     if (currentUser == null) {

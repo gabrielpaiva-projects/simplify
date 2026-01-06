@@ -13,7 +13,6 @@ abstract class BaseRepository {
     required this.logger,
   });
 
-  /// Execute a remote operation with error handling
   Future<Either<Failure, T>> executeRemote<T>(
     Future<T> Function() operation, {
     String? operationName,
@@ -60,7 +59,6 @@ abstract class BaseRepository {
     }
   }
 
-  /// Execute a local/cache operation with error handling
   Future<Either<Failure, T>> executeLocal<T>(
     Future<T> Function() operation, {
     String? operationName,
@@ -84,7 +82,6 @@ abstract class BaseRepository {
     }
   }
 
-  /// Execute a synchronous operation with error handling
   Either<Failure, T> executeSync<T>(
     T Function() operation, {
     String? operationName,

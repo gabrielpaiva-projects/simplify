@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/notification_model.dart';
 
-/// Serviço para gerenciar notificações em memória e armazenamento local
 class NotificationStorageService extends ChangeNotifier {
   static const String _notificationsKey = 'stored_notifications';
   static const int _maxNotifications = 100; // Limite máximo de notificações armazenadas
@@ -11,19 +10,14 @@ class NotificationStorageService extends ChangeNotifier {
   final List<NotificationModel> _notifications = [];
   SharedPreferences? _prefs;
 
-  /// Lista de notificações (mais recentes primeiro)
   List<NotificationModel> get notifications => List.unmodifiable(_notifications);
 
-  /// Número total de notificações
   int get totalCount => _notifications.length;
 
-  /// Número de notificações não lidas
   int get unreadCount => _notifications.where((n) => !n.isRead).length;
 
-  /// Se há notificações não lidas
   bool get hasUnreadNotifications => unreadCount > 0;
 
-  /// Inicializar o serviço e carregar notificações salvas
   Future<void> initialize() async {
     try {
       _prefs = await SharedPreferences.getInstance();
@@ -34,7 +28,6 @@ class NotificationStorageService extends ChangeNotifier {
     }
   }
 
-  /// Carregar notificações do armazenamento local
   Future<void> _loadNotificationsFromStorage() async {
     try {
       final notificationsJson = _prefs?.getStringList(_notificationsKey) ?? [];
@@ -50,7 +43,6 @@ class NotificationStorageService extends ChangeNotifier {
         }
       }
       
-      // Ordenar por data (mais recentes primeiro)
       _notifications.sort((a, b) => b.receivedAt.compareTo(a.receivedAt));
       
     } catch (e) {
@@ -58,7 +50,6 @@ class NotificationStorageService extends ChangeNotifier {
     }
   }
 
-  /// Salvar notificações no armazenamento local
   Future<void> _saveNotificationsToStorage() async {
     try {
       final notificationsJson = _notifications
@@ -71,25 +62,20 @@ class NotificationStorageService extends ChangeNotifier {
     }
   }
 
-  /// Adicionar nova notificação
   Future<void> addNotification(NotificationModel notification) async {
     try {
-      // Verificar se já existe uma notificação com o mesmo ID
       final existingIndex = _notifications.indexWhere((n) => n.id == notification.id);
       if (existingIndex != -1) {
         debugPrint('Notification with ID ${notification.id} already exists, skipping');
         return;
       }
 
-      // Adicionar no início da lista (mais recente)
       _notifications.insert(0, notification);
 
-      // Limitar o número de notificações
       if (_notifications.length > _maxNotifications) {
         _notifications.removeRange(_maxNotifications, _notifications.length);
       }
 
-      // Salvar e notificar listeners
       await _saveNotificationsToStorage();
       notifyListeners();
       
@@ -99,7 +85,6 @@ class NotificationStorageService extends ChangeNotifier {
     }
   }
 
-  /// Marcar notificação como lida
   Future<void> markAsRead(String notificationId) async {
     try {
       final index = _notifications.indexWhere((n) => n.id == notificationId);
@@ -117,7 +102,6 @@ class NotificationStorageService extends ChangeNotifier {
     }
   }
 
-  /// Marcar todas as notificações como lidas
   Future<void> markAllAsRead() async {
     try {
       bool hasChanges = false;
@@ -138,7 +122,6 @@ class NotificationStorageService extends ChangeNotifier {
     }
   }
 
-  /// Remover notificação
   Future<void> removeNotification(String notificationId) async {
     try {
       final index = _notifications.indexWhere((n) => n.id == notificationId);
@@ -153,7 +136,6 @@ class NotificationStorageService extends ChangeNotifier {
     }
   }
 
-  /// Limpar todas as notificações
   Future<void> clearAllNotifications() async {
     try {
       _notifications.clear();
@@ -165,7 +147,6 @@ class NotificationStorageService extends ChangeNotifier {
     }
   }
 
-  /// Obter notificação por ID
   NotificationModel? getNotificationById(String id) {
     try {
       return _notifications.firstWhere((n) => n.id == id);
@@ -174,17 +155,14 @@ class NotificationStorageService extends ChangeNotifier {
     }
   }
 
-  /// Obter notificações por tipo
   List<NotificationModel> getNotificationsByType(String type) {
     return _notifications.where((n) => n.type == type).toList();
   }
 
-  /// Obter notificações não lidas
   List<NotificationModel> getUnreadNotifications() {
     return _notifications.where((n) => !n.isRead).toList();
   }
 
-  /// Limpar notificações antigas (mais de 30 dias)
   Future<void> cleanupOldNotifications() async {
     try {
       final cutoffDate = DateTime.now().subtract(const Duration(days: 30));

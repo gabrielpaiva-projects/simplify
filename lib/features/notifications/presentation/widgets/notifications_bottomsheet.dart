@@ -41,7 +41,6 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet>
     ));
     _animationController.forward();
 
-    // Limpar notificações antigas ao abrir
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<NotificationStorageService>().cleanupOldNotifications();
     });
@@ -70,7 +69,6 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet>
         ),
         child: Column(
           children: [
-            // Handle bar
             Container(
               margin: const EdgeInsets.only(top: 12),
               width: 40,
@@ -81,10 +79,8 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet>
               ),
             ),
             
-            // Header
             _buildHeader(),
             
-            // Content
             Expanded(
               child: Consumer<NotificationStorageService>(
                 builder: (context, notificationService, child) {
@@ -96,10 +92,8 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet>
                   
                   return Column(
                     children: [
-                      // Stats card
                       if (notifications.isNotEmpty) _buildStatsCard(notificationService),
                       
-                      // Notifications list
                       Expanded(
                         child: ListView.builder(
                           padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
@@ -335,7 +329,6 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet>
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  // Icon
                   Container(
                     width: 44,
                     height: 44,
@@ -351,7 +344,6 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet>
                   ),
                   const SizedBox(width: 12),
                   
-                  // Content
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -484,15 +476,12 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet>
   }
 
   void _handleNotificationTap(NotificationModel notification, NotificationStorageService service) {
-    // Marcar como lida
     if (!notification.isRead) {
       service.markAsRead(notification.id);
     }
 
-    // Fechar bottomsheet
     Navigator.of(context).pop();
 
-    // TODO: Implementar navegação baseada no tipo
     final type = notification.type;
     switch (type) {
       case 'appointment':

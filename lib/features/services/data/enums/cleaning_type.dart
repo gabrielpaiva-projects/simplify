@@ -1,4 +1,3 @@
-// Enum for cleaning service types
 enum CleaningType {
   standard('cleaning_pricing'), // Limpeza padrão
   heavy('limpeza_pesada');      // Limpeza pesada
@@ -7,7 +6,6 @@ enum CleaningType {
   
   const CleaningType(this.documentName);
   
-  // Get display name in Portuguese
   String get displayName {
     switch (this) {
       case CleaningType.standard:
@@ -17,7 +15,6 @@ enum CleaningType {
     }
   }
   
-  // Get short name for UI
   String get shortName {
     switch (this) {
       case CleaningType.standard:
@@ -27,7 +24,6 @@ enum CleaningType {
     }
   }
   
-  // Factory method to create from string
   static CleaningType fromString(String value) {
     switch (value.toLowerCase()) {
       case 'standard':

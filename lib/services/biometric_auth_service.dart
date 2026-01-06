@@ -5,7 +5,6 @@ import 'package:local_auth/error_codes.dart' as auth_error;
 class BiometricAuthService {
   static final LocalAuthentication _localAuth = LocalAuthentication();
 
-  /// Verifica se o dispositivo suporta biometria
   static Future<bool> isBiometricAvailable() async {
     try {
       final bool canCheckBiometrics = await _localAuth.canCheckBiometrics;
@@ -25,12 +24,10 @@ class BiometricAuthService {
     }
   }
 
-  /// Autentica o usuário usando biometria
   static Future<BiometricAuthResult> authenticate({
     String reason = 'Por favor, autentique-se para continuar',
   }) async {
     try {
-      // Verifica se biometria está disponível
       final bool isAvailable = await isBiometricAvailable();
       
       if (!isAvailable) {
@@ -41,7 +38,6 @@ class BiometricAuthService {
         );
       }
 
-      // Tenta autenticar
       final bool didAuthenticate = await _localAuth.authenticate(
         localizedReason: reason,
         options: const AuthenticationOptions(
@@ -113,7 +109,6 @@ class BiometricAuthService {
     }
   }
 
-  /// Verifica quais tipos de biometria estão disponíveis
   static Future<List<BiometricType>> getAvailableBiometrics() async {
     try {
       return await _localAuth.getAvailableBiometrics();
@@ -123,7 +118,6 @@ class BiometricAuthService {
     }
   }
 
-  /// Cancela a autenticação em andamento
   static Future<bool> cancelAuthentication() async {
     try {
       return await _localAuth.stopAuthentication();
@@ -134,7 +128,6 @@ class BiometricAuthService {
   }
 }
 
-/// Resultado da autenticação biométrica
 class BiometricAuthResult {
   final bool isAuthenticated;
   final BiometricError? error;
@@ -147,7 +140,6 @@ class BiometricAuthResult {
   });
 }
 
-/// Tipos de erro de autenticação biométrica
 enum BiometricError {
   notAvailable,
   notEnrolled,

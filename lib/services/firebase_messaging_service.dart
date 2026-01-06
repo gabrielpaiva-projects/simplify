@@ -22,23 +22,17 @@ class FirebaseMessagingService {
   NotificationOverlayService? _overlayService;
   NotificationStorageService? _storageService;
 
-  /// Inicializar o serviço de mensagens
   Future<void> initialize() async {
     try {
-      // Inicializar referência aos serviços
       _overlayService = di.sl<NotificationOverlayService>();
       _storageService = di.sl<NotificationStorageService>();
       
-      // Inicializar o storage service
       await _storageService!.initialize();
       
-      // Solicitar permissões para notificações
       await _requestPermissions();
       
-      // Obter e salvar o token FCM
       await _getAndSaveToken();
       
-      // Configurar listeners
       _setupTokenRefreshListener();
       _setupMessageListeners();
       
@@ -48,7 +42,6 @@ class FirebaseMessagingService {
     }
   }
 
-  /// Solicitar permissões para notificações
   Future<void> _requestPermissions() async {
     try {
       NotificationSettings settings = await _messaging.requestPermission(
@@ -73,7 +66,6 @@ class FirebaseMessagingService {
     }
   }
 
-  /// Obter o token FCM e salvá-lo no Firestore
   Future<void> _getAndSaveToken() async {
     try {
       final token = await _messaging.getToken();
@@ -87,7 +79,6 @@ class FirebaseMessagingService {
     }
   }
 
-  /// Salvar o token no Firestore
   Future<void> _saveTokenToFirestore(String token) async {
     try {
       final user = _auth.currentUser;
@@ -106,8 +97,6 @@ class FirebaseMessagingService {
         'isActive': true,
       };
 
-      // Salvar na collection 'tokens' usando o token como ID do documento
-      // Isso evita duplicatas do mesmo token
       await _firestore.collection('tokens').doc(token).set(
         tokenData,
         SetOptions(merge: true),
@@ -119,7 +108,6 @@ class FirebaseMessagingService {
     }
   }
 
-  /// Configurar listener para refresh do token
   void _setupTokenRefreshListener() {
     _messaging.onTokenRefresh.listen((newToken) async {
       _logger.i('FCM Token refreshed');
@@ -128,25 +116,20 @@ class FirebaseMessagingService {
     });
   }
 
-  /// Configurar listeners para mensagens
   void _setupMessageListeners() {
-    // Mensagens em foreground
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       _logger.i('Received message in foreground: ${message.messageId}');
       _handleMessage(message);
     });
 
-    // Mensagens quando o app é aberto via notificação
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       _logger.i('App opened from notification: ${message.messageId}');
       _handleMessage(message);
     });
 
-    // Verificar se o app foi aberto via notificação quando estava fechado
     _checkInitialMessage();
   }
 
-  /// Verificar mensagem inicial (quando o app foi aberto via notificação)
   Future<void> _checkInitialMessage() async {
     try {
       final initialMessage = await _messaging.getInitialMessage();
@@ -159,7 +142,6 @@ class FirebaseMessagingService {
     }
   }
 
-  /// Tratar mensagens recebidas
   void _handleMessage(RemoteMessage message) {
     _logger.i('Handling message: ${message.notification?.title}');
     
@@ -167,15 +149,12 @@ class FirebaseMessagingService {
       _logger.i('Message data: ${message.data}');
     }
     
-    // Salvar notificação no storage
     _saveNotificationToStorage(message);
     
-    // Mostrar badge de notificação quando o app estiver em foreground
     if (_overlayService != null) {
       if (_overlayService!.isReady) {
         _overlayService!.showNotificationBadge(message);
       } else {
-        // Aguardar um pouco para garantir que o contexto esteja disponível
         Future.delayed(const Duration(milliseconds: 500), () {
           if (_overlayService!.isReady) {
             _overlayService!.showNotificationBadge(message);
@@ -189,7 +168,6 @@ class FirebaseMessagingService {
     }
   }
 
-  /// Salvar notificação recebida no storage
   void _saveNotificationToStorage(RemoteMessage message) {
     try {
       if (_storageService != null) {
@@ -204,14 +182,11 @@ class FirebaseMessagingService {
     }
   }
 
-  /// Obter o token atual
   String? get currentToken => _currentToken;
 
-  /// Invalidar token (quando o usuário faz logout)
   Future<void> invalidateToken() async {
     try {
       if (_currentToken != null) {
-        // Marcar o token como inativo no Firestore
         await _firestore.collection('tokens').doc(_currentToken!).update({
           'isActive': false,
           'invalidatedAt': FieldValue.serverTimestamp(),
@@ -226,13 +201,11 @@ class FirebaseMessagingService {
     }
   }
 
-  /// Limpar tokens antigos/inativos do usuário atual
   Future<void> cleanupOldTokens() async {
     try {
       final user = _auth.currentUser;
       if (user == null) return;
 
-      // Buscar todos os tokens do usuário
       final query = await _firestore
           .collection('tokens')
           .where('userId', isEqualTo: user.uid)
@@ -244,7 +217,6 @@ class FirebaseMessagingService {
         final data = doc.data();
         final tokenCreatedAt = data['createdAt'] as Timestamp?;
         
-        // Remover tokens com mais de 30 dias ou inativos
         if (tokenCreatedAt != null) {
           final tokenAge = DateTime.now().difference(tokenCreatedAt.toDate());
           if (tokenAge.inDays > 30 || data['isActive'] == false) {
@@ -260,7 +232,6 @@ class FirebaseMessagingService {
     }
   }
 
-  /// Obter plataforma atual
   String _getPlatform() {
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       return 'ios';
@@ -271,7 +242,6 @@ class FirebaseMessagingService {
     }
   }
 
-  /// Subscrever a um tópico
   Future<void> subscribeToTopic(String topic) async {
     try {
       await _messaging.subscribeToTopic(topic);
@@ -281,7 +251,6 @@ class FirebaseMessagingService {
     }
   }
 
-  /// Desinscrever de um tópico
   Future<void> unsubscribeFromTopic(String topic) async {
     try {
       await _messaging.unsubscribeFromTopic(topic);
@@ -291,7 +260,6 @@ class FirebaseMessagingService {
     }
   }
 
-  /// Deletar token completamente (para casos específicos)
   Future<void> deleteToken() async {
     try {
       await _messaging.deleteToken();
@@ -306,14 +274,11 @@ class FirebaseMessagingService {
   }
 }
 
-// Handler para mensagens em background
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   final logger = Logger();
   logger.i('Handling background message: ${message.messageId}');
   
-  // Aqui você pode implementar lógica específica para mensagens em background
-  // Por exemplo, salvar dados localmente, mostrar notificação personalizada, etc.
 }
 
 

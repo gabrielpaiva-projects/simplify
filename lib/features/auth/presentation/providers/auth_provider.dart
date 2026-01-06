@@ -23,7 +23,6 @@ class AuthProvider extends ChangeNotifier {
     _init();
   }
 
-  // Estados
   AuthStatus _status = AuthStatus.initial;
   User? _user;
   UserType? _userType;
@@ -33,7 +32,6 @@ class AuthProvider extends ChangeNotifier {
   bool _isProfessionalVerified = false;
   bool _isBlocked = false;
 
-  // Getters
   AuthStatus get status => _status;
   User? get user => _user;
   UserType? get userType => _userType;
@@ -45,14 +43,11 @@ class AuthProvider extends ChangeNotifier {
   bool get isProfessionalVerified => _isProfessionalVerified;
   bool get isBlocked => _isBlocked;
 
-  // Inicializar provider
   void _init() {
     _authRepository.authStateChanges.listen((User? user) async {
       _user = user;
       if (user != null) {
         await _loadUserData();
-        // Reinicializar o FCM service quando o usuário fizer login
-        // para garantir que o token seja salvo com o novo usuário
         await _messagingService.initialize();
         _status = AuthStatus.authenticated;
       } else {
@@ -64,7 +59,6 @@ class AuthProvider extends ChangeNotifier {
     });
   }
 
-  // Carregar dados do usuário
   Future<void> _loadUserData() async {
     if (_user == null) return;
 
@@ -76,7 +70,6 @@ class AuthProvider extends ChangeNotifier {
       (data) {
         _userData = data;
         if (data != null) {
-          // Verificar se a conta está bloqueada (para todos os tipos de usuário)
           _isBlocked = data['isBlocked'] ?? false;
           
           final typeString = data['userType'] as String?;
@@ -99,7 +92,6 @@ class AuthProvider extends ChangeNotifier {
     );
   }
 
-  // Login
   Future<bool> signIn({
     required String email,
     required String password,
@@ -116,10 +108,8 @@ class AuthProvider extends ChangeNotifier {
       final credential = result.getOrElse(() => null);
       _user = credential?.user;
       
-      // Carregar dados do usuário imediatamente após o login
       if (_user != null) {
         await _loadUserData();
-        // Limpar tokens antigos e garantir que o token atual esteja salvo
         await _messagingService.cleanupOldTokens();
       }
       
@@ -133,7 +123,6 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // Cadastro de Cliente
   Future<bool> signUpClient({
     required ClientModel client,
   }) async {
@@ -157,7 +146,6 @@ class AuthProvider extends ChangeNotifier {
     );
   }
 
-  // Cadastro de Profissional
   Future<bool> signUpProfessional({
     required ProfessionalModel professional,
   }) async {
@@ -183,12 +171,10 @@ class AuthProvider extends ChangeNotifier {
     );
   }
 
-  // Logout
   Future<void> signOut() async {
     _setLoading(true);
     _clearError();
 
-    // Invalidar token FCM antes do logout
     await _messagingService.invalidateToken();
 
     final result = await _authRepository.signOut();
@@ -198,7 +184,6 @@ class AuthProvider extends ChangeNotifier {
         _setError(error);
       },
       (_) {
-        // Limpar todos os dados do usuário
         _user = null;
         _userData = null;
         _userType = null;
@@ -211,7 +196,6 @@ class AuthProvider extends ChangeNotifier {
     _setLoading(false);
   }
 
-  // Resetar senha
   Future<bool> resetPassword(String email) async {
     _setLoading(true);
     _clearError();
@@ -231,7 +215,6 @@ class AuthProvider extends ChangeNotifier {
     );
   }
 
-  // Verificar se email está em uso
   Future<bool> isEmailInUse(String email) async {
     final result = await _authRepository.isEmailInUse(email);
 
@@ -241,7 +224,6 @@ class AuthProvider extends ChangeNotifier {
     );
   }
 
-  // Verificar se CPF está em uso
   Future<bool> isCpfInUse(String cpf) async {
     final result = await _authRepository.isCpfInUse(cpf);
 
@@ -251,7 +233,6 @@ class AuthProvider extends ChangeNotifier {
     );
   }
 
-  // Recarregar dados do usuário
   Future<void> reloadUserData() async {
     if (_user != null) {
       await _loadUserData();
@@ -259,7 +240,6 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // Métodos auxiliares
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();
@@ -280,7 +260,6 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // Verificar profissional (apenas para admins)
   Future<bool> verifyProfessional(String professionalUid, bool verified) async {
     if (_userType != UserType.admin) {
       _setError('Apenas administradores podem verificar profissionais');
@@ -305,7 +284,6 @@ class AuthProvider extends ChangeNotifier {
     );
   }
 
-  // Obter profissionais não verificados (apenas para admins)
   Future<List<Map<String, dynamic>>> getUnverifiedProfessionals() async {
     if (_userType != UserType.admin) {
       _setError('Apenas administradores podem acessar esta lista');
@@ -323,7 +301,6 @@ class AuthProvider extends ChangeNotifier {
     );
   }
 
-  // Verificar se um profissional específico está verificado
   Future<bool> checkProfessionalVerification(String uid) async {
     final result = await _authRepository.isProfessionalVerified(uid);
 
@@ -333,7 +310,6 @@ class AuthProvider extends ChangeNotifier {
     );
   }
 
-  // Limpar provider
   @override
   void dispose() {
     super.dispose();

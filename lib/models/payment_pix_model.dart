@@ -40,7 +40,6 @@ class PaymentPixModel {
   });
 
   factory PaymentPixModel.fromFirestore(Map<String, dynamic> data, String documentId) {
-    // Verificações de segurança
     final serviceDataMap = data['serviceData'];
     
     final amount = (data['amount'] is num) ? (data['amount'] as num).toDouble() : 0.0;
@@ -75,7 +74,6 @@ class PaymentPixModel {
     return model;
   }
 
-  // Getters úteis
   String get formattedAmount {
     return 'R\$ ${amount.toStringAsFixed(2)}';
   }
@@ -104,8 +102,6 @@ class PaymentPixModel {
   }
 
   bool get isPending {
-    // Considera pendente se o status for PENDING, independente do lastWebhookEvent
-    // Isso cobre casos onde o lastWebhookEvent pode estar vazio ou diferente
     return status == 'PENDING';
   }
 

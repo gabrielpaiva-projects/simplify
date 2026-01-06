@@ -117,7 +117,6 @@ class DioClient {
     );
   }
 
-  // HTTP Methods
   Future<Response<T>> get<T>(
     String path, {
     Map<String, dynamic>? queryParameters,
@@ -216,12 +215,10 @@ class DioClient {
     }
   }
 
-  // Add auth token to headers
   void setAuthToken(String token) {
     _dio.options.headers['Authorization'] = 'Bearer $token';
   }
 
-  // Remove auth token from headers
   void removeAuthToken() {
     _dio.options.headers.remove('Authorization');
   }

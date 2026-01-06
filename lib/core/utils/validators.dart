@@ -19,7 +19,6 @@ class Validators {
     r'^\d{5}\-?\d{3}$',
   );
 
-  // Email validation
   static String? validateEmail(String? value) {
     if (value == null || value.isEmpty) {
       return 'E-mail é obrigatório';
@@ -30,7 +29,6 @@ class Validators {
     return null;
   }
 
-  // Password validation
   static String? validatePassword(String? value) {
     if (value == null || value.isEmpty) {
       return 'Senha é obrigatória';
@@ -41,7 +39,6 @@ class Validators {
     return null;
   }
 
-  // Strong password validation
   static String? validateStrongPassword(String? value) {
     if (value == null || value.isEmpty) {
       return 'Senha é obrigatória';
@@ -64,7 +61,6 @@ class Validators {
     return null;
   }
 
-  // Name validation
   static String? validateName(String? value) {
     if (value == null || value.isEmpty) {
       return 'Nome é obrigatório';
@@ -75,7 +71,6 @@ class Validators {
     return null;
   }
 
-  // Phone validation
   static String? validatePhone(String? value) {
     if (value == null || value.isEmpty) {
       return 'Telefone é obrigatório';
@@ -87,7 +82,6 @@ class Validators {
     return null;
   }
 
-  // CPF validation
   static String? validateCPF(String? value) {
     if (value == null || value.isEmpty) {
       return 'CPF é obrigatório';
@@ -99,12 +93,10 @@ class Validators {
       return 'CPF inválido';
     }
     
-    // Check for known invalid CPFs
     if (RegExp(r'^(\d)\1{10}$').hasMatch(cpf)) {
       return 'CPF inválido';
     }
     
-    // Validate CPF algorithm
     if (!_isValidCPF(cpf)) {
       return 'CPF inválido';
     }
@@ -112,7 +104,6 @@ class Validators {
     return null;
   }
 
-  // CNPJ validation
   static String? validateCNPJ(String? value) {
     if (value == null || value.isEmpty) {
       return 'CNPJ é obrigatório';
@@ -124,12 +115,10 @@ class Validators {
       return 'CNPJ inválido';
     }
     
-    // Check for known invalid CNPJs
     if (RegExp(r'^(\d)\1{13}$').hasMatch(cnpj)) {
       return 'CNPJ inválido';
     }
     
-    // Validate CNPJ algorithm
     if (!_isValidCNPJ(cnpj)) {
       return 'CNPJ inválido';
     }
@@ -137,7 +126,6 @@ class Validators {
     return null;
   }
 
-  // CEP validation
   static String? validateCEP(String? value) {
     if (value == null || value.isEmpty) {
       return 'CEP é obrigatório';
@@ -148,7 +136,6 @@ class Validators {
     return null;
   }
 
-  // Required field validation
   static String? validateRequired(String? value, String fieldName) {
     if (value == null || value.isEmpty) {
       return '$fieldName é obrigatório';
@@ -156,7 +143,6 @@ class Validators {
     return null;
   }
 
-  // Min length validation
   static String? Function(String?) validateMinLength(int minLength, String fieldName) {
     return (String? value) {
       if (value == null || value.isEmpty) {
@@ -169,7 +155,6 @@ class Validators {
     };
   }
 
-  // Max length validation
   static String? Function(String?) validateMaxLength(int maxLength, String fieldName) {
     return (String? value) {
       if (value != null && value.length > maxLength) {
@@ -179,7 +164,6 @@ class Validators {
     };
   }
 
-  // CPF algorithm validation
   static bool _isValidCPF(String cpf) {
     List<int> numbers = cpf.split('').map((e) => int.parse(e)).toList();
     
@@ -204,7 +188,6 @@ class Validators {
     return secondDigit == numbers[10];
   }
 
-  // CNPJ algorithm validation
   static bool _isValidCNPJ(String cnpj) {
     List<int> numbers = cnpj.split('').map((e) => int.parse(e)).toList();
     

@@ -66,7 +66,6 @@ class TermsAndConditionsStepState extends State<TermsAndConditionsStep> {
                   children: [
                     const SizedBox(height: 24),
                     
-                    // Title
                     const Text(
                       'Termos e Condições',
                       style: TextStyle(
@@ -89,7 +88,6 @@ class TermsAndConditionsStepState extends State<TermsAndConditionsStep> {
                     
                     const SizedBox(height: 24),
                     
-                    // Terms container with nested scroll
                     Container(
                       height: 400, // Fixed height for terms container
                       decoration: BoxDecoration(
@@ -103,22 +101,18 @@ class TermsAndConditionsStepState extends State<TermsAndConditionsStep> {
                         borderRadius: BorderRadius.circular(16),
                         child: Stack(
                           children: [
-                            // Terms text with nested scroll
                             NotificationListener<ScrollNotification>(
                               onNotification: (ScrollNotification notification) {
-                                // Allow scroll to pass through when at boundaries
                                 if (notification is OverscrollNotification) {
                                   return false; // Let parent handle overscroll
                                 }
                                 
                                 if (notification is ScrollUpdateNotification) {
-                                  // If we're at the top and trying to scroll up
                                   if (_scrollController.position.pixels <= 0 && 
                                       notification.scrollDelta! < 0) {
                                     return false; // Let parent handle
                                   }
                                   
-                                  // If we're at the bottom and trying to scroll down
                                   if (_scrollController.position.pixels >= 
                                       _scrollController.position.maxScrollExtent && 
                                       notification.scrollDelta! > 0) {
@@ -167,7 +161,6 @@ class TermsAndConditionsStepState extends State<TermsAndConditionsStep> {
                               ),
                             ),
                             
-                            // Gradient overlay at bottom if not scrolled
                             if (!_hasScrolledToBottom)
                               Positioned(
                                 bottom: 0,
@@ -217,7 +210,6 @@ class TermsAndConditionsStepState extends State<TermsAndConditionsStep> {
                     
                     const SizedBox(height: 24),
                     
-                    // Checkbox
                     GestureDetector(
                       onTap: _hasScrolledToBottom
                           ? () {
@@ -302,7 +294,6 @@ class TermsAndConditionsStepState extends State<TermsAndConditionsStep> {
                     
                     const SizedBox(height: 16),
                     
-                    // Privacy policy info
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(

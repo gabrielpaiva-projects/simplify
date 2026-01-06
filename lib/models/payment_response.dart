@@ -1,4 +1,3 @@
-/// Modelo de resposta base da API
 class ApiResponse<T> {
   final bool success;
   final T? data;
@@ -27,7 +26,6 @@ class ApiResponse<T> {
   }
 }
 
-/// Modelo de resposta de pagamento PIX
 class PixPaymentResponse {
   final String expirationDate;
   final double amount;
@@ -74,7 +72,6 @@ class PixPaymentResponse {
       };
 }
 
-/// Modelo de resposta de pagamento com Cartão
 class CardPaymentResponse {
   final String status;
   final String statusDetail;
@@ -101,7 +98,6 @@ class CardPaymentResponse {
   bool get isPending => status.toLowerCase() == 'pending';
   bool get isRejected => status.toLowerCase() == 'rejected';
   
-  // Manter compatibilidade com código existente
   bool get isApproved => isConfirmed;
 
   Map<String, dynamic> toJson() => {
@@ -112,7 +108,6 @@ class CardPaymentResponse {
       };
 }
 
-/// Modelo para informações do cartão (sem dados sensíveis para display)
 class CardDisplayInfo {
   final String lastFourDigits;
   final String brand;

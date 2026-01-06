@@ -64,7 +64,6 @@ class BaseConsumerWidget<T extends BaseState> extends StatelessWidget {
   }
 }
 
-/// Simplified consumer for when you only need the state
 class SimpleConsumer<T extends BaseState> extends StatelessWidget {
   final Widget Function(BuildContext, T) builder;
 
@@ -81,7 +80,6 @@ class SimpleConsumer<T extends BaseState> extends StatelessWidget {
   }
 }
 
-/// Selector widget for optimized rebuilds
 class StateSelector<T extends BaseState, S> extends StatelessWidget {
   final S Function(T) selector;
   final Widget Function(BuildContext, S, Widget?) builder;

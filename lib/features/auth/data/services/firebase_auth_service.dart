@@ -6,26 +6,20 @@ class FirebaseAuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Stream para observar mudanças no estado de autenticação
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  // Obter usuário atual
   User? get currentUser => _auth.currentUser;
 
-  // Criar conta para Cliente
   Future<UserCredential?> createClientAccount({
     required ClientModel client,
   }) async {
     try {
-      // Criar conta no Firebase Auth
       final credential = await _auth.createUserWithEmailAndPassword(
         email: client.email,
         password: client.password,
       );
 
-      // Salvar dados adicionais no Firestore
       if (credential.user != null) {
-        // Garantir que isBlocked seja false ao criar a conta
         final clientData = client.toJson();
         clientData['isBlocked'] = false;
         
@@ -34,7 +28,6 @@ class FirebaseAuthService {
           userData: clientData,
         );
 
-        // Atualizar nome do usuário no Firebase Auth
         await credential.user!.updateDisplayName(client.fullName);
       }
 
@@ -46,20 +39,16 @@ class FirebaseAuthService {
     }
   }
 
-  // Criar conta para Profissional
   Future<UserCredential?> createProfessionalAccount({
     required ProfessionalModel professional,
   }) async {
     try {
-      // Criar conta no Firebase Auth
       final credential = await _auth.createUserWithEmailAndPassword(
         email: professional.email,
         password: professional.password,
       );
 
-      // Salvar dados adicionais no Firestore
       if (credential.user != null) {
-        // Garantir que isVerified e isBlocked sejam false ao criar a conta
         final professionalData = professional.toJson();
         professionalData['isVerified'] = false; // Sempre false na criação
         professionalData['isBlocked'] = false; // Sempre false na criação
@@ -69,7 +58,6 @@ class FirebaseAuthService {
           userData: professionalData,
         );
 
-        // Atualizar nome do usuário no Firebase Auth
         await credential.user!.updateDisplayName(professional.fullName);
       }
 
@@ -81,7 +69,6 @@ class FirebaseAuthService {
     }
   }
 
-  // Criar conta para Admin (método protegido)
   Future<UserCredential?> createAdminAccount({
     required String email,
     required String password,
@@ -89,19 +76,16 @@ class FirebaseAuthService {
     required Map<String, dynamic> additionalData,
   }) async {
     try {
-      // Verificar se o usuário atual é admin
       final currentUserData = await getUserData(currentUser?.uid ?? '');
       if (currentUserData?['userType'] != 'admin') {
         throw Exception('Apenas administradores podem criar contas de admin');
       }
 
-      // Criar conta no Firebase Auth
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // Salvar dados adicionais no Firestore
       if (credential.user != null) {
         final adminData = {
           ...additionalData,
@@ -116,7 +100,6 @@ class FirebaseAuthService {
           userData: adminData,
         );
 
-        // Atualizar nome do usuário no Firebase Auth
         await credential.user!.updateDisplayName(fullName);
       }
 
@@ -128,7 +111,6 @@ class FirebaseAuthService {
     }
   }
 
-  // Login com email e senha
   Future<UserCredential?> signInWithEmailAndPassword({
     required String email,
     required String password,
@@ -147,7 +129,6 @@ class FirebaseAuthService {
     }
   }
 
-  // Logout
   Future<void> signOut() async {
     try {
       await _auth.signOut();
@@ -156,7 +137,6 @@ class FirebaseAuthService {
     }
   }
 
-  // Resetar senha
   Future<void> resetPassword(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email);
@@ -167,7 +147,6 @@ class FirebaseAuthService {
     }
   }
 
-  // Obter dados do usuário do Firestore
   Future<Map<String, dynamic>?> getUserData(String uid) async {
     try {
       final doc = await _firestore.collection('users').doc(uid).get();
@@ -180,7 +159,6 @@ class FirebaseAuthService {
     }
   }
 
-  // Obter tipo de usuário
   Future<UserType?> getUserType(String uid) async {
     try {
       final userData = await getUserData(uid);
@@ -203,7 +181,6 @@ class FirebaseAuthService {
     }
   }
 
-  // Atualizar dados do usuário
   Future<void> updateUserData({
     required String uid,
     required Map<String, dynamic> data,
@@ -218,7 +195,6 @@ class FirebaseAuthService {
     }
   }
 
-  // Verificar se email já está em uso
   Future<bool> isEmailInUse(String email) async {
     try {
       final methods = await _auth.fetchSignInMethodsForEmail(email);
@@ -228,7 +204,6 @@ class FirebaseAuthService {
     }
   }
 
-  // Verificar se CPF já está cadastrado
   Future<bool> isCpfInUse(String cpf) async {
     try {
       final query = await _firestore
@@ -242,17 +217,14 @@ class FirebaseAuthService {
     }
   }
 
-  // Salvar dados do usuário no Firestore
   Future<void> _saveUserToFirestore({
     required String uid,
     required Map<String, dynamic> userData,
   }) async {
     try {
-      // Remover a senha dos dados antes de salvar
       final dataToSave = Map<String, dynamic>.from(userData);
       dataToSave.remove('password');
       
-      // Adicionar timestamps
       dataToSave['uid'] = uid;
       dataToSave['createdAt'] = FieldValue.serverTimestamp();
       dataToSave['updatedAt'] = FieldValue.serverTimestamp();
@@ -263,7 +235,6 @@ class FirebaseAuthService {
     }
   }
 
-  // Tratamento de exceções do Firebase Auth
   String _handleAuthException(FirebaseAuthException e) {
     switch (e.code) {
       case 'weak-password':
@@ -289,13 +260,10 @@ class FirebaseAuthService {
     }
   }
 
-  // Verificar se o usuário está autenticado
   bool get isAuthenticated => currentUser != null;
 
-  // Obter o UID do usuário atual
   String? get currentUserId => currentUser?.uid;
 
-  // Verificar email do usuário
   Future<void> sendEmailVerification() async {
     try {
       await currentUser?.sendEmailVerification();
@@ -304,10 +272,8 @@ class FirebaseAuthService {
     }
   }
 
-  // Verificar se o email foi verificado
   bool get isEmailVerified => currentUser?.emailVerified ?? false;
 
-  // Recarregar dados do usuário
   Future<void> reloadUser() async {
     try {
       await currentUser?.reload();
@@ -316,7 +282,6 @@ class FirebaseAuthService {
     }
   }
 
-  // Verificar se o profissional está verificado
   Future<bool> isProfessionalVerified(String uid) async {
     try {
       final userData = await getUserData(uid);
@@ -329,22 +294,18 @@ class FirebaseAuthService {
     }
   }
 
-  // Atualizar status de verificação do profissional (apenas admin pode fazer isso)
   Future<void> verifyProfessional(String professionalUid, bool verified) async {
     try {
-      // Verificar se o usuário atual é admin
       final currentUserData = await getUserData(currentUser?.uid ?? '');
       if (currentUserData?['userType'] != 'admin') {
         throw Exception('Apenas administradores podem verificar profissionais');
       }
 
-      // Verificar se o usuário a ser verificado é um profissional
       final professionalData = await getUserData(professionalUid);
       if (professionalData?['userType'] != 'professional') {
         throw Exception('Apenas profissionais podem ser verificados');
       }
 
-      // Atualizar status de verificação
       await _firestore.collection('users').doc(professionalUid).update({
         'isVerified': verified,
         'verifiedAt': verified ? FieldValue.serverTimestamp() : null,
@@ -356,10 +317,8 @@ class FirebaseAuthService {
     }
   }
 
-  // Obter lista de profissionais não verificados (para admin)
   Future<List<Map<String, dynamic>>> getUnverifiedProfessionals() async {
     try {
-      // Verificar se o usuário atual é admin
       final currentUserData = await getUserData(currentUser?.uid ?? '');
       if (currentUserData?['userType'] != 'admin') {
         throw Exception('Apenas administradores podem acessar esta lista');
@@ -381,7 +340,6 @@ class FirebaseAuthService {
     }
   }
 
-  // Verificar se o usuário está bloqueado
   Future<bool> isUserBlocked(String uid) async {
     try {
       final userData = await getUserData(uid);
@@ -394,16 +352,13 @@ class FirebaseAuthService {
     }
   }
 
-  // Bloquear ou desbloquear usuário (apenas admin pode fazer isso)
   Future<void> blockUser(String userUid, bool blocked) async {
     try {
-      // Verificar se o usuário atual é admin
       final currentUserData = await getUserData(currentUser?.uid ?? '');
       if (currentUserData?['userType'] != 'admin') {
         throw Exception('Apenas administradores podem bloquear/desbloquear usuários');
       }
 
-      // Atualizar status de bloqueio
       await _firestore.collection('users').doc(userUid).update({
         'isBlocked': blocked,
         'blockedAt': blocked ? FieldValue.serverTimestamp() : null,
@@ -415,10 +370,8 @@ class FirebaseAuthService {
     }
   }
 
-  // Obter lista de usuários bloqueados (para admin)
   Future<List<Map<String, dynamic>>> getBlockedUsers() async {
     try {
-      // Verificar se o usuário atual é admin
       final currentUserData = await getUserData(currentUser?.uid ?? '');
       if (currentUserData?['userType'] != 'admin') {
         throw Exception('Apenas administradores podem acessar esta lista');

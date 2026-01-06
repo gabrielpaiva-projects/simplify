@@ -71,13 +71,11 @@ class AuthRepositoryImpl implements AuthRepository {
     required ClientModel client,
   }) async {
     try {
-      // Verificar se email já está em uso
       final emailInUse = await _authService.isEmailInUse(client.email);
       if (emailInUse) {
         return const Left('Este email já está cadastrado');
       }
 
-      // Verificar se CPF já está cadastrado
       final cpfInUse = await _authService.isCpfInUse(client.cpf);
       if (cpfInUse) {
         return const Left('Este CPF já está cadastrado');
@@ -97,13 +95,11 @@ class AuthRepositoryImpl implements AuthRepository {
     required ProfessionalModel professional,
   }) async {
     try {
-      // Verificar se email já está em uso
       final emailInUse = await _authService.isEmailInUse(professional.email);
       if (emailInUse) {
         return const Left('Este email já está cadastrado');
       }
 
-      // Verificar se CPF já está cadastrado
       final cpfInUse = await _authService.isCpfInUse(professional.cpf);
       if (cpfInUse) {
         return const Left('Este CPF já está cadastrado');

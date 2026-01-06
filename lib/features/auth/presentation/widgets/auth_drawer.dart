@@ -21,7 +21,6 @@ class AuthDrawer extends StatelessWidget {
           backgroundColor: isDarkMode ? AppColors.deepBlack : AppColors.iceWhite,
           child: Column(
             children: [
-              // Header
               DrawerHeader(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -37,7 +36,6 @@ class AuthDrawer extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    // Avatar
                     CircleAvatar(
                       radius: 35,
                       backgroundColor: Colors.white,
@@ -49,7 +47,6 @@ class AuthDrawer extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     
-                    // Nome do usuário
                     Text(
                       userData?['fullName'] ?? user?.displayName ?? 'Usuário',
                       style: const TextStyle(
@@ -60,7 +57,6 @@ class AuthDrawer extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     
-                    // Email
                     Text(
                       user?.email ?? '',
                       style: TextStyle(
@@ -70,7 +66,6 @@ class AuthDrawer extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     
-                    // Tipo de usuário e status de verificação
                     Row(
                       children: [
                         Container(
@@ -91,7 +86,6 @@ class AuthDrawer extends StatelessWidget {
                             ),
                           ),
                         ),
-                        // Mostrar badge de verificação para profissionais
                         if (userType == UserType.professional) ...[
                           const SizedBox(width: 8),
                           Container(
@@ -142,12 +136,10 @@ class AuthDrawer extends StatelessWidget {
                 ),
               ),
               
-              // Menu Items
               Expanded(
                 child: ListView(
                   padding: EdgeInsets.zero,
                   children: [
-                    // Perfil
                     ListTile(
                       leading: Icon(
                         Icons.person_outline,
@@ -161,11 +153,9 @@ class AuthDrawer extends StatelessWidget {
                       ),
                       onTap: () {
                         Navigator.pop(context);
-                        // TODO: Navegar para tela de perfil
                       },
                     ),
                     
-                    // Configurações
                     ListTile(
                       leading: Icon(
                         Icons.settings_outlined,
@@ -179,14 +169,11 @@ class AuthDrawer extends StatelessWidget {
                       ),
                       onTap: () {
                         Navigator.pop(context);
-                        // TODO: Navegar para tela de configurações
                       },
                     ),
                     
-                    // Divider
                     const Divider(),
                     
-                    // Informações da conta
                     if (userData != null) ...[
                       Padding(
                         padding: const EdgeInsets.symmetric(
@@ -205,7 +192,6 @@ class AuthDrawer extends StatelessWidget {
                         ),
                       ),
                       
-                      // CPF
                       if (userData['cpf'] != null)
                         _buildInfoTile(
                           'CPF',
@@ -213,7 +199,6 @@ class AuthDrawer extends StatelessWidget {
                           isDarkMode,
                         ),
                       
-                      // Telefone
                       if (userData['phone'] != null)
                         _buildInfoTile(
                           'Telefone',
@@ -221,7 +206,6 @@ class AuthDrawer extends StatelessWidget {
                           isDarkMode,
                         ),
                       
-                      // RG (apenas para profissionais)
                       if (userType == UserType.professional && userData['rg'] != null)
                         _buildInfoTile(
                           'RG',
@@ -232,7 +216,6 @@ class AuthDrawer extends StatelessWidget {
                       const Divider(),
                     ],
                     
-                    // Ajuda
                     ListTile(
                       leading: Icon(
                         Icons.help_outline,
@@ -246,11 +229,9 @@ class AuthDrawer extends StatelessWidget {
                       ),
                       onTap: () {
                         Navigator.pop(context);
-                        // TODO: Navegar para tela de ajuda
                       },
                     ),
                     
-                    // Sobre
                     ListTile(
                       leading: Icon(
                         Icons.info_outline,
@@ -264,14 +245,12 @@ class AuthDrawer extends StatelessWidget {
                       ),
                       onTap: () {
                         Navigator.pop(context);
-                        // TODO: Navegar para tela sobre
                       },
                     ),
                   ],
                 ),
               ),
               
-              // Logout button
               Container(
                 decoration: BoxDecoration(
                   border: Border(
@@ -295,7 +274,6 @@ class AuthDrawer extends StatelessWidget {
                     ),
                   ),
                   onTap: () async {
-                    // Confirmar logout
                     final shouldLogout = await showDialog<bool>(
                       context: context,
                       builder: (context) => AlertDialog(

@@ -179,7 +179,6 @@ class _ProfileMenuBottomSheet extends StatelessWidget {
           title: 'Meu Perfil',
           onTap: () {
             Navigator.pop(context);
-            // TODO: Navegar para tela de perfil
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Tela de perfil em desenvolvimento'),
@@ -194,7 +193,6 @@ class _ProfileMenuBottomSheet extends StatelessWidget {
           title: 'Meus Serviços',
           onTap: () {
             Navigator.pop(context);
-            // TODO: Navegar para tela de serviços do profissional
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Tela de serviços em desenvolvimento'),
@@ -209,7 +207,6 @@ class _ProfileMenuBottomSheet extends StatelessWidget {
           title: 'Notificações',
           onTap: () {
             Navigator.pop(context);
-            // TODO: Navegar para tela de notificações
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Tela de notificações em desenvolvimento'),
@@ -224,7 +221,6 @@ class _ProfileMenuBottomSheet extends StatelessWidget {
           title: 'Ajuda e Suporte',
           onTap: () {
             Navigator.pop(context);
-            // TODO: Navegar para tela de ajuda
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Tela de ajuda em desenvolvimento'),

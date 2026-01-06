@@ -5,11 +5,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 class StorageService {
   static final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  /// Faz upload da foto do rosto do profissional para o Firebase Storage
-  /// Retorna a URL de download da imagem
   static Future<String?> uploadProfileImage(File imageFile, {String? userId}) async {
     try {
-      // Usar userId fornecido ou obter do usuário atual
       String? targetUserId = userId;
       if (targetUserId == null) {
         final User? currentUser = FirebaseAuth.instance.currentUser;
@@ -19,19 +16,16 @@ class StorageService {
         targetUserId = currentUser.uid;
       }
 
-      // Verificar se o arquivo existe
       if (!await imageFile.exists()) {
         throw Exception('Arquivo de imagem não encontrado');
       }
 
-      // Criar referência única para a imagem
       final String fileName = 'profile_image_${targetUserId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final Reference storageRef = _storage
           .ref()
           .child('profile_images')
           .child(fileName);
 
-      // Configurar metadados da imagem
       final SettableMetadata metadata = SettableMetadata(
         contentType: 'image/jpeg',
         customMetadata: {
@@ -44,19 +38,15 @@ class StorageService {
       print('Iniciando upload da imagem: ${imageFile.path}');
       print('Tamanho do arquivo: ${await imageFile.length()} bytes');
 
-      // Fazer upload do arquivo
       final UploadTask uploadTask = storageRef.putFile(imageFile, metadata);
 
-      // Monitorar progresso do upload
       uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
         double progress = snapshot.bytesTransferred / snapshot.totalBytes;
         print('Upload progress: ${(progress * 100).toStringAsFixed(2)}%');
       });
 
-      // Aguardar conclusão do upload
       final TaskSnapshot snapshot = await uploadTask;
 
-      // Obter URL de download
       final String downloadUrl = await snapshot.ref.getDownloadURL();
 
       print('Upload concluído com sucesso. URL: $downloadUrl');
@@ -68,7 +58,6 @@ class StorageService {
     }
   }
 
-  /// Remove uma imagem do Firebase Storage usando sua URL
   static Future<bool> deleteImageByUrl(String imageUrl) async {
     try {
       final Reference ref = _storage.refFromURL(imageUrl);
@@ -80,10 +69,8 @@ class StorageService {
     }
   }
 
-  /// Faz upload do comprovante de endereço
   static Future<String?> uploadAddressProof(File file, {String? userId}) async {
     try {
-      // Usar userId fornecido ou obter do usuário atual
       String? targetUserId = userId;
       if (targetUserId == null) {
         final User? currentUser = FirebaseAuth.instance.currentUser;
@@ -93,12 +80,10 @@ class StorageService {
         targetUserId = currentUser.uid;
       }
 
-      // Verificar se o arquivo existe
       if (!await file.exists()) {
         throw Exception('Arquivo de comprovante não encontrado');
       }
 
-      // Determinar extensão do arquivo
       final String extension = file.path.split('.').last.toLowerCase();
       final String fileName = 'address_proof_${targetUserId}_${DateTime.now().millisecondsSinceEpoch}.$extension';
       
@@ -107,7 +92,6 @@ class StorageService {
           .child('address_proofs')
           .child(fileName);
 
-      // Configurar metadados
       final SettableMetadata metadata = SettableMetadata(
         contentType: _getContentType(extension),
         customMetadata: {
@@ -120,10 +104,8 @@ class StorageService {
       print('Iniciando upload do comprovante: ${file.path}');
       print('Tamanho do arquivo: ${await file.length()} bytes');
 
-      // Fazer upload
       final UploadTask uploadTask = storageRef.putFile(file, metadata);
       
-      // Monitorar progresso do upload
       uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
         double progress = snapshot.bytesTransferred / snapshot.totalBytes;
         print('Upload progress (comprovante): ${(progress * 100).toStringAsFixed(2)}%');
@@ -141,7 +123,6 @@ class StorageService {
     }
   }
 
-  /// Determina o content-type baseado na extensão do arquivo
   static String _getContentType(String extension) {
     switch (extension.toLowerCase()) {
       case 'pdf':

@@ -7,7 +7,6 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       
-      // Esquema de cores
       colorScheme: const ColorScheme.light(
         primary: AppColors.primaryGreen,
         secondary: AppColors.mediumGreen,
@@ -19,7 +18,6 @@ class AppTheme {
         onError: AppColors.iceWhite,
       ),
       
-      // AppBar
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.primaryGreen,
         foregroundColor: AppColors.iceWhite,
@@ -32,10 +30,8 @@ class AppTheme {
         ),
       ),
       
-      // Scaffold
       scaffoldBackgroundColor: AppColors.iceWhite,
       
-      // Input decoration
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.lightGrey,
@@ -71,7 +67,6 @@ class AppTheme {
         ),
       ),
       
-      // Elevated Button
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primaryGreen,
@@ -91,7 +86,6 @@ class AppTheme {
         ),
       ),
       
-      // Text Button
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primaryGreen,
@@ -102,7 +96,6 @@ class AppTheme {
         ),
       ),
       
-      // Text Theme
       textTheme: const TextTheme(
         headlineLarge: TextStyle(
           fontSize: 32,
@@ -136,7 +129,6 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       
-      // Esquema de cores
       colorScheme: const ColorScheme.dark(
         primary: AppColors.primaryGreen,
         secondary: AppColors.mediumGreen,
@@ -148,7 +140,6 @@ class AppTheme {
         onError: AppColors.iceWhite,
       ),
       
-      // AppBar
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.charcoalGrey,
         foregroundColor: AppColors.primaryText,
@@ -161,10 +152,8 @@ class AppTheme {
         ),
       ),
       
-      // Scaffold
       scaffoldBackgroundColor: AppColors.deepBlack,
       
-      // Input decoration
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.charcoalGrey.withValues(alpha: 0.3),
@@ -203,7 +192,6 @@ class AppTheme {
         ),
       ),
       
-      // Elevated Button
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primaryGreen,
@@ -223,7 +211,6 @@ class AppTheme {
         ),
       ),
       
-      // Text Button
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primaryGreen,
@@ -234,7 +221,6 @@ class AppTheme {
         ),
       ),
       
-      // Text Theme
       textTheme: const TextTheme(
         headlineLarge: TextStyle(
           fontSize: 32,

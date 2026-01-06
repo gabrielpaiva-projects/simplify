@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-/// Base class for all failures in the application
 abstract class Failure extends Equatable {
   final String message;
   final String? code;
@@ -14,7 +13,6 @@ abstract class Failure extends Equatable {
   List<Object?> get props => [message, code];
 }
 
-/// Server failure
 class ServerFailure extends Failure {
   const ServerFailure({
     required super.message,
@@ -22,7 +20,6 @@ class ServerFailure extends Failure {
   });
 }
 
-/// Cache failure
 class CacheFailure extends Failure {
   const CacheFailure({
     required super.message,
@@ -30,7 +27,6 @@ class CacheFailure extends Failure {
   });
 }
 
-/// Network failure
 class NetworkFailure extends Failure {
   const NetworkFailure({
     required super.message,
@@ -38,7 +34,6 @@ class NetworkFailure extends Failure {
   });
 }
 
-/// Validation failure
 class ValidationFailure extends Failure {
   final Map<String, List<String>>? errors;
 
@@ -52,7 +47,6 @@ class ValidationFailure extends Failure {
   List<Object?> get props => [message, code, errors];
 }
 
-/// Unknown failure
 class UnknownFailure extends Failure {
   const UnknownFailure({
     super.message = 'Um erro inesperado ocorreu',

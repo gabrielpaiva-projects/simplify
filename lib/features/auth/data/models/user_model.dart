@@ -1,4 +1,3 @@
-// Modelo base para usuário
 abstract class UserModel {
   final String cpf;
   final String fullName;
@@ -12,7 +11,7 @@ abstract class UserModel {
   final String city;
   final String state;
   final UserType userType;
-  final bool isBlocked; // Flag para bloquear conta
+  final bool isBlocked;
 
   UserModel({
     required this.cpf,
@@ -27,13 +26,12 @@ abstract class UserModel {
     required this.city,
     required this.state,
     required this.userType,
-    this.isBlocked = false, // Por padrão, conta não bloqueada
+    this.isBlocked = false,
   });
 
   Map<String, dynamic> toJson();
 }
 
-// Modelo para Cliente
 class ClientModel extends UserModel {
   ClientModel({
     required String cpf,
@@ -84,12 +82,11 @@ class ClientModel extends UserModel {
   }
 }
 
-// Modelo para Profissional
 class ProfessionalModel extends UserModel {
   final String rg;
-  final String? addressProofPath; // Caminho do comprovante de endereço
-  final String? profileImageUrl; // URL da foto do rosto no Firebase Storage
-  final bool isVerified; // Flag de verificação do profissional
+  final String? addressProofPath;
+  final String? profileImageUrl;
+  final bool isVerified;
 
   ProfessionalModel({
     required String cpf,
@@ -106,7 +103,7 @@ class ProfessionalModel extends UserModel {
     required String state,
     this.addressProofPath,
     this.profileImageUrl,
-    this.isVerified = false, // Por padrão, profissional não verificado
+    this.isVerified = false,
     bool isBlocked = false,
   }) : super(
           cpf: cpf,
@@ -148,7 +145,6 @@ class ProfessionalModel extends UserModel {
   }
 }
 
-// Enum para tipo de usuário
 enum UserType {
   client,
   professional,

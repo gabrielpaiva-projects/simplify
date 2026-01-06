@@ -29,7 +29,6 @@ class _ProfessionalAnalysisScreenState extends State<ProfessionalAnalysisScreen>
   void initState() {
     super.initState();
     
-    // Initialize animations
     _confettiController = AnimationController(
       duration: const Duration(seconds: 8), // Mais lento
       vsync: this,
@@ -78,13 +77,11 @@ class _ProfessionalAnalysisScreenState extends State<ProfessionalAnalysisScreen>
       curve: Curves.easeInOut,
     ));
     
-    // Start animations
     Future.delayed(const Duration(milliseconds: 200), () {
       _scaleController.forward();
       _fadeController.forward();
     });
     
-    // Generate premium confetti
     _generatePremiumConfetti();
   }
   
@@ -129,7 +126,6 @@ class _ProfessionalAnalysisScreenState extends State<ProfessionalAnalysisScreen>
       backgroundColor: const Color(0xFF0A0A0A),
       body: Stack(
         children: [
-          // Premium gradient background
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -144,7 +140,6 @@ class _ProfessionalAnalysisScreenState extends State<ProfessionalAnalysisScreen>
             ),
           ),
           
-          // Subtle pattern overlay
           Opacity(
             opacity: 0.03,
             child: Container(
@@ -157,7 +152,6 @@ class _ProfessionalAnalysisScreenState extends State<ProfessionalAnalysisScreen>
             ),
           ),
           
-          // Premium confetti animation
           AnimatedBuilder(
             animation: _confettiController,
             builder: (context, child) {
@@ -171,7 +165,6 @@ class _ProfessionalAnalysisScreenState extends State<ProfessionalAnalysisScreen>
             },
           ),
           
-          // Main content with glassmorphism
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -181,7 +174,6 @@ class _ProfessionalAnalysisScreenState extends State<ProfessionalAnalysisScreen>
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Premium success animation
                       ScaleTransition(
                         scale: _scaleAnimation,
                         child: AnimatedBuilder(
@@ -205,7 +197,6 @@ class _ProfessionalAnalysisScreenState extends State<ProfessionalAnalysisScreen>
                                 child: Stack(
                                   alignment: Alignment.center,
                                   children: [
-                                    // Outer glow ring
                                     Container(
                                       width: 160,
                                       height: 160,
@@ -220,7 +211,6 @@ class _ProfessionalAnalysisScreenState extends State<ProfessionalAnalysisScreen>
                                         ),
                                       ),
                                     ),
-                                    // Inner premium circle
                                     Container(
                                       width: 120,
                                       height: 120,
@@ -255,7 +245,6 @@ class _ProfessionalAnalysisScreenState extends State<ProfessionalAnalysisScreen>
                       
                       const SizedBox(height: 48),
                       
-                      // Premium title with shimmer
                       AnimatedBuilder(
                         animation: _shimmerAnimation,
                         builder: (context, child) {
@@ -292,7 +281,6 @@ class _ProfessionalAnalysisScreenState extends State<ProfessionalAnalysisScreen>
                       
                       const SizedBox(height: 16),
                       
-                      // Elegant subtitle
                       Text(
                         'Seu cadastro foi recebido',
                         style: TextStyle(
@@ -306,7 +294,6 @@ class _ProfessionalAnalysisScreenState extends State<ProfessionalAnalysisScreen>
                       
                       const SizedBox(height: 40),
                       
-                      // Premium glass card
                       ClipRRect(
                         borderRadius: BorderRadius.circular(24),
                         child: BackdropFilter(
@@ -330,7 +317,6 @@ class _ProfessionalAnalysisScreenState extends State<ProfessionalAnalysisScreen>
                             ),
                             child: Column(
                               children: [
-                                // Premium icon
                                 Container(
                                   padding: const EdgeInsets.all(20),
                                   decoration: BoxDecoration(
@@ -376,7 +362,6 @@ class _ProfessionalAnalysisScreenState extends State<ProfessionalAnalysisScreen>
                                 
                                 const SizedBox(height: 24),
                                 
-                                // Premium divider
                                 Container(
                                   height: 1,
                                   decoration: BoxDecoration(
@@ -392,7 +377,6 @@ class _ProfessionalAnalysisScreenState extends State<ProfessionalAnalysisScreen>
                                 
                                 const SizedBox(height: 24),
                                 
-                                // Email notification
                                 Row(
                                   children: [
                                     Container(
@@ -441,7 +425,6 @@ class _ProfessionalAnalysisScreenState extends State<ProfessionalAnalysisScreen>
                       
                       const SizedBox(height: 32),
                       
-                      // Process steps with premium design
                       Container(
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
@@ -483,7 +466,6 @@ class _ProfessionalAnalysisScreenState extends State<ProfessionalAnalysisScreen>
                       
                       const SizedBox(height: 48),
                       
-                      // Premium action button
                       Container(
                         width: double.infinity,
                         height: 60,
@@ -559,7 +541,6 @@ class _ProfessionalAnalysisScreenState extends State<ProfessionalAnalysisScreen>
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         children: [
-          // Step number with premium style
           Container(
             width: 48,
             height: 48,
@@ -636,7 +617,6 @@ class _ProfessionalAnalysisScreenState extends State<ProfessionalAnalysisScreen>
   }
 }
 
-// Premium Confetti Particle
 class ConfettiParticle {
   double x;
   double y;
@@ -660,7 +640,6 @@ class ConfettiParticle {
   });
 }
 
-// Premium Confetti Painter
 class PremiumConfettiPainter extends CustomPainter {
   final List<ConfettiParticle> particles;
   final double progress;
@@ -673,25 +652,20 @@ class PremiumConfettiPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     for (var particle in particles) {
-      // Movimento suave e lento
       particle.y = (particle.y + particle.speed * 0.002) % 1.2;
       
-      // Movimento lateral suave tipo folha caindo
       particle.x = particle.x + math.sin(progress * math.pi * 2 + particle.rotation) * 0.001;
       
-      // Fade out gradual quando chega no fim
       if (particle.y > 0.8) {
         particle.opacity = math.max(0, 1 - ((particle.y - 0.8) * 5));
       }
       
-      // Só desenha se visível
       if (particle.y < 0 || particle.y > 1.1 || particle.opacity <= 0) continue;
       
       final paint = Paint()
         ..color = particle.color.withOpacity(particle.opacity * 0.7)
         ..style = PaintingStyle.fill;
       
-      // Adiciona shimmer em algumas partículas
       if (particle.shimmer) {
         paint.maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
       }
@@ -705,7 +679,6 @@ class PremiumConfettiPainter extends CustomPainter {
       canvas.translate(position.dx, position.dy);
       canvas.rotate(particle.rotation + progress * math.pi * 0.5); // Rotação mais lenta
       
-      // Desenha formas premium
       switch (particle.shape) {
         case 0: // Círculo com gradiente
           final gradient = RadialGradient(

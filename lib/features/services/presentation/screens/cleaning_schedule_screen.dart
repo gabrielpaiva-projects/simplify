@@ -34,10 +34,8 @@ class CleaningScheduleScreen extends StatefulWidget {
 
 class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     with TickerProviderStateMixin {
-  // Pricing Provider
   late CleaningPricingProvider _pricingProvider;
   
-  // Animation Controllers
   late AnimationController _headerController;
   late AnimationController _cardController;
   late AnimationController _footerController;
@@ -45,7 +43,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   late AnimationController _pulseController;
   late AnimationController _pageTransitionController;
   
-  // Animations
   late Animation<double> _headerAnimation;
   late Animation<double> _cardAnimation;
   late Animation<double> _footerSlideAnimation;
@@ -53,15 +50,12 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   late Animation<double> _pulseAnimation;
   late Animation<double> _pageTransitionAnimation;
   
-  // Staggered animations for cards
   final List<AnimationController> _cardAnimationControllers = [];
   final List<Animation<double>> _cardAnimations = [];
   
-  // Page Controller
   final PageController _pageController = PageController();
   int _currentPage = 0;
   
-  // Payment related
   String _selectedPaymentMethod = 'credit_card';
   final _cardNumberController = TextEditingController();
   final _cardHolderController = TextEditingController();
@@ -72,7 +66,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   bool _pixCopied = false;
   bool _isProcessingPix = false;
   
-  // State
   String _selectedResidence = 'apartment';
   int _rooms = 2;
   int _bathrooms = 1;
@@ -87,10 +80,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   
   final ScrollController _scrollController = ScrollController();
   
-  // Available dates (next 14 days)
   late List<DateTime> _availableDates;
   
-  // Time slots
   final List<String> _morningSlots = ['08:00', '09:00', '10:00', '11:00'];
   final List<String> _afternoonSlots = ['14:00', '15:00', '16:00', '17:00', '18:00'];
 
@@ -100,13 +91,11 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     _initializeDates();
     _initializeAnimations();
     
-    // Initialize pricing provider with the correct cleaning type
     _pricingProvider = CleaningPricingProvider(
       initialType: widget.cleaningType,
     );
     _pricingProvider.addListener(_onPricingDataChanged);
     
-    // Load pricing data and calculate initial price
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadPricingData();
     });
@@ -132,7 +121,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   }
 
   void _initializeAnimations() {
-    // Header animation
     _headerController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -145,7 +133,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       curve: Curves.easeOutCubic,
     ));
     
-    // Main card animation
     _cardController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
@@ -158,7 +145,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       curve: Curves.easeOutBack,
     ));
     
-    // Footer animation
     _footerController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
@@ -171,7 +157,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       curve: Curves.easeOutCubic,
     ));
     
-    // Price animation
     _priceController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
@@ -184,7 +169,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       curve: Curves.easeInOut,
     ));
     
-    // Pulse animation for CTA button
     _pulseController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
@@ -197,7 +181,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       curve: Curves.easeInOut,
     ));
     
-    // Page transition animation
     _pageTransitionController = AnimationController(
       duration: const Duration(milliseconds: 400),
       vsync: this,
@@ -210,7 +193,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       curve: Curves.easeInOut,
     ));
     
-    // Initialize staggered card animations
     for (int i = 0; i < 6; i++) {
       final controller = AnimationController(
         duration: Duration(milliseconds: 400 + (i * 100)),
@@ -228,7 +210,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       );
     }
     
-    // Start animations
     _startAnimations();
   }
 
@@ -249,11 +230,9 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
 
   void _calculatePrice() {
     if (!_pricingProvider.hasData) {
-      // If pricing data is not loaded yet, skip calculation
       return;
     }
     
-    // Calculate price using the provider
     double base = _pricingProvider.calculatePrice(
       residenceType: _selectedResidence,
       rooms: _rooms,
@@ -262,7 +241,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       includePets: _includePets,
     );
     
-    // Calculate time using the provider
     int timeInMinutes = _pricingProvider.calculateTime(
       residenceType: _selectedResidence,
       rooms: _rooms,
@@ -297,7 +275,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       );
       _pageTransitionController.forward();
       
-      // Generate PIX code when entering payment page
       if (_currentPage == 2 && _selectedPaymentMethod == 'pix' && !_pixCodeGenerated) {
         _generatePixCode();
       }
@@ -315,7 +292,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
         curve: Curves.easeInOut,
       );
 
-      // Ensure animation is properly set for previous pages
       if (_currentPage > 0) {
         _pageTransitionController.forward();
       } else {
@@ -357,7 +333,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       backgroundColor: const Color(0xFFFAFBFD),
       body: Stack(
         children: [
-          // Background gradient
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -371,11 +346,9 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             ),
           ),
           
-          // Main content
           SafeArea(
             child: Column(
               children: [
-                // Animated Header
                 AnimatedBuilder(
                   animation: _headerAnimation,
                   builder: (context, child) {
@@ -386,10 +359,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                   },
                 ),
                 
-                // Progress Bar
                 _buildProgressBar(),
                 
-                // Page View
                 Expanded(
                   child: PageView(
                     controller: _pageController,
@@ -400,11 +371,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                       });
                     },
                     children: [
-                      // First Page - Service Configuration
                       _buildServiceConfigurationPage(),
-                      // Second Page - Date and Time Selection
                       _buildDateTimePage(),
-                      // Third Page - Payment
                       _buildPaymentPage(),
                     ],
                   ),
@@ -413,7 +381,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             ),
           ),
           
-          // Animated Footer
           Positioned(
             bottom: 0,
             left: 0,
@@ -449,7 +416,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       ),
       child: Row(
         children: [
-          // Back button
           GestureDetector(
             onTap: () {
               if (_currentPage > 0) {
@@ -474,7 +440,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           ),
           const SizedBox(width: 16),
           
-          // Title
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -531,7 +496,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             ),
           ),
           
-          // Help button
           GestureDetector(
             onTap: _showHelpModal,
             child: Container(
@@ -586,7 +550,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       ),
       child: Column(
         children: [
-          // Header
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
@@ -605,7 +568,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             ),
             child: Column(
               children: [
-                // Handle
                 Container(
                   width: 40,
                   height: 4,
@@ -676,14 +638,12 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             ),
           ),
 
-          // Content
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Step 1
                   _buildHelpStep(
                     step: 1,
                     title: 'Configure seu serviço',
@@ -694,7 +654,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
 
                   const SizedBox(height: 24),
 
-                  // Step 2
                   _buildHelpStep(
                     step: 2,
                     title: 'Escolha data e horário',
@@ -705,7 +664,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
 
                   const SizedBox(height: 24),
 
-                  // Step 3
                   _buildHelpStep(
                     step: 3,
                     title: 'Finalize o pagamento',
@@ -716,7 +674,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
 
                   const SizedBox(height: 32),
 
-                  // Additional Information
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -773,7 +730,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
 
                   const SizedBox(height: 32),
 
-                  // Contact
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -918,7 +874,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: Row(
         children: [
-          // Step 1 - Configuração
           Expanded(
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
@@ -929,7 +884,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             ),
           ),
           const SizedBox(width: 8),
-          // Step 2 - Data e Hora
           Expanded(
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
@@ -942,7 +896,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             ),
           ),
           const SizedBox(width: 8),
-          // Step 3 - Pagamento
           Expanded(
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
@@ -968,13 +921,10 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
         children: [
           const SizedBox(height: 20),
           
-          // Residence Type Section
           _buildAnimatedCard(0, _buildResidenceSection()),
           
-          // Room Details Section
           _buildAnimatedCard(1, _buildRoomDetailsSection()),
           
-          // Extra Services Section
           _buildAnimatedCard(2, _buildExtrasSection()),
           
           const SizedBox(height: 20),
@@ -991,11 +941,9 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
         children: [
           const SizedBox(height: 20),
 
-          // Date Selection Section
           AnimatedBuilder(
             animation: _pageTransitionAnimation,
             builder: (context, child) {
-              // Ensure content is always visible when on this page
               final animationValue = _currentPage == 1 ? 1.0 : _pageTransitionAnimation.value;
               return Transform.scale(
                 scale: 0.8 + (0.2 * animationValue),
@@ -1007,11 +955,9 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             },
           ),
 
-          // Time Selection Section
           AnimatedBuilder(
             animation: _pageTransitionAnimation,
             builder: (context, child) {
-              // Ensure content is always visible when on this page
               final animationValue = _currentPage == 1 ? 1.0 : _pageTransitionAnimation.value;
               return Transform.translate(
                 offset: Offset(0, 50 * (1 - animationValue)),
@@ -1097,7 +1043,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           ),
           const SizedBox(height: 20),
           
-          // Residence options
           Consumer<CleaningPricingProvider>(
             builder: (context, provider, child) {
               if (provider.isLoading) {
@@ -1280,7 +1225,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           ),
           const SizedBox(height: 20),
           
-          // Room counter
           _buildCounterRow(
             icon: Icons.weekend,
             label: 'Cômodos',
@@ -1304,7 +1248,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           
           const SizedBox(height: 16),
           
-          // Bathroom counter
           _buildCounterRow(
             icon: Icons.bathtub,
             label: 'Banheiros',
@@ -1483,7 +1426,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           ),
           const SizedBox(height: 20),
           
-          // Extra options
           Consumer<CleaningPricingProvider>(
             builder: (context, provider, child) {
               if (!provider.hasData) {
@@ -1684,7 +1626,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           ),
           const SizedBox(height: 20),
           
-          // Date grid
           SizedBox(
             height: 70,
             child: ListView.builder(
@@ -1821,7 +1762,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           ),
           const SizedBox(height: 20),
           
-          // Morning slots
           const Text(
             'Manhã',
             style: TextStyle(
@@ -1839,7 +1779,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           
           const SizedBox(height: 16),
           
-          // Afternoon slots
           const Text(
             'Tarde',
             style: TextStyle(
@@ -1915,22 +1854,18 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
 
 
   Widget _buildModernFooter() {
-    // Verifica se pode continuar baseado na página e método de pagamento
     bool canContinue = false;
 
     if (_currentPage == 2) {
-      // Página de pagamento
       if (_selectedPaymentMethod == 'pix') {
         canContinue = true; // Sempre pode prosseguir com PIX
       } else {
-        // Cartão: só se todos os campos estiverem preenchidos
         canContinue = _cardNumberController.text.length >= 16 &&
                      _cardHolderController.text.isNotEmpty &&
                      _expiryDateController.text.length >= 5 &&
                      _cvvController.text.length >= 3;
       }
     } else {
-      // Páginas anteriores
       canContinue = _currentPage == 0 || (_selectedDate != null && _selectedTime != null);
     }
 
@@ -1951,7 +1886,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Row(
             children: [
-              // Price display
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1986,7 +1920,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
 
               const SizedBox(width: 16),
 
-              // CTA Button - Smaller size
               Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
@@ -2019,7 +1952,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                       if (_currentPage < 2) {
                         _goToNextPage();
                       } else {
-                        // Página de pagamento - sempre chama _confirmSchedule que já tem a lógica correta
                         _confirmSchedule();
                       }
                     } : null,
@@ -2121,7 +2053,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   }
 
   String _formatCurrency(double value) {
-    // Formatar para Real brasileiro: R$ 1.234,56
     final formatter = NumberFormat.currency(
       locale: 'pt_BR',
       symbol: 'R\$',
@@ -2130,7 +2061,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     return formatter.format(value);
   }
 
-  // Método auxiliar para obter dados do usuário do Firestore
   Future<Map<String, dynamic>> _getUserData() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
@@ -2149,19 +2079,15 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     return userDoc.data()!;
   }
 
-  // Método para preparar os dados completos do agendamento usando o modelo estruturado
   Future<ServiceSchedulingData> _prepareBookingData() async {
     final userData = await _getUserData();
     
-    // Formatar a data selecionada
     final selectedDateTime = _selectedDate ?? DateTime.now();
     final formattedDate = selectedDateTime.toIso8601String();
     
-    // Obter valores reais do provider de preços
     final productsPrice = _includeProducts ? _pricingProvider.getProductsPrice() : 0.0;
     final petsPrice = _includePets ? _pricingProvider.getPetsPrice() : 0.0;
     
-    // Preparar serviços extras com valores do Firestore
     final servicosExtras = ServicosExtras(
       produtosInclusos: _includeProducts,
       produtosValor: productsPrice,
@@ -2169,7 +2095,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       petsValor: petsPrice,
     );
     
-    // Preparar endereço do usuário
     final endereco = Endereco(
       rua: userData['street'] ?? '',
       numero: userData['number'] ?? '',
@@ -2179,13 +2104,11 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       cep: userData['cep'] ?? '',
     );
     
-    // Mapear tipo de limpeza
     TipoLimpeza tipoLimpeza = TipoLimpeza.padrao;
     if (widget.cleaningType == CleaningType.heavy) {
       tipoLimpeza = TipoLimpeza.pesada;
     }
     
-    // Mapear tipo de imóvel
     TipoImovel tipoImovel;
     switch (_selectedResidence) {
       case 'studio':
@@ -2222,16 +2145,13 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
     });
 
     try {
-      // Get current user
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser == null) {
         throw Exception('Usuário não autenticado');
       }
 
-      // Preparar dados completos do agendamento
       final serviceData = await _prepareBookingData();
 
-      // Process PIX payment via API
       final response = await PaymentService.processPixPayment(
         userId: currentUser.uid,
         amount: _targetPrice,
@@ -2248,7 +2168,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           _isProcessingPix = false;
         });
         
-        // Navigate to PIX payment screen with real data
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -2313,7 +2232,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
         ),
         child: Column(
           children: [
-            // Header
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -2400,13 +2318,11 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
               ),
             ),
             
-            // Content
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
-                    // QR Code
                     if (pixResponse.qrCodeBase64.isNotEmpty)
                       Container(
                         padding: const EdgeInsets.all(16),
@@ -2434,7 +2350,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                     
                     const SizedBox(height: 24),
                     
-                    // Amount
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -2465,7 +2380,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                     
                     const SizedBox(height: 16),
                     
-                    // PIX Code
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
@@ -2510,7 +2424,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                     
                     const SizedBox(height: 16),
                     
-                    // Copy button
                     GestureDetector(
                       onTap: () {
                         Clipboard.setData(ClipboardData(text: pixResponse.qrCode));
@@ -2561,7 +2474,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                     
                     const SizedBox(height: 16),
                     
-                    // Expiration info
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -2588,7 +2500,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                     
                     const SizedBox(height: 24),
                     
-                    // Confirm button
                     ElevatedButton(
                       onPressed: () {
                         Navigator.pop(context);
@@ -2640,11 +2551,9 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
   void _confirmSchedule() async {
     HapticFeedback.mediumImpact();
     
-    // For credit card payment
     if (_selectedPaymentMethod == 'credit_card') {
       print('=== INICIANDO PAGAMENTO COM CARTÃO ===');
       
-      // Validate card fields
       if (_cardNumberController.text.length < 16 ||
           _cardHolderController.text.isEmpty ||
           _expiryDateController.text.length < 5 ||
@@ -2663,7 +2572,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       });
       
       try {
-        // Get current user
         final currentUser = FirebaseAuth.instance.currentUser;
         if (currentUser == null) {
           print('ERRO: Usuário não autenticado');
@@ -2672,12 +2580,10 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
         
         print('Usuário autenticado: ${currentUser.uid}');
         
-        // Extract expiry date parts
         final expiryParts = _expiryDateController.text.split('/');
         final expiryMonth = expiryParts[0];
         final expiryYear = '20${expiryParts[1]}'; // Convert YY to YYYY
         
-        // Log card data (masking sensitive info)
         final maskedCardNumber = _cardNumberController.text.replaceAll(' ', '');
         print('=== DADOS DO CARTÃO ===');
         print('Número do cartão: ${maskedCardNumber.substring(0, 4)}****${maskedCardNumber.substring(maskedCardNumber.length - 4)}');
@@ -2689,10 +2595,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
         print('Descrição: Agendamento: ${widget.serviceTitle}');
         print('=======================');
         
-        // Preparar dados completos do agendamento
         final serviceData = await _prepareBookingData();
         
-        // Process card payment via API
         print('Chamando PaymentService.processCardPayment()...');
         final response = await PaymentService.processCardPayment(
           userId: currentUser.uid,
@@ -2727,7 +2631,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
         if (response.success && response.data != null) {
           if (response.data!.isApproved) {
             print('SUCESSO: Pagamento aprovado!');
-            // Payment approved - navigate to confirmation
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -2759,7 +2662,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
         }
       }
     } else if (_selectedPaymentMethod == 'pix') {
-      // For PIX payment, process the PIX first
       _processPixPayment();
     }
   }
@@ -2777,22 +2679,18 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           children: [
             const SizedBox(height: 32),
 
-            // Title Section
             _buildTitleSection(),
 
             const SizedBox(height: 32),
 
-            // Service Summary
             _buildServiceSummary(),
 
             const SizedBox(height: 32),
 
-            // Payment Methods
             _buildPaymentMethodSelector(),
 
             const SizedBox(height: 32),
 
-            // Payment Content - Only show if credit card is selected
             if (_selectedPaymentMethod == 'credit_card') ...[
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 300),
@@ -2810,7 +2708,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                 ),
               ),
             ] else if (_selectedPaymentMethod == 'pix') ...[
-              // Clean and compact PIX card
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: AnimatedContainer(
@@ -2833,7 +2730,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                   ),
                   child: Column(
                     children: [
-                      // Compact header with icon and title
                       Row(
                         children: [
                           Container(
@@ -2880,7 +2776,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
 
                       const SizedBox(height: 20),
 
-                      // Compact instructions
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -2926,7 +2821,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
 
                       const SizedBox(height: 16),
 
-                      // Compact benefits
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
@@ -2994,7 +2888,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
         ),
         child: Column(
           children: [
-            // Service info
             Row(
               children: [
                 Container(
@@ -3068,7 +2961,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
 
             const SizedBox(height: 20),
 
-            // Total price
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -3311,7 +3203,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Card Form Fields
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -3325,7 +3216,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Card number field with icon
                 _buildEnhancedInput(
                   controller: _cardNumberController,
                   label: 'Número do cartão',
@@ -3354,7 +3244,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                 
                 const SizedBox(height: 20),
 
-                // Card holder name field
                 _buildEnhancedInput(
                   controller: _cardHolderController,
                   label: 'Nome do titular',
@@ -3365,7 +3254,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                 
                 const SizedBox(height: 20),
 
-                // Expiry date and CVV in row
                 Row(
                   children: [
                     Expanded(
@@ -3410,7 +3298,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
 
           const SizedBox(height: 20),
 
-          // Security badges
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -3456,7 +3343,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // PIX Header
           Row(
             children: [
               Icon(Icons.pix, size: 20, color: Colors.grey[700]),
@@ -3473,7 +3359,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
           ),
           const SizedBox(height: 24),
 
-          // PIX Code Section
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
@@ -3483,7 +3368,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             ),
             child: Column(
               children: [
-                // PIX Code Container
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
@@ -3533,7 +3417,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
 
                 const SizedBox(height: 20),
 
-                // Instructions
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -3566,7 +3449,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
 
           const SizedBox(height: 16),
 
-          // Copy PIX Code button
           GestureDetector(
             onTap: () {
               if (_pixCode.isNotEmpty) {
@@ -3626,7 +3508,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
 
           const SizedBox(height: 16),
 
-          // Timer and Instructions
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -3905,7 +3786,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
       ),
       child: Column(
         children: [
-          // Minimal Header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: BoxDecoration(
@@ -3924,7 +3804,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             ),
             child: Column(
               children: [
-                // Handle
                 Container(
                   width: 36,
                   height: 4,
@@ -3996,14 +3875,12 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
             ),
           ),
 
-          // Content
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Compact Value Display
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
@@ -4077,7 +3954,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
 
                   const SizedBox(height: 20),
 
-                  // Compact Instructions
                   Row(
                     children: [
                       Icon(Icons.info_outline, size: 16, color: Colors.grey[600]),
@@ -4115,7 +3991,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
 
                   const SizedBox(height: 20),
 
-                  // PIX Code Section - Cleaner design
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -4163,7 +4038,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                           ),
                         ),
                         const SizedBox(height: 12),
-                        // Copy button integrated
                         GestureDetector(
                           onTap: () {
                             Clipboard.setData(ClipboardData(text: _pixCode));
@@ -4220,10 +4094,8 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
 
                   const SizedBox(height: 24),
 
-                  // Action Buttons
                   Row(
                     children: [
-                      // Cancel button
                       Expanded(
                         child: GestureDetector(
                           onTap: () => Navigator.pop(context),
@@ -4247,7 +4119,6 @@ class _CleaningScheduleScreenState extends State<CleaningScheduleScreen>
                         ),
                       ),
                       const SizedBox(width: 12),
-                      // Confirm button
                       Expanded(
                         flex: 2,
                         child: GestureDetector(

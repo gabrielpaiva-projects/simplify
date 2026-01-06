@@ -30,21 +30,17 @@ class ModernProfessionalRegistration extends StatefulWidget {
 class _ModernProfessionalRegistrationState 
     extends State<ModernProfessionalRegistration>
     with TickerProviderStateMixin {
-  // Controllers
   final PageController _pageController = PageController();
   
-  // Step 1: Dados Pessoais
   final _nameController = TextEditingController();
   final _cpfController = TextEditingController();
   final _rgController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   
-  // Step 2: Senha
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   
-  // Step 3: Endereço
   final _cepController = TextEditingController();
   final _streetController = TextEditingController();
   final _numberController = TextEditingController();
@@ -53,17 +49,14 @@ class _ModernProfessionalRegistrationState
   final _cityController = TextEditingController();
   final _stateController = TextEditingController();
   
-  // Form Keys
   final _personalFormKey = GlobalKey<FormState>();
   final _passwordFormKey = GlobalKey<FormState>();
   final _addressFormKey = GlobalKey<FormState>();
   final _documentsFormKey = GlobalKey<FormState>();
   final _termsFormKey = GlobalKey<FormState>();
   
-  // Terms acceptance state
   bool _termsAccepted = false;
   
-  // Masks
   final _cpfMask = MaskTextInputFormatter(
     mask: '###.###.###-##',
     filter: {"#": RegExp(r'[0-9]')},
@@ -84,7 +77,6 @@ class _ModernProfessionalRegistrationState
     filter: {"#": RegExp(r'[0-9]')},
   );
   
-  // States
   int _currentStep = 0;
   bool _isLoading = false;
   bool _isPasswordVisible = false;
@@ -96,18 +88,15 @@ class _ModernProfessionalRegistrationState
   String? _profileImageUrl;
   bool _isValidatingFace = false;
   
-  // Animation Controllers
   late AnimationController _progressController;
   late AnimationController _fadeController;
   late AnimationController _slideController;
   late List<AnimationController> _stepControllers;
   
-  // Animations
   late Animation<double> _progressAnimation;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   
-  // Image Picker
   final ImagePicker _imagePicker = ImagePicker();
   
   @override
@@ -164,7 +153,6 @@ class _ModernProfessionalRegistrationState
       curve: Curves.easeOutCubic,
     ));
     
-    // Start initial animations
     _fadeController.forward();
     _slideController.forward();
     _stepControllers[0].forward();
@@ -179,7 +167,6 @@ class _ModernProfessionalRegistrationState
       controller.dispose();
     }
     
-    // Dispose text controllers
     _nameController.dispose();
     _cpfController.dispose();
     _rgController.dispose();
@@ -201,10 +188,8 @@ class _ModernProfessionalRegistrationState
   }
   
   void _nextStep() async {
-    // Close keyboard
     FocusScope.of(context).unfocus();
     
-    // Validate current step
     bool isValid = false;
     
     switch (_currentStep) {
@@ -240,7 +225,6 @@ class _ModernProfessionalRegistrationState
         }
         break;
       case 5:
-        // Validate terms acceptance
         isValid = _termsAccepted;
         if (!isValid) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -255,7 +239,6 @@ class _ModernProfessionalRegistrationState
     
     if (isValid) {
       if (_currentStep < 5) {
-        // Animate to next step
         await _stepControllers[_currentStep].reverse();
         
         setState(() {
@@ -270,14 +253,12 @@ class _ModernProfessionalRegistrationState
           curve: Curves.easeInOut,
         );
       } else {
-        // Complete registration
         _completeRegistration();
       }
     }
   }
   
   void _previousStep() async {
-    // Close keyboard
     FocusScope.of(context).unfocus();
     
     if (_currentStep > 0) {
@@ -298,7 +279,6 @@ class _ModernProfessionalRegistrationState
   }
   
   void _completeRegistration() async {
-    // Close keyboard
     FocusScope.of(context).unfocus();
     
     setState(() {
@@ -308,7 +288,6 @@ class _ModernProfessionalRegistrationState
     try {
       final authProvider = Provider.of<local_auth.AuthProvider>(context, listen: false);
       
-      // Primeiro, criar modelo de profissional sem as URLs dos arquivos
       final professional = ProfessionalModel(
         cpf: _cpfController.text.replaceAll(RegExp(r'[^0-9]'), ''),
         fullName: _nameController.text.trim(),
@@ -326,7 +305,6 @@ class _ModernProfessionalRegistrationState
         profileImageUrl: null, // Será atualizado após upload
       );
       
-      // Registrar no Firebase Auth primeiro
       final success = await authProvider.signUpProfessional(
         professional: professional,
       );
@@ -335,7 +313,6 @@ class _ModernProfessionalRegistrationState
         throw Exception(authProvider.errorMessage ?? 'Erro ao criar conta no Firebase Auth');
       }
 
-      // Agora que o usuário foi criado, obter o UID
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser == null) {
         throw Exception('Usuário não foi criado corretamente');
@@ -344,7 +321,6 @@ class _ModernProfessionalRegistrationState
       String? profileImageUrl;
       String? addressProofUrl;
 
-      // Fazer upload da foto do rosto se houver
       if (_profileImageFile != null) {
         print('Fazendo upload da foto do rosto...');
         profileImageUrl = await StorageService.uploadProfileImage(
@@ -357,7 +333,6 @@ class _ModernProfessionalRegistrationState
         print('Upload da foto do rosto concluído: $profileImageUrl');
       }
       
-      // Fazer upload do comprovante de endereço se houver
       if (_addressProofFile != null) {
         print('Fazendo upload do comprovante de residência...');
         addressProofUrl = await StorageService.uploadAddressProof(
@@ -370,7 +345,6 @@ class _ModernProfessionalRegistrationState
         print('Upload do comprovante concluído: $addressProofUrl');
       }
 
-      // Atualizar o documento do usuário no Firestore com as URLs dos arquivos
       if (profileImageUrl != null || addressProofUrl != null) {
         print('Atualizando documento do usuário com URLs dos arquivos...');
         final updateData = <String, dynamic>{};
@@ -389,7 +363,6 @@ class _ModernProfessionalRegistrationState
         print('Documento do usuário atualizado com sucesso');
       }
       
-      // Navega para a tela de análise com confetes
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
@@ -434,7 +407,6 @@ class _ModernProfessionalRegistrationState
       return;
     }
     
-    // Evita múltiplas chamadas simultâneas
     if (_isSearchingCep) {
       print('Já está buscando CEP, ignorando');
       return;
@@ -462,7 +434,6 @@ class _ModernProfessionalRegistrationState
         print('Cidade: ${address.localidade}');
         print('Estado: ${address.uf}');
         
-        // CEP encontrado com sucesso - não exibe snackbar
       } else {
         print('❌ CEP não encontrado ou resposta nula');
         if (mounted) {
@@ -498,7 +469,6 @@ class _ModernProfessionalRegistrationState
   }
   
   Future<void> _pickDocument() async {
-    // Show options dialog
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -585,7 +555,6 @@ class _ModernProfessionalRegistrationState
   }
 
   Future<void> _pickProfilePhoto() async {
-    // Show options dialog
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -649,7 +618,6 @@ class _ModernProfessionalRegistrationState
           _isValidatingFace = true;
         });
 
-        // Validar se há um rosto na imagem
         final validationResult = await FaceDetectionService.validateFaceInImage(photo.path);
 
         setState(() {
@@ -661,7 +629,6 @@ class _ModernProfessionalRegistrationState
             _profileImageFile = File(photo.path);
           });
 
-          // Mostrar sucesso
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -684,7 +651,6 @@ class _ModernProfessionalRegistrationState
             );
           }
         } else {
-          // Mostrar erro de validação
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -736,7 +702,6 @@ class _ModernProfessionalRegistrationState
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Background gradient
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -750,17 +715,13 @@ class _ModernProfessionalRegistrationState
             ),
           ),
           
-          // Main content
           SafeArea(
             child: Column(
               children: [
-                // Header
                 _buildHeader(),
                 
-                // Progress indicator
                 _buildProgressIndicator(),
                 
-                // Form content
                 Expanded(
                   child: FadeTransition(
                     opacity: _fadeAnimation,
@@ -790,13 +751,11 @@ class _ModernProfessionalRegistrationState
                   ),
                 ),
                 
-                // Navigation buttons
                 _buildNavigationButtons(),
               ],
             ),
           ),
           
-          // Loading overlay
           if (_isLoading)
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
@@ -821,10 +780,8 @@ class _ModernProfessionalRegistrationState
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Row(
         children: [
-          // Back button
           IconButton(
             onPressed: () {
-              // Close keyboard
               FocusScope.of(context).unfocus();
               
               if (_currentStep > 0) {
@@ -848,7 +805,6 @@ class _ModernProfessionalRegistrationState
           
           const SizedBox(width: 16),
           
-          // Title
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -875,7 +831,6 @@ class _ModernProfessionalRegistrationState
             ),
           ),
           
-          // Step indicator
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
@@ -954,7 +909,6 @@ class _ModernProfessionalRegistrationState
                   children: [
                     const SizedBox(height: 24),
                     
-                    // Name field
                     _ModernTextField(
                       controller: _nameController,
                       label: 'Nome completo',
@@ -972,7 +926,6 @@ class _ModernProfessionalRegistrationState
                     
                     const SizedBox(height: 20),
                     
-                    // RG field
                     _ModernTextField(
                       controller: _rgController,
                       label: 'RG',
@@ -989,7 +942,6 @@ class _ModernProfessionalRegistrationState
                     
                     const SizedBox(height: 20),
                     
-                    // CPF field
                     _ModernTextField(
                       controller: _cpfController,
                       label: 'CPF',
@@ -1010,7 +962,6 @@ class _ModernProfessionalRegistrationState
                     
                     const SizedBox(height: 20),
                     
-                    // Phone field
                     _ModernTextField(
                       controller: _phoneController,
                       label: 'Telefone para contato',
@@ -1031,7 +982,6 @@ class _ModernProfessionalRegistrationState
                     
                     const SizedBox(height: 20),
                     
-                    // Email field
                     _ModernTextField(
                       controller: _emailController,
                       label: 'E-mail',
@@ -1075,7 +1025,6 @@ class _ModernProfessionalRegistrationState
                   children: [
                     const SizedBox(height: 24),
                     
-                    // Info card
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -1122,7 +1071,6 @@ class _ModernProfessionalRegistrationState
                     
                     const SizedBox(height: 32),
                     
-                    // Password field
                     _ModernTextField(
                       controller: _passwordController,
                       label: 'Senha',
@@ -1154,19 +1102,16 @@ class _ModernProfessionalRegistrationState
                         return null;
                       },
                       onChanged: (value) {
-                        // Trigger rebuild for password strength indicator
                         setState(() {});
                       },
                     ),
                     
                     const SizedBox(height: 12),
                     
-                    // Password strength indicator
                     _buildPasswordStrengthIndicator(),
                     
                     const SizedBox(height: 20),
                     
-                    // Confirm password field
                     _ModernTextField(
                       controller: _confirmPasswordController,
                       label: 'Confirmar senha',
@@ -1288,7 +1233,6 @@ class _ModernProfessionalRegistrationState
                   children: [
                     const SizedBox(height: 24),
                     
-                    // CEP field with search
                     _ModernTextField(
                       controller: _cepController,
                       label: 'CEP',
@@ -1325,7 +1269,6 @@ class _ModernProfessionalRegistrationState
                       },
                       onChanged: (value) {
                         final cleanCep = value.replaceAll(RegExp(r'[^0-9]'), '');
-                        // Quando atingir 8 dígitos (limite do CEP), busca automaticamente
                         if (cleanCep.length == 8) {
                           _searchCep();
                         }
@@ -1334,7 +1277,6 @@ class _ModernProfessionalRegistrationState
                     
                     const SizedBox(height: 20),
                     
-                    // Street field
                     _ModernTextField(
                       controller: _streetController,
                       label: 'Rua',
@@ -1349,7 +1291,6 @@ class _ModernProfessionalRegistrationState
                     
                     const SizedBox(height: 20),
                     
-                    // Number and complement row
                     Row(
                       children: [
                         Expanded(
@@ -1381,7 +1322,6 @@ class _ModernProfessionalRegistrationState
                     
                     const SizedBox(height: 20),
                     
-                    // Neighborhood field
                     _ModernTextField(
                       controller: _neighborhoodController,
                       label: 'Bairro',
@@ -1396,7 +1336,6 @@ class _ModernProfessionalRegistrationState
                     
                     const SizedBox(height: 20),
                     
-                    // City field
                     _ModernTextField(
                       controller: _cityController,
                       label: 'Cidade',
@@ -1411,7 +1350,6 @@ class _ModernProfessionalRegistrationState
                     
                     const SizedBox(height: 20),
                     
-                    // State field
                     _ModernTextField(
                       controller: _stateController,
                       label: 'Estado',
@@ -1458,7 +1396,6 @@ class _ModernProfessionalRegistrationState
                   children: [
                     const SizedBox(height: 24),
                     
-                    // Title
                     const Text(
                       'Comprovante de Residência',
                       style: TextStyle(
@@ -1480,7 +1417,6 @@ class _ModernProfessionalRegistrationState
                     
                     const SizedBox(height: 32),
                     
-                    // Upload area
                     GestureDetector(
                       onTap: _pickDocument,
                       child: AnimatedContainer(
@@ -1559,7 +1495,6 @@ class _ModernProfessionalRegistrationState
                     
                     const SizedBox(height: 24),
                     
-                    // Info card
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -1592,7 +1527,6 @@ class _ModernProfessionalRegistrationState
                     
                     if (_addressProofFile != null) ...[
                       const SizedBox(height: 16),
-                      // Remove file button
                       TextButton.icon(
                         onPressed: () {
                           setState(() {
@@ -1635,7 +1569,6 @@ class _ModernProfessionalRegistrationState
                 children: [
                   const SizedBox(height: 24),
                   
-                  // Title
                   const Text(
                     'Foto do Rosto',
                     style: TextStyle(
@@ -1657,7 +1590,6 @@ class _ModernProfessionalRegistrationState
                   
                   const SizedBox(height: 32),
                   
-                  // Photo preview or capture area
                   GestureDetector(
                     onTap: _isValidatingFace ? null : _pickProfilePhoto,
                     child: AnimatedContainer(
@@ -1688,7 +1620,6 @@ class _ModernProfessionalRegistrationState
                                     _profileImageFile!,
                                     fit: BoxFit.cover,
                                   ),
-                                  // Overlay with success icon
                                   Container(
                                     decoration: BoxDecoration(
                                       gradient: LinearGradient(
@@ -1773,7 +1704,6 @@ class _ModernProfessionalRegistrationState
                   
                   const SizedBox(height: 24),
                   
-                  // Info card about photo visibility
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -1820,7 +1750,6 @@ class _ModernProfessionalRegistrationState
                   
                   const SizedBox(height: 16),
                   
-                  // Tips card
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -1867,7 +1796,6 @@ class _ModernProfessionalRegistrationState
                   
                   if (_profileImageFile != null) ...[
                     const SizedBox(height: 16),
-                    // Remove photo button
                     TextButton.icon(
                       onPressed: () {
                         setState(() {
@@ -1921,7 +1849,6 @@ class _ModernProfessionalRegistrationState
   }
 }
 
-// Modern Text Field Widget
 class _ModernTextField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
@@ -2013,7 +1940,6 @@ class _ModernTextField extends StatelessWidget {
   }
 }
 
-// Modern Button Widget
 class _ModernButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final String text;

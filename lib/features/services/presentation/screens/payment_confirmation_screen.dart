@@ -115,7 +115,6 @@ class _PaymentConfirmationContentState extends State<PaymentConfirmationContent>
         position: _slideAnimation,
         child: Column(
           children: [
-            // Handle
             Container(
               margin: const EdgeInsets.only(top: 12),
               width: 40,
@@ -126,12 +125,10 @@ class _PaymentConfirmationContentState extends State<PaymentConfirmationContent>
               ),
             ),
             
-            // Header
             Container(
               padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
-                  // Success Icon
                   Container(
                     width: 80,
                     height: 80,
@@ -188,17 +185,14 @@ class _PaymentConfirmationContentState extends State<PaymentConfirmationContent>
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
                   children: [
-                    // Search Status
                     _buildSearchStatus(),
                     
                     const SizedBox(height: 24),
                     
-                    // Service Summary
                     _buildServiceSummary(),
                     
                     const SizedBox(height: 24),
                     
-                    // Next Steps
                     _buildNextSteps(),
                     
                     const SizedBox(height: 120), // Space for buttons
@@ -207,7 +201,6 @@ class _PaymentConfirmationContentState extends State<PaymentConfirmationContent>
               ),
             ),
             
-            // Bottom Buttons
             _buildBottomButtons(),
           ],
         ),
@@ -540,7 +533,6 @@ class _PaymentConfirmationContentState extends State<PaymentConfirmationContent>
       child: SafeArea(
         child: Column(
           children: [
-            // Meus Agendamentos Button
             SizedBox(
               width: double.infinity,
               height: 52,
@@ -548,7 +540,6 @@ class _PaymentConfirmationContentState extends State<PaymentConfirmationContent>
                 onPressed: () {
                   HapticFeedback.lightImpact();
                   Navigator.of(context).pop();
-                  // TODO: Navegar para tela de agendamentos
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Tela de agendamentos em desenvolvimento'),
@@ -576,7 +567,6 @@ class _PaymentConfirmationContentState extends State<PaymentConfirmationContent>
             
             const SizedBox(height: 12),
             
-            // Voltar ao Início Button
             SizedBox(
               width: double.infinity,
               height: 52,
@@ -624,7 +614,6 @@ class _PaymentConfirmationContentState extends State<PaymentConfirmationContent>
   }
 }
 
-// Manter compatibilidade com uso como tela (caso necessário)
 class PaymentConfirmationScreen extends StatelessWidget {
   final String serviceTitle;
   final double totalAmount;
@@ -643,7 +632,6 @@ class PaymentConfirmationScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Automaticamente mostra como bottomsheet
     WidgetsBinding.instance.addPostFrameCallback((_) {
       PaymentConfirmationBottomSheet.show(
         context: context,

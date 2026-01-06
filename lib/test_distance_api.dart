@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'services/google_maps_distance_service.dart';
 
-/// Tela de teste para verificar se a API do Google Maps está funcionando
 class TestDistanceApiScreen extends StatefulWidget {
   const TestDistanceApiScreen({Key? key}) : super(key: key);
 
@@ -21,7 +20,6 @@ class _TestDistanceApiScreenState extends State<TestDistanceApiScreen> {
     });
 
     try {
-      // Teste com endereços conhecidos em São Paulo
       final distance = await _distanceService.calculateDistance(
         originAddress: 'Avenida Paulista, 1000, São Paulo, SP, Brasil',
         destinationAddress: 'Rua Augusta, 500, São Paulo, SP, Brasil',

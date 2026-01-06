@@ -1,4 +1,3 @@
-/// Modelo para payload de badge PIX
 class PixBadgePayload {
   final String userId;
   final double amount;
@@ -10,14 +9,12 @@ class PixBadgePayload {
     int? timestamp,
   }) : timestamp = timestamp ?? DateTime.now().millisecondsSinceEpoch;
 
-  /// Converte para Map para serialização
   Map<String, dynamic> toJson() => {
         'userId': userId,
         'amount': amount,
         'timestamp': timestamp,
       };
 
-  /// Cria a partir de um Map
   factory PixBadgePayload.fromJson(Map<String, dynamic> json) {
     return PixBadgePayload(
       userId: json['userId'] as String,
@@ -31,7 +28,6 @@ class PixBadgePayload {
       'PixBadgePayload(userId: $userId, amount: $amount, timestamp: $timestamp)';
 }
 
-/// Modelo para payload de badge de Cartão
 class CardBadgePayload {
   final String userId;
   final double amount;
@@ -53,7 +49,6 @@ class CardBadgePayload {
     int? timestamp,
   }) : timestamp = timestamp ?? DateTime.now().millisecondsSinceEpoch;
 
-  /// Converte para Map para serialização
   Map<String, dynamic> toJson() => {
         'userId': userId,
         'amount': amount,
@@ -65,7 +60,6 @@ class CardBadgePayload {
         'timestamp': timestamp,
       };
 
-  /// Cria a partir de um Map
   factory CardBadgePayload.fromJson(Map<String, dynamic> json) {
     return CardBadgePayload(
       userId: json['userId'] as String,
@@ -84,14 +78,12 @@ class CardBadgePayload {
       'CardBadgePayload(userId: $userId, amount: $amount, installments: $installments)';
 }
 
-/// Tipos de método de pagamento
 enum PaymentMethod {
   pix,
   creditCard,
   debitCard,
 }
 
-/// Bandeiras de cartão suportadas
 enum CardBrand {
   mastercard('master'),
   visa('visa'),

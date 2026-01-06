@@ -1,6 +1,5 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 
-/// Modelo para representar uma notificação no app
 class NotificationModel {
   final String id;
   final String title;
@@ -22,7 +21,6 @@ class NotificationModel {
     this.type,
   });
 
-  /// Criar NotificationModel a partir de RemoteMessage do FCM
   factory NotificationModel.fromRemoteMessage(RemoteMessage message) {
     return NotificationModel(
       id: message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
@@ -36,7 +34,6 @@ class NotificationModel {
     );
   }
 
-  /// Criar cópia da notificação com novos valores
   NotificationModel copyWith({
     String? id,
     String? title,
@@ -59,7 +56,6 @@ class NotificationModel {
     );
   }
 
-  /// Converter para Map (para serialização)
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -73,7 +69,6 @@ class NotificationModel {
     };
   }
 
-  /// Criar NotificationModel a partir de Map (para deserialização)
   factory NotificationModel.fromMap(Map<String, dynamic> map) {
     return NotificationModel(
       id: map['id'] as String,

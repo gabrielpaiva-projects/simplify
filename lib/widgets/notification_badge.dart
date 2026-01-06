@@ -49,7 +49,6 @@ class _NotificationBadgeState extends State<NotificationBadge>
 
     _animationController.forward();
 
-    // Auto dismiss after 5 seconds (um pouco mais tempo para ler)
     Future.delayed(const Duration(seconds: 5), () {
       if (mounted) {
         _dismiss();
@@ -154,7 +153,6 @@ class _NotificationBadgeState extends State<NotificationBadge>
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      // Ícone com background circular clean
                       Container(
                         width: 48,
                         height: 48,
@@ -169,13 +167,11 @@ class _NotificationBadgeState extends State<NotificationBadge>
                         ),
                       ),
                       const SizedBox(width: 16),
-                      // Conteúdo da notificação
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // Título clean
                             Text(
                               widget.message.notification?.title ?? 'Notificação',
                               style: TextStyle(
@@ -188,7 +184,6 @@ class _NotificationBadgeState extends State<NotificationBadge>
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 4),
-                            // Corpo da mensagem
                             Text(
                               widget.message.notification?.body ?? '',
                               style: TextStyle(
@@ -201,7 +196,6 @@ class _NotificationBadgeState extends State<NotificationBadge>
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            // Valor se for pagamento
                             if (widget.message.data['amount'] != null) ...[
                               const SizedBox(height: 6),
                               Container(
@@ -228,7 +222,6 @@ class _NotificationBadgeState extends State<NotificationBadge>
                         ),
                       ),
                       const SizedBox(width: 8),
-                      // Botão fechar minimalista
                       GestureDetector(
                         onTap: _dismiss,
                         child: Container(

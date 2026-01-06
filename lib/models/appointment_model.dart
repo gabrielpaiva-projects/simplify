@@ -96,7 +96,6 @@ class AppointmentModel {
     };
   }
 
-  // Getters úteis
   String get formattedDate {
     try {
       final DateTime dateTime = DateTime.parse(data);

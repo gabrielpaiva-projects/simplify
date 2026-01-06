@@ -16,21 +16,16 @@ import 'services/notification_storage_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
   
-  // Configure Firebase Messaging background handler
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   
-  // Configure environment
   AppConfig.setEnvironment(Environment.development);
   
-  // Initialize dependencies
   await di.init();
   
-  // Initialize Firebase Messaging Service
   final messagingService = di.sl<FirebaseMessagingService>();
   await messagingService.initialize();
   
@@ -51,11 +46,9 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        // Auth Provider
         ChangeNotifierProvider(
           create: (_) => di.sl<AuthProvider>(),
         ),
-        // Notification Storage Provider
         ChangeNotifierProvider(
           create: (_) => di.sl<NotificationStorageService>(),
         ),
@@ -75,7 +68,6 @@ class _MyAppState extends State<MyApp> {
   }
 }
 
-/// Widget wrapper que garante a inicialização correta do overlay service
 class OverlayWrapper extends StatefulWidget {
   final Widget child;
 
@@ -93,7 +85,6 @@ class _OverlayWrapperState extends State<OverlayWrapper> {
   void initState() {
     super.initState();
     
-    // Inicializar o overlay service após o widget estar completamente montado
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         final overlayService = di.sl<NotificationOverlayService>();

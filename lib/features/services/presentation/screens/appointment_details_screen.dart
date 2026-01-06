@@ -6,7 +6,6 @@ import '../../../../models/appointment_model.dart';
 import '../../../../services/appointment_service.dart';
 import '../../../../services/professional_service.dart';
 
-// Função global para gerar URLs do Google Maps com logs
 String getGoogleMapsUrl(String address) {
   final encodedAddress = Uri.encodeComponent(address);
   final url = 'https://maps.googleapis.com/maps/api/staticmap?'
@@ -54,7 +53,6 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
     print('🔍 [APPOINTMENT_DETAILS] Status: ${widget.appointment.paymentStatus}');
     print('🔍 [APPOINTMENT_DETAILS] ProfissionalId: ${widget.appointment.profissionalId}');
     
-    // Para agendamentos RECEIVED (PIX) ou CONFIRMED (CARTÃO), buscar dados do profissional
     if (widget.appointment.paymentStatus == 'RECEIVED' || widget.appointment.paymentStatus == 'CONFIRMED') {
       if (widget.appointment.profissionalId != null && widget.appointment.profissionalId!.isNotEmpty) {
         print('🔍 [APPOINTMENT_DETAILS] Carregando dados do profissional: ${widget.appointment.profissionalId}');
@@ -90,7 +88,6 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
   }
 
   String get _statusText {
-    // Para agendamentos RECEIVED (PIX) ou CONFIRMED (CARTÃO)
     if (widget.appointment.paymentStatus == 'RECEIVED' || widget.appointment.paymentStatus == 'CONFIRMED') {
       if (widget.appointment.profissionalId == null || (widget.appointment.profissionalId?.isEmpty ?? true)) {
         return 'Buscando profissional';
@@ -99,7 +96,6 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
       }
     }
     
-    // Para outros status, usar o padrão
     return widget.appointment.paymentStatusDisplayName;
   }
 
@@ -125,7 +121,6 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
         bottom: false,
         child: Column(
           children: [
-            // Header customizado
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
               child: Row(
@@ -197,7 +192,6 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
               ),
             ),
             
-            // Conteúdo scrollável
             Expanded(
               child: Container(
                 decoration: const BoxDecoration(
@@ -209,7 +203,6 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Localização com mapa real
                       Container(
                         width: double.infinity,
                         height: 140,
@@ -219,7 +212,6 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
                         ),
                         child: Stack(
                           children: [
-                            // Mapa real do Google Maps
                             Positioned.fill(
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(20),
@@ -286,7 +278,6 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
                                 ),
                               ),
                             ),
-                            // Endereço overlay
                             Positioned(
                               bottom: 12,
                               left: 12,
@@ -334,7 +325,6 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
                       
                       const SizedBox(height: 32),
                       
-                      // Informações em grid
                       Row(
                         children: [
                           Expanded(
@@ -363,7 +353,6 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
                         icon: Icons.home_outlined,
                       ),
 
-                      // Seção do profissional (se disponível)
                       if (widget.appointment.profissionalId != null && (widget.appointment.profissionalId?.isNotEmpty ?? false)) ...[
                         const SizedBox(height: 24),
                         _ProfessionalSection(
@@ -375,7 +364,6 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
                       if (isUpcoming && !isCancelled) ...[
                         const SizedBox(height: 40),
                         
-                        // Botões clean
                         Column(
                           children: [
                             SizedBox(
@@ -474,7 +462,6 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
 
     if (confirm != true) return;
 
-    // Mostra progresso
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -670,7 +657,6 @@ class _ProfessionalSection extends StatelessWidget {
           else if (professional != null)
             Row(
               children: [
-                // Avatar do profissional
                 Container(
                   width: 50,
                   height: 50,
@@ -712,7 +698,6 @@ class _ProfessionalSection extends StatelessWidget {
                 
                 const SizedBox(width: 16),
                 
-                // Dados do profissional
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

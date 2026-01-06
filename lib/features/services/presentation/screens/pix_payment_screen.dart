@@ -92,7 +92,6 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
           timer.cancel();
         }
 
-        // Animate timer color when time is running low
         if (_minutes <= 5 && !_timerController.isAnimating) {
           _timerController.repeat(reverse: true);
         }
@@ -178,20 +177,16 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
       if (payment != null) {
         _paymentId = payment.id;
         
-        // Verifica se o pagamento foi aprovado
         if (payment.status == 'RECEIVED' || payment.lastWebhookEvent == 'PAYMENT_RECEIVED') {
-          // Pagamento aprovado - navegar para agendamentos
           if (mounted) {
             _showSuccess();
           }
         } else {
-          // Pagamento ainda pendente
           if (mounted) {
             _showPaymentPending();
           }
         }
       } else {
-        // Pagamento não encontrado
         if (mounted) {
           _showPaymentNotFound();
         }
@@ -243,7 +238,6 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
         opacity: _fadeAnimation,
         child: Column(
           children: [
-            // Premium Header with gradient
             Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(24, 100, 24, 32),
@@ -271,7 +265,6 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
               ),
               child: Column(
                 children: [
-                  // PIX Icon with animation
                   ScaleTransition(
                     scale: _pulseAnimation,
                     child: Container(
@@ -295,7 +288,6 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
                   
                   const SizedBox(height: 24),
                   
-                  // Service title
                   Text(
                     widget.serviceTitle,
                     style: const TextStyle(
@@ -309,7 +301,6 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
                   
                   const SizedBox(height: 8),
                   
-                  // Amount with premium styling
                   Text(
                     'R\$ ${widget.amount.toStringAsFixed(2).replaceAll('.', ',')}',
                     style: const TextStyle(
@@ -323,7 +314,6 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
                   
                   const SizedBox(height: 20),
                   
-                  // Premium Timer
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     decoration: BoxDecoration(
@@ -359,7 +349,6 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
               ),
             ),
             
-            // Premium Content
             Expanded(
               child: Container(
                 margin: const EdgeInsets.all(24),
@@ -386,7 +375,6 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Premium section header
                       Row(
                         children: [
                           Container(
@@ -412,7 +400,6 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
                       
                       const SizedBox(height: 20),
                       
-                      // Premium code container
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
@@ -445,7 +432,6 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
                             
                             const SizedBox(height: 20),
                             
-                            // Premium copy button
                             AnimatedContainer(
                               duration: const Duration(milliseconds: 300),
                               width: double.infinity,
@@ -505,7 +491,6 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
                       
                       const Spacer(),
                       
-                      // Premium bottom button
                       Container(
                         width: double.infinity,
                         height: 56,
@@ -962,7 +947,6 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Premium success icon with animation
               ScaleTransition(
                 scale: _pulseAnimation,
                 child: Container(
@@ -1016,7 +1000,6 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
               
               const SizedBox(height: 32),
               
-              // Premium service info card
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
@@ -1111,7 +1094,6 @@ class _PixPaymentScreenState extends State<PixPaymentScreen>
               
               const SizedBox(height: 32),
               
-              // Premium continue button
               Container(
                 width: double.infinity,
                 height: 56,

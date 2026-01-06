@@ -61,7 +61,6 @@ class AppConfig {
     }
   }
   
-  // API Keys (example)
   static String get googleMapsApiKey {
     switch (_environment) {
       case Environment.development:

@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class ProfessionalService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  /// Busca dados de um profissional por ID
   Future<ProfessionalData?> getProfessionalById(String professionalId) async {
     try {
       print('🔍 [PROFESSIONAL_SERVICE] Buscando profissional: $professionalId');
@@ -20,7 +19,6 @@ class ProfessionalService {
         final data = doc.data()!;
         print('🔍 [PROFESSIONAL_SERVICE] Document data: $data');
         
-        // Verificar se é realmente um profissional
         final userType = data['userType'];
         print('🔍 [PROFESSIONAL_SERVICE] UserType: $userType');
         

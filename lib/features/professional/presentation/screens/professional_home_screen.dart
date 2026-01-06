@@ -8,7 +8,6 @@ import '../../../../models/appointment_model.dart';
 import '../widgets/professional_app_bar.dart';
 import '../widgets/modern_service_card.dart';
 
-// Função global para gerar URLs do Google Maps (mesma do fluxo do cliente)
 String getGoogleMapsUrl(String address) {
   final encodedAddress = Uri.encodeComponent(address);
   final url = 'https://maps.googleapis.com/maps/api/staticmap?'
@@ -42,7 +41,6 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
   
   late AnimationController _animationController;
   
-  // Filtro de distância
   double _selectedDistance = 10.0; // km
   final List<double> _distanceOptions = [5.0, 10.0, 15.0, 25.0, 50.0];
 
@@ -75,15 +73,12 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            // Custom App Bar
             SliverToBoxAdapter(
               child: _buildModernAppBar(),
             ),
-            // Header impecável
             SliverToBoxAdapter(
               child: _buildImpeccableHeader(),
             ),
-            // Services Section
             SliverToBoxAdapter(
               child: _buildServicesSection(),
             ),
@@ -112,7 +107,6 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
       ),
       child: Row(
         children: [
-          // Avatar do profissional
           Container(
             width: 44,
             height: 44,
@@ -141,7 +135,6 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
             ),
           ),
           const SizedBox(width: 16),
-          // Título e status
           Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -179,20 +172,17 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
               ],
             ),
           ),
-          // Ações do app bar
           Row(
             children: [
               _buildAppBarAction(
                 Icons.notifications_outlined,
                 onTap: () {
-                  // TODO: Abrir notificações
                 },
               ),
               const SizedBox(width: 12),
               _buildAppBarAction(
                 Icons.more_vert,
                 onTap: () {
-                  // TODO: Abrir menu
                 },
               ),
             ],
@@ -238,7 +228,6 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Saudação elegante
           Consumer<AuthProvider>(
             builder: (context, authProvider, child) {
                       final userName = authProvider.userData?['fullName']?.split(' ')[0] ?? 'Profissional';
@@ -266,7 +255,6 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
             },
           ),
                   const SizedBox(height: 12),
-                  // Subtítulo moderno
                   Text(
                     'Encontre os melhores serviços próximos a você',
             style: TextStyle(
@@ -277,7 +265,6 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                     ),
                   ),
                   const SizedBox(height: 24),
-                  // Estatística inline elegante
                   StreamBuilder<List<ServiceWithDistance>>(
                     stream: _servicesService.getAvailableServicesWithDistance(),
                     builder: (context, snapshot) {
@@ -286,7 +273,6 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                       }
                       
                       final allServices = snapshot.data ?? [];
-                      // Filtrar por distância para mostrar a contagem correta
                       final filteredCount = allServices
                           .where((service) => service.distance <= _selectedDistance)
                           .length;
@@ -409,7 +395,6 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
             ],
           ),
           const SizedBox(height: 12),
-          // Chips de distância
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -490,10 +475,8 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
             child: Column(
               children: [
                 const SizedBox(height: 8),
-                // Seletor de distância
                 _buildDistanceSelector(),
                 const SizedBox(height: 20),
-                // Section header elegante
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Row(
@@ -528,7 +511,6 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                   ),
                 ),
                 const SizedBox(height: 16),
-                // Services list
                 StreamBuilder<List<ServiceWithDistance>>(
       stream: _servicesService.getAvailableServicesWithDistance(),
       builder: (context, snapshot) {
@@ -542,7 +524,6 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
 
                         final allServices = snapshot.data ?? [];
                         
-                        // Filtrar por distância
                         final servicesWithDistance = allServices
                             .where((service) => service.distance <= _selectedDistance)
                             .toList();
@@ -738,7 +719,6 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
         ),
         child: Row(
           children: [
-            // Shimmer do ícone
             Container(
               width: 40,
               height: 40,
@@ -748,7 +728,6 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
               ),
             ),
             const SizedBox(width: 16),
-            // Shimmer do texto
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -773,7 +752,6 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                 ],
               ),
             ),
-            // Shimmer do contador
             Container(
               width: 40,
               height: 28,
@@ -794,7 +772,6 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
       child: Column(
         children: [
           const SizedBox(height: 40),
-          // Ilustração moderna
           Container(
             width: 140,
             height: 140,
@@ -816,7 +793,6 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
             child: Stack(
               alignment: Alignment.center,
               children: [
-                // Círculos decorativos
                 Positioned(
                   top: 20,
                   right: 20,
@@ -841,7 +817,6 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                     ),
                   ),
                 ),
-                // Ícone principal
           Icon(
                   Icons.search_outlined,
                   size: 48,
@@ -851,7 +826,6 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
             ),
           ),
           const SizedBox(height: 32),
-          // Texto principal
           Text(
             'Nenhum serviço encontrado',
             style: TextStyle(
@@ -862,7 +836,6 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
             ),
           ),
           const SizedBox(height: 12),
-          // Subtexto
           Text(
             'Não encontramos serviços disponíveis nesta\ndistância. Tente expandir o raio de busca.',
             textAlign: TextAlign.center,
@@ -874,7 +847,6 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
             ),
           ),
           const SizedBox(height: 32),
-          // Sugestões
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -887,7 +859,6 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                 icon: Icons.tune,
                 label: 'Filtros',
                 onTap: () {
-                  // Scroll para o seletor de distância
                   setState(() {
                     _selectedDistance = 25.0;
                   });
@@ -989,7 +960,6 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Header com gradiente
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(24),
@@ -1009,7 +979,6 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                 ),
                 child: Column(
                   children: [
-                    // Ícone com efeito
                     Container(
                       width: 70,
                       height: 70,
@@ -1054,12 +1023,10 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                 ),
               ),
               
-              // Conteúdo
               Padding(
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
-                    // Card de informações
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
@@ -1112,7 +1079,6 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                             ],
                           ),
                           const SizedBox(height: 16),
-                          // Valor em destaque
                           Container(
                             width: double.infinity,
                             padding: const EdgeInsets.all(16),
@@ -1176,10 +1142,8 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                     
                     const SizedBox(height: 24),
                     
-                    // Botões
                     Row(
                       children: [
-                        // Botão Cancelar
                         Expanded(
                           child: Container(
                             height: 56,
@@ -1218,7 +1182,6 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
                         
                         const SizedBox(width: 12),
                         
-                        // Botão Aceitar
                         Expanded(
                           child: Container(
                             height: 56,
@@ -1282,7 +1245,6 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
     );
 
     if (confirmed == true) {
-      // Show loading
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -1431,7 +1393,6 @@ class _ProfessionalHomeScreenState extends State<ProfessionalHomeScreen>
   }
 }
 
-// Clean & Modern Service Card
 class UltraModernServiceCard extends StatelessWidget {
   final AppointmentModel service;
   final double distance;
@@ -1466,10 +1427,8 @@ class UltraModernServiceCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header row
           Row(
             children: [
-              // Service icon
               Container(
                 width: 48,
                 height: 48,
@@ -1484,7 +1443,6 @@ class UltraModernServiceCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 16),
-              // Service info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1514,7 +1472,6 @@ class UltraModernServiceCard extends StatelessWidget {
           
           const SizedBox(height: 20),
           
-          // Details row
           Row(
             children: [
               _buildDetailItem(
@@ -1539,7 +1496,6 @@ class UltraModernServiceCard extends StatelessWidget {
           
           const SizedBox(height: 24),
           
-          // Divider
           Container(
             height: 1,
             color: const Color(0xFFF3F4F6),
@@ -1547,7 +1503,6 @@ class UltraModernServiceCard extends StatelessWidget {
           
           const SizedBox(height: 20),
           
-          // Map image
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: Container(
@@ -1556,7 +1511,6 @@ class UltraModernServiceCard extends StatelessWidget {
               color: const Color(0xFFF3F4F6),
               child: Stack(
                 children: [
-                  // Mapa real do Google Maps
                   Image.network(
                     getGoogleMapsUrl(service.endereco.fullAddress),
                     width: double.infinity,
@@ -1614,7 +1568,6 @@ class UltraModernServiceCard extends StatelessWidget {
                       );
                     },
                   ),
-                  // Distance overlay
                   Positioned(
                     top: 8,
                     right: 8,
@@ -1641,10 +1594,8 @@ class UltraModernServiceCard extends StatelessWidget {
           
           const SizedBox(height: 20),
           
-          // Price and actions
           Row(
             children: [
-              // Price column
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1669,10 +1620,8 @@ class UltraModernServiceCard extends StatelessWidget {
                   ],
                 ),
               ),
-              // Action buttons
               Column(
                 children: [
-                  // Details button
                   SizedBox(
                     width: 120,
                     height: 40,
@@ -1695,7 +1644,6 @@ class UltraModernServiceCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  // Accept button
                   SizedBox(
                     width: 120,
                     height: 48,
@@ -1782,7 +1730,6 @@ class UltraModernServiceCard extends StatelessWidget {
   }
 }
 
-// Service Details BottomSheet
 class ServiceDetailsBottomSheet extends StatelessWidget {
   final AppointmentModel service;
   final double distance;
@@ -1808,7 +1755,6 @@ class ServiceDetailsBottomSheet extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Handle bar
           Container(
             margin: const EdgeInsets.only(top: 12),
             width: 40,
@@ -1819,7 +1765,6 @@ class ServiceDetailsBottomSheet extends StatelessWidget {
             ),
           ),
           
-          // Header
           Padding(
             padding: const EdgeInsets.all(24),
             child: Row(
@@ -1880,14 +1825,12 @@ class ServiceDetailsBottomSheet extends StatelessWidget {
             ),
           ),
           
-          // Content
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Map section
                   _buildSection(
                     'Localização',
                     Icons.location_on_outlined,
@@ -1960,7 +1903,6 @@ class ServiceDetailsBottomSheet extends StatelessWidget {
                   
                   const SizedBox(height: 24),
                   
-                  // Service details
                   _buildSection(
                     'Detalhes do Serviço',
                     Icons.info_outline,
@@ -1976,7 +1918,6 @@ class ServiceDetailsBottomSheet extends StatelessWidget {
                   
                   const SizedBox(height: 24),
                   
-                  // Extra services
                   if (service.servicosExtras.temPets || service.servicosExtras.produtosInclusos)
                     _buildSection(
                       'Serviços Extras',
@@ -2005,7 +1946,6 @@ class ServiceDetailsBottomSheet extends StatelessWidget {
                   
                   const SizedBox(height: 24),
                   
-                  // Client info
                   _buildSection(
                     'Cliente',
                     Icons.person_outline,
@@ -2014,7 +1954,6 @@ class ServiceDetailsBottomSheet extends StatelessWidget {
                   
                   const SizedBox(height: 24),
                   
-                  // Payment info
                   _buildSection(
                     'Pagamento',
                     Icons.payment_outlined,
@@ -2042,7 +1981,6 @@ class ServiceDetailsBottomSheet extends StatelessWidget {
             ),
           ),
           
-          // Fixed bottom action button
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
