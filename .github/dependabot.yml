@@ -1,0 +1,186 @@
+# Configuração do Dependabot para manter as dependências atualizadas
+version: 2
+
+updates:
+  # Dependências do Flutter/Dart (pub)
+  - package-ecosystem: "pub"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "@your-github-username"  # Substitua pelo seu username
+    assignees:
+      - "@your-github-username"  # Substitua pelo seu username
+    labels:
+      - "dependencies"
+      - "dart"
+      - "flutter"
+      - "automated"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    pull-request-branch-name:
+      separator: "-"
+    rebase-strategy: "auto"
+    versioning-strategy: "increase"
+    ignore:
+      # Ignorar atualizações major que podem quebrar compatibilidade
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      # Agrupar dependências de desenvolvimento
+      dev-dependencies:
+        patterns:
+          - "flutter_test"
+          - "test"
+          - "mockito"
+          - "build_runner"
+          - "flutter_lints"
+          - "very_good_analysis"
+        update-types:
+          - "minor"
+          - "patch"
+      
+      # Agrupar dependências de UI
+      ui-dependencies:
+        patterns:
+          - "flutter_svg"
+          - "cached_network_image"
+          - "shimmer"
+          - "lottie"
+          - "animations"
+        update-types:
+          - "minor"
+          - "patch"
+      
+      # Agrupar dependências de estado
+      state-dependencies:
+        patterns:
+          - "provider"
+          - "riverpod"
+          - "bloc"
+          - "get"
+          - "mobx"
+        update-types:
+          - "minor"
+          - "patch"
+  
+  # Dependências do GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "@your-github-username"  # Substitua pelo seu username
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "ci/cd"
+      - "automated"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    pull-request-branch-name:
+      separator: "-"
+  
+  # Dependências do npm (se houver package.json para ferramentas web)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "03:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "@your-github-username"  # Substitua pelo seu username
+    labels:
+      - "dependencies"
+      - "javascript"
+      - "automated"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    ignore:
+      # Ignorar atualizações major
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    allow:
+      # Permitir apenas dependências de desenvolvimento
+      - dependency-type: "development"
+  
+  # Dependências do Gradle (Android)
+  - package-ecosystem: "gradle"
+    directory: "/android"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "03:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "@your-github-username"  # Substitua pelo seu username
+    labels:
+      - "dependencies"
+      - "android"
+      - "automated"
+    commit-message:
+      prefix: "deps-android"
+      include: "scope"
+    ignore:
+      # Ignorar atualizações do Gradle que podem quebrar o build
+      - dependency-name: "com.android.tools.build:gradle"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "gradle"
+        update-types: ["version-update:semver-major"]
+  
+  # Dependências do CocoaPods (iOS)
+  - package-ecosystem: "bundler"
+    directory: "/ios"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "03:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "@your-github-username"  # Substitua pelo seu username
+    labels:
+      - "dependencies"
+      - "ios"
+      - "automated"
+    commit-message:
+      prefix: "deps-ios"
+      include: "scope"
+    allow:
+      # Permitir apenas dependências relacionadas ao CocoaPods
+      - dependency-name: "cocoapods*"
+  
+  # Dependências do Docker (se houver Dockerfile)
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "friday"
+      time: "03:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "@your-github-username"  # Substitua pelo seu username
+    labels:
+      - "dependencies"
+      - "docker"
+      - "automated"
+    commit-message:
+      prefix: "deps-docker"
+      include: "scope"

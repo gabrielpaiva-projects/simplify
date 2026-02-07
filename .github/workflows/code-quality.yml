@@ -1,0 +1,309 @@
+name: Qualidade de Código
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main, develop]
+  schedule:
+    # Executa semanalmente às segundas-feiras
+    - cron: '0 0 * * 1'
+
+env:
+  FLUTTER_VERSION: '3.16.5'
+
+jobs:
+  # Análise de complexidade e qualidade
+  code-metrics:
+    name: 📈 Métricas de Código
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: 🎯 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+      
+      - name: 📦 Instalar ferramentas de análise
+        run: |
+          flutter pub get
+          flutter pub global activate dart_code_metrics
+          flutter pub global activate dcm
+          flutter pub global activate flutter_coverage_badge
+      
+      - name: 📊 Análise de complexidade ciclomática
+        run: |
+          echo "## 📊 Análise de Complexidade" >> $GITHUB_STEP_SUMMARY
+          flutter pub global run dart_code_metrics:metrics check-metrics lib \
+            --cyclomatic-complexity=10 \
+            --maximum-nesting-level=5 \
+            --number-of-parameters=4 \
+            --reporter=console
+      
+      - name: 🔍 Análise de código não utilizado
+        run: |
+          flutter pub global run dart_code_metrics:metrics check-unused-code lib \
+            --reporter=console \
+            --monorepo
+      
+      - name: 📝 Análise de arquivos não utilizados
+        run: |
+          flutter pub global run dart_code_metrics:metrics check-unused-files lib \
+            --reporter=console
+      
+      - name: 🎨 Análise de estilo de código
+        run: |
+          flutter pub global run dart_code_metrics:metrics analyze lib \
+            --reporter=json > metrics-report.json
+          
+          # Gerar relatório em HTML
+          flutter pub global run dart_code_metrics:metrics analyze lib \
+            --reporter=html \
+            --output-directory=metrics-html
+      
+      - name: 📤 Upload relatório de métricas
+        uses: actions/upload-artifact@v4
+        with:
+          name: metrics-report
+          path: |
+            metrics-report.json
+            metrics-html/
+          retention-days: 30
+  
+  # Análise de documentação
+  documentation:
+    name: 📚 Documentação
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      
+      - name: 🎯 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+      
+      - name: 📦 Instalar dependências
+        run: flutter pub get
+      
+      - name: 📝 Verificar documentação
+        run: |
+          # Verifica se todos os métodos públicos estão documentados
+          dart doc . --validate-links
+          
+          # Gera documentação
+          dart doc . --output=doc/api
+      
+      - name: 📊 Análise de cobertura de documentação
+        run: |
+          # Conta quantos métodos públicos não têm documentação
+          echo "## 📚 Cobertura de Documentação" >> $GITHUB_STEP_SUMMARY
+          
+          total_public=$(grep -r "^[[:space:]]*[a-zA-Z].*(" lib --include="*.dart" | wc -l)
+          documented=$(grep -r "^[[:space:]]*///" lib --include="*.dart" | wc -l)
+          
+          if [ $total_public -gt 0 ]; then
+            coverage=$((documented * 100 / total_public))
+            echo "Cobertura: ${coverage}%" >> $GITHUB_STEP_SUMMARY
+            
+            if [ $coverage -lt 80 ]; then
+              echo "⚠️ Cobertura de documentação abaixo de 80%!" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+      
+      - name: 📤 Upload documentação
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation
+          path: doc/api
+          retention-days: 30
+  
+  # Análise de dependências
+  dependency-review:
+    name: 🔍 Revisão de Dependências
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      
+      - name: 🔍 Dependency Review
+        uses: actions/dependency-review-action@v3
+        with:
+          fail-on-severity: moderate
+          deny-licenses: GPL-3.0, AGPL-3.0
+          comment-summary-in-pr: always
+  
+  # Análise de segurança
+  security:
+    name: 🔒 Segurança
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      
+      - name: 🎯 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+      
+      - name: 📦 Instalar dependências
+        run: flutter pub get
+      
+      - name: 🔒 Análise de vulnerabilidades
+        run: |
+          flutter pub audit
+          
+          # Verifica por secrets hardcoded
+          echo "## 🔍 Verificação de Secrets" >> $GITHUB_STEP_SUMMARY
+          
+          # Procura por padrões comuns de secrets
+          patterns=(
+            "api[_-]?key"
+            "secret[_-]?key"
+            "password"
+            "token"
+            "private[_-]?key"
+            "client[_-]?secret"
+          )
+          
+          found_secrets=false
+          for pattern in "${patterns[@]}"; do
+            if grep -r -i "$pattern.*=.*['\"]" lib --include="*.dart" 2>/dev/null; then
+              echo "⚠️ Possível secret encontrado para padrão: $pattern" >> $GITHUB_STEP_SUMMARY
+              found_secrets=true
+            fi
+          done
+          
+          if [ "$found_secrets" = true ]; then
+            echo "❌ Possíveis secrets hardcoded encontrados!" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "✅ Nenhum secret hardcoded encontrado" >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: 🛡️ SAST com Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/flutter
+            p/security-audit
+            p/owasp-top-ten
+        continue-on-error: true
+  
+  # Análise de acessibilidade
+  accessibility:
+    name: ♿ Acessibilidade
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      
+      - name: 🎯 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+      
+      - name: 📦 Instalar dependências
+        run: flutter pub get
+      
+      - name: ♿ Verificar acessibilidade
+        run: |
+          echo "## ♿ Verificação de Acessibilidade" >> $GITHUB_STEP_SUMMARY
+          
+          # Verifica uso de Semantics widgets
+          semantics_count=$(grep -r "Semantics\|semanticsLabel\|ExcludeSemantics" lib --include="*.dart" | wc -l)
+          
+          if [ $semantics_count -eq 0 ]; then
+            echo "⚠️ Nenhum widget de acessibilidade encontrado!" >> $GITHUB_STEP_SUMMARY
+            echo "Considere adicionar Semantics widgets para melhorar a acessibilidade" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ $semantics_count widgets de acessibilidade encontrados" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Verifica contraste de cores (exemplo básico)
+          echo "### 🎨 Verificação de Contraste" >> $GITHUB_STEP_SUMMARY
+          
+          # Procura por cores hardcoded que podem ter problemas de contraste
+          if grep -r "Color(0x\|Colors\." lib --include="*.dart" | grep -v "Theme"; then
+            echo "⚠️ Cores hardcoded encontradas. Verifique o contraste para acessibilidade" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ Usando tema para cores (boa prática)" >> $GITHUB_STEP_SUMMARY
+          fi
+  
+  # Análise de performance de código
+  performance-analysis:
+    name: ⚡ Análise de Performance
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      
+      - name: 🎯 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+      
+      - name: 📦 Instalar dependências
+        run: flutter pub get
+      
+      - name: ⚡ Análise de performance
+        run: |
+          echo "## ⚡ Análise de Performance" >> $GITHUB_STEP_SUMMARY
+          
+          # Verifica uso de const constructors
+          const_count=$(grep -r "const " lib --include="*.dart" | wc -l)
+          widget_count=$(grep -r "Widget\|StatelessWidget\|StatefulWidget" lib --include="*.dart" | wc -l)
+          
+          if [ $widget_count -gt 0 ]; then
+            const_ratio=$((const_count * 100 / widget_count))
+            echo "Uso de const constructors: ${const_ratio}%" >> $GITHUB_STEP_SUMMARY
+            
+            if [ $const_ratio -lt 30 ]; then
+              echo "⚠️ Baixo uso de const constructors pode impactar performance" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+          
+          # Verifica uso de keys em listas
+          echo "### 🔑 Verificação de Keys" >> $GITHUB_STEP_SUMMARY
+          
+          list_widgets=$(grep -r "ListView\|Column\|Row" lib --include="*.dart" | wc -l)
+          key_usage=$(grep -r "key:" lib --include="*.dart" | wc -l)
+          
+          echo "Widgets de lista: $list_widgets" >> $GITHUB_STEP_SUMMARY
+          echo "Uso de keys: $key_usage" >> $GITHUB_STEP_SUMMARY
+          
+          # Verifica setState desnecessários
+          echo "### 🔄 Análise de setState" >> $GITHUB_STEP_SUMMARY
+          
+          setstate_count=$(grep -r "setState" lib --include="*.dart" | wc -l)
+          echo "Chamadas setState encontradas: $setstate_count" >> $GITHUB_STEP_SUMMARY
+          
+          if [ $setstate_count -gt 50 ]; then
+            echo "⚠️ Muitas chamadas setState. Considere usar gerenciamento de estado" >> $GITHUB_STEP_SUMMARY
+          fi
